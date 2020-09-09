@@ -128,3 +128,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+poetry.lock
+shell.nix
+.envrc
+.local
+.vim

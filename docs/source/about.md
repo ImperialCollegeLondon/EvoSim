@@ -1,3 +1,0 @@
-# About Poetry Template
-
-This is just a test file.
