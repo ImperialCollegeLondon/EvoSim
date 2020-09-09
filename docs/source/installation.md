@@ -1,8 +1,6 @@
-# EVOLVE: Electric Vehicle fleet Optimisation for Lowering Vehicle Emissions
+# Installing EVOLVE
 
-![Build Status](https://github.com/ImperialCollegeLondon/Evolve/workflows/ci/badge.svg)
-
-# Installation for users
+## Installation for users
 
 The latest package can be installed with:
 
@@ -15,9 +13,9 @@ the name of the commit, tag, or branch.
 
 The only pre-requisite is python 3.8 or higher and [git](https://git-scm.com/).
 
-# Installation for Developers
+## Installation for Developers
 
-## Initial setup
+### Initial setup
 
 The pre-requisite for development are python 3.8 or higher, the python package manager
 [poetry](https://python-poetry.org/), and [git](https://git-scm.com/).
@@ -49,7 +47,7 @@ it, then run:
 pre-commit install
 ```
 
-## Testing
+### Testing
 
 EVOLVE is a develop using the [Test Driven Development
 methodology](https://en.wikipedia.org/wiki/Test-driven_development). In practice, it
@@ -59,7 +57,7 @@ means many test have been written ensuring that each part of the code works as e
 poetry run pytest
 ```
 
-## Documentation
+### Documentation
 
 The documentation can be generated with:
 
@@ -69,7 +67,7 @@ poetry run sphinx-build -b html docs/source/ docs/build/
 
 Then open the file "docs/build/index.html" with a browser.
 
-## Prepering a new release
+### Prepering a new release
 
 Once it is time for a new release, run the following steps:
 
