@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "evolve"
+name = "EvoSim"
 version = "0.1.0"
 description = "Electric Vehicle fleet Optimisation for Lowering Vehicle Emissions"
 authors = [
@@ -8,8 +8,8 @@ authors = [
     "Research Computing Service, Imperial College London <rcs-support@imperial.ac.uk>"
 ]
 readme = "README.md"
-homepage = "https://github.com/ImperialCollegeLondon/Evolve"
-packages = [{include = "evolve", from = "src"}]
+homepage = "https://github.com/ImperialCollegeLondon/EvoSim"
+packages = [{include = "evosim", from = "src"}]
 include = ["*.rst"]
 
 [tool.poetry.dependencies]
