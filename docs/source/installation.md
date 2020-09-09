@@ -67,7 +67,7 @@ poetry run sphinx-build -b html docs/source/ docs/build/
 
 Then open the file "docs/build/index.html" with a browser.
 
-### Prepering a new release
+### Preparing a new release
 
 Once it is time for a new release, run the following steps:
 
