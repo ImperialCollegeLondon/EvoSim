@@ -14,7 +14,7 @@ from datetime import datetime  # noqa: E402
 
 # -- Project information -----------------------------------------------------
 
-project = "Evolve"
+project = "EvoSim"
 copyright = f"{datetime.today().year}, Imperial College London"
 author = "Research Computing Service, Imperial College London"
 

@@ -1,11 +1,11 @@
-# Installing EVOLVE
+# Installing EvoSim
 
 ## Installation for users
 
 The latest package can be installed with:
 
 ```bash
-pip install git+https://github.com/ImperialCollegeLondon/Evolve.git@main
+pip install git+https://github.com/ImperialCollegeLondon/EvoSim.git@main
 ```
 
 Specific versions or branches (e.g. "develop") can be installed by replacing "main" with
@@ -20,16 +20,16 @@ The only pre-requisite is python 3.8 or higher and [git](https://git-scm.com/).
 The pre-requisite for development are python 3.8 or higher, the python package manager
 [poetry](https://python-poetry.org/), and [git](https://git-scm.com/).
 
-EVOLVE can be installed for development with:
+EvoSim can be installed for development with:
 
 ```bash
 # Clone the repository
-git clone https://github.com/ImperialCollegeLondon/Evolve
+git clone https://github.com/ImperialCollegeLondon/EvoSim
 # Move to the directory with the source files
-cd Evolve
+cd EvoSim
 # Switch to a new branch
 git switch -c my_new_branch origin/develop
-# Install a virtual environment with the EVOLVE package
+# Install a virtual environment with the EvoSim package
 poetry install
 # Start hacking!!
 ```
@@ -49,7 +49,7 @@ pre-commit install
 
 ### Testing
 
-EVOLVE is a develop using the [Test Driven Development
+EvoSim is developed using the [Test Driven Development
 methodology](https://en.wikipedia.org/wiki/Test-driven_development). In practice, it
 means many test have been written ensuring that each part of the code works as expected.
 
