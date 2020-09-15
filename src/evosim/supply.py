@@ -79,6 +79,7 @@ def random_charging_points(
         dict(latitude=lat, longitude=lon, socket=st, charger=ct)
     )
     result["socket"] = result.socket.astype("category")
+    result["charger"] = result.charger.astype("category")
     return dd.from_pandas(result, **kwargs) if kwargs else result
 
 
