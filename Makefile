@@ -4,9 +4,9 @@
 # You can set these variables from the command line, and also
 # from the environment for the first two.
 SPHINXOPTS    ?= -E
-SPHINXBUILD   ?= sphinx-build
-SOURCEDIR     = docs/source
-BUILDDIR      = docs/build
+SPHINXBUILD   ?= poetry run sphinx-build
+SOURCEDIR     = docs
+BUILDDIR      = build
 
 # Put it first so that "make" without argument is like "make help".
 help:
@@ -20,7 +20,6 @@ help:
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 tests: pytest doctest
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O) -a -E
 
 pytest:
-	@python -m pytest
+	@poetry run pytest

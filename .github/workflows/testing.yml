@@ -33,7 +33,7 @@ jobs:
       run: python -m poetry run pytest
 
     - name: Check doctests
-      run: python -m poetry run sphinx-build -M html docs/source/ docs/build/
+      run: python -m poetry run sphinx-build -M html docs build
 
     - name: Build documentation
-      run: python -m poetry run sphinx-build -M doctest docs/source/ docs/build/
+      run: python -m poetry run sphinx-build -M doctest docs build

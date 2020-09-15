@@ -65,10 +65,10 @@ There are two types of tests:
     documentation and document how EvoSim can be used and enhanced by developers.
 
     ```bash
-    poetry run sphinx-build -E -M doctest docs/source docs/build
+    poetry run sphinx-build -E -b doctest docs build
     ```
 
-Linux, MacOS, and WLS users can run both types of tests with:
+Linux, MacOS, and Window Linux Subsystem users can run both types of tests with:
 
 ```bash
 make tests
@@ -79,10 +79,10 @@ make tests
 The documentation can be generated with:
 
 ```bash
-poetry run sphinx-build -b html docs/source/ docs/build/
+poetry run sphinx-build -b html docs build
 ```
 
-Then open the file "docs/build/index.html" with a browser.
+Then open the file "build/index.html" with a browser.
 
 ### Preparing a new release
 
