@@ -10,6 +10,9 @@ Optimisation for lowering vehicle Emissions.
    :caption: Contents:
 
    installation.md
+   manual.rst
+   api.rst
+
 
 Indices and tables
 ==================
