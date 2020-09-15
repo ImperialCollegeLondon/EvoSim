@@ -52,9 +52,26 @@ pre-commit install
 EvoSim is developed using the [Test Driven Development
 methodology](https://en.wikipedia.org/wiki/Test-driven_development). In practice, it
 means many test have been written ensuring that each part of the code works as expected.
+There are two types of tests:
+
+- unittest: in the "tests/" subdirectory. They check the internal implementation of
+    EvoSim.
+
+    ```bash
+    poetry run pytest
+    ```
+
+- doctest: in the "\*.rst" files with the source code. These tests are part of the
+    documentation and document how EvoSim can be used and enhanced by developers.
+
+    ```bash
+    poetry run sphinx-build -E -M doctest docs/source docs/build
+    ```
+
+Linux, MacOS, and WLS users can run both types of tests with:
 
 ```bash
-poetry run pytest
+make tests
 ```
 
 ### Documentation
