@@ -1,7 +1,7 @@
 Charging Points
 ===============
 
-.. testsetup:: *
+.. testsetup:: charging_points
     
     import pandas as pd
     import numpy as np
@@ -9,13 +9,12 @@ Charging Points
     import evosim
 
     pd.set_option('precision', 2)
-    
 
 Charging points are a list of locations (latitude and longitude) with a socket and
 charger type. The simplest way to generate one is to use
 :py:func:`evosim.supply.random_charging_points`:
 
-.. doctest::
+.. doctest:: charging_points
 
     >>> result = evosim.supply.random_charging_points(5, seed=1)
     >>> result
@@ -27,11 +26,11 @@ charger type. The simplest way to generate one is to use
     4     51.39      -0.45         CHADEMO    SLOW
 
 The random ``seed`` is optional. It is provided here so that the code and output above
-can be tested reproducibly. By default, the function returns a `pandas.DataFrame`. The
-``socket`` and ``charger`` columns take their values from
-:py:class:`evosim.supply.Sockets` and :py:class:`evosim.supply.Chargers`:
+can be tested reproducibly. By default, the function returns a
+:py:class:`pandas.DataFrame`. The ``socket`` and ``charger`` columns take their values
+from :py:class:`evosim.supply.Sockets` and :py:class:`evosim.supply.Chargers`:
 
-.. doctest::
+.. doctest:: charging_points
 
     >>> result.socket
     0               CCS
@@ -58,11 +57,11 @@ can be tested reproducibly. By default, the function returns a `pandas.DataFrame
     <Chargers.SLOW: (0, 7)>
 
 Note the range ``(0, 7)``. It indicates the power range of the
-:py:attr:`~evosim.supply.ChargerType.SLOW` charger.
+:py:attr:`~evosim.supply.Chargers.SLOW` charger.
 
 
-.. topic:: Creating a charging point of type :py:mod:`dask.dataframe.DataFrame`
+.. topic:: Creating a charging point of type :py:class:`dask.dataframe.DataFrame`
 
-    Optionally, :py:func:`evosim.supply.randomly_chargingpoint` can generate
-    a :py:mod:`dask` dataframe, simply by supplying it with the requisite arguments from
-    :py:func:`dask.dataframe.fom_pandas`.
+    Optionally, :py:func:`~evosim.supply.random_charging_points` can generate a
+    :py:class:`dask.dataframe.DataFrame` simply by supplying it with the requisite
+    arguments from :py:func:`dask.dataframe.from_pandas`.

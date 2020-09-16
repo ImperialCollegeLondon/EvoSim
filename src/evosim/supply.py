@@ -67,8 +67,13 @@ def random_charging_points(
             choose randomly. Defaults to all available charger types.
         seed: seed for the random number generators. Defaults to ``None``. See
             :py:func:`numpy.random.default_rng`.
-        **kwargs: If empty, creates a :py:mod:`pandas` dataframe. If keywords are given,
-            then they should be those of :py:mod:`dask.dataframe.from_pandas`.
+        **kwargs: If keywords are given, then they should be those of
+            :py:func:`dask.dataframe.from_pandas`
+
+    Returns:
+        Union[dask.dataframe.DataFrame, pandas.DataFrame]: If no keyword arguments are
+        givent, then the funtion returns a :py:class:`pandas.DataFrame`. Otherwise, it
+        returns a :py:class:`dask.dataframe.DataFrame`.
     """
     rng = np.random.default_rng(seed=seed)
     lat = rng.uniform(high=np.max(latitude), low=np.min(latitude), size=n)
