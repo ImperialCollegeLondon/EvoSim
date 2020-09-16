@@ -1,6 +1,6 @@
 from enum import Enum, auto
 from pathlib import Path
-from typing import Sequence, Tuple, Union
+from typing import Optional, Sequence, Tuple, Union
 
 import dask.dataframe as dd
 import numpy as np
@@ -49,7 +49,9 @@ def random_charging_points(
     latitude: Tuple[float, float] = LONDON_LATITUDE,
     longitude: Tuple[float, float] = LONDON_LONGITUDE,
     socket_types: Sequence[Sockets] = tuple(Sockets),
+    socket_distribution: Optional[Sequence[float]] = None,
     charger_types: Sequence[Chargers] = tuple(Chargers),
+    charger_distribution: Optional[Sequence[float]] = None,
     seed=None,
     **kwargs,
 ) -> ChargingPoint:
@@ -63,8 +65,10 @@ def random_charging_points(
             Defaults to the london, {LONDON_LONGITUDE} .
         socket_types: A list of :py:class:`~evosim.supply.Sockets` from which to
             choose randomly. Defaults to all available socket types.
+        socket_distribution: weights when choosing the socket types.
         charger_types: A list of :py:class:`~evosim.supply.Chargers` from which to
             choose randomly. Defaults to all available charger types.
+        charger_distribution: weights when choosing the charger types.
         seed: seed for the random number generators. Defaults to ``None``. See
             :py:func:`numpy.random.default_rng`.
         **kwargs: If keywords are given, then they should be those of
@@ -78,10 +82,12 @@ def random_charging_points(
     rng = np.random.default_rng(seed=seed)
     lat = rng.uniform(high=np.max(latitude), low=np.min(latitude), size=n)
     lon = rng.uniform(high=np.max(longitude), low=np.min(longitude), size=n)
-    st = rng.choice(list(socket_types), size=n, replace=True)
-    ct = rng.choice(list(charger_types), size=n, replace=True)
+    socket = rng.choice(list(socket_types), size=n, replace=True, p=socket_distribution)
+    charger = rng.choice(
+        list(charger_types), size=n, replace=True, p=charger_distribution
+    )
     result: ChargingPoint = pd.DataFrame(
-        dict(latitude=lat, longitude=lon, socket=st, charger=ct)
+        dict(latitude=lat, longitude=lon, socket=socket, charger=charger)
     )
     result["socket"] = result.socket.astype("category")
     result["charger"] = result.charger.astype("category")
