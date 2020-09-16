@@ -16,7 +16,7 @@ LONDON_LATITUDE = 51.25, 51.70
 LONDON_LONGITUDE = -0.5, 1.25
 
 
-class SocketTypes(Enum):
+class Sockets(Enum):
     """Charging point socket types."""
 
     TYPE1 = auto()
@@ -30,7 +30,7 @@ class SocketTypes(Enum):
         return self.name
 
 
-class ChargerTypes(Enum):
+class Chargers(Enum):
     """Charging point charging types.
 
     The values are the power range in kW.
@@ -48,8 +48,8 @@ def random_charging_points(
     n: int,
     latitude: Tuple[float, float] = LONDON_LATITUDE,
     longitude: Tuple[float, float] = LONDON_LONGITUDE,
-    socket_types: Sequence[SocketTypes] = tuple(SocketTypes),
-    charger_types: Sequence[ChargerTypes] = tuple(ChargerTypes),
+    socket_types: Sequence[Sockets] = tuple(Sockets),
+    charger_types: Sequence[Chargers] = tuple(Chargers),
     seed=None,
     **kwargs,
 ) -> ChargingPoint:
@@ -61,9 +61,9 @@ def random_charging_points(
             Defaults to the london, {LONDON_LATITUDE}.
         longitude: The range over which to create random charging point locations
             Defaults to the london, {LONDON_LONGITUDE} .
-        socket_types: A list of :py:class:`~evosim.supply.SocketTypes` from which to
+        socket_types: A list of :py:class:`~evosim.supply.Sockets` from which to
             choose randomly. Defaults to all available socket types.
-        charger_types: A list of :py:class:`~evosim.supply.ChargerTypes` from which to
+        charger_types: A list of :py:class:`~evosim.supply.Chargers` from which to
             choose randomly. Defaults to all available charger types.
         seed: seed for the random number generators. Defaults to ``None``. See
             :py:func:`numpy.random.default_rng`.

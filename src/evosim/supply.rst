@@ -29,8 +29,7 @@ charger type. The simplest way to generate one is to use
 The random ``seed`` is optional. It is provided here so that the code and output above
 can be tested reproducibly. By default, the function returns a `pandas.DataFrame`. The
 ``socket`` and ``charger`` columns take their values from
-:py:class:`evosim.supply.SocketSocketTypes` and
-:py:class:`evosim.supply.ChargerTypes`:
+:py:class:`evosim.supply.Sockets` and :py:class:`evosim.supply.Chargers`:
 
 .. doctest::
 
@@ -44,7 +43,7 @@ can be tested reproducibly. By default, the function returns a `pandas.DataFrame
     Categories (3, object): [CCS, CHADEMO, DC_COMBO_TYPE2]
 
     >>> result.socket[0]
-    <SocketTypes.CCS: 6>
+    <Sockets.CCS: 6>
 
     >>> result.charger
     0     SLOW
@@ -56,7 +55,7 @@ can be tested reproducibly. By default, the function returns a `pandas.DataFrame
     Categories (3, object): [SLOW, FAST, RAPID]
 
     >>> result.charger[0]
-    <ChargerTypes.SLOW: (0, 7)>
+    <Chargers.SLOW: (0, 7)>
 
 Note the range ``(0, 7)``. It indicates the power range of the
 :py:attr:`~evosim.supply.ChargerType.SLOW` charger.
