@@ -180,17 +180,6 @@ version = ">=0.8.2"
 optional = true
 
 [[package]]
-name = "data-science-types"
-version = "0.2.17"
-description = "Type stubs for Python machine learning libraries"
-category = "dev"
-optional = false
-python-versions = ">=3.6"
-
-[package.extras]
-dev = ["black", "flake8", "flake8-pyi", "matplotlib", "mypy", "numpy", "pandas", "pytest"]
-
-[[package]]
 name = "distlib"
 version = "0.3.1"
 description = "Distribution utilities"
@@ -823,7 +812,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.0"
 python-versions = "^3.8"
-content-hash = "6bfecdb717e2a23bc16ed105cfd4b89002282cd0b40ed693110d844b7956cbfe"
+content-hash = "f8003049142a94babb6f2035cce1c6974562c8a4db1b43ca15426d4fcee032f5"
 
 [metadata.files]
 alabaster = [
@@ -917,10 +906,6 @@ coverage = [
 dask = [
     {file = "dask-2.26.0-py3-none-any.whl", hash = "sha256:09e2e3423df23acf59e54202351895a9bf3e18210e343b6247b33034207b0a3a"},
     {file = "dask-2.26.0.tar.gz", hash = "sha256:44c5c358bf9037dcff1b8332379738b7766b2d93652fca850a10b6e8a05497f7"},
-]
-data-science-types = [
-    {file = "data-science-types-0.2.17.tar.gz", hash = "sha256:e6f146e4a2eca648177caae81e55b5425e2e83b0126c92164fe498e3f4d20043"},
-    {file = "data_science_types-0.2.17-py3-none-any.whl", hash = "sha256:f1a5612cb7cabe354f626db8bd4af480cb8be32fc05a7f7d72317a391240cacb"},
 ]
 distlib = [
     {file = "distlib-0.3.1-py2.py3-none-any.whl", hash = "sha256:8c09de2c67b3e7deef7184574fc060ab8a793e7adbb183d942c389c8b13c52fb"},
