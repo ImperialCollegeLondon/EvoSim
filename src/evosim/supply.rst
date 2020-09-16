@@ -52,7 +52,8 @@ can be tested reproducibly. By default, the function returns a `pandas.DataFrame
     2    RAPID
     3     SLOW
     4     SLOW
-    Name: charger, dtype: object
+    Name: charger, dtype: category
+    Categories (3, object): [SLOW, FAST, RAPID]
 
     >>> result.charger[0]
     <ChargerTypes.SLOW: (0, 7)>
