@@ -106,7 +106,7 @@ def random_electric_vehicles(
         charger_types,
         charger_distribution,
         seed=rng,
-    )
+    ).drop(columns=["occupancy", "capacity"])
 
     result["dest_lat"] = rng.uniform(
         high=np.max(latitude), low=np.min(latitude), size=n

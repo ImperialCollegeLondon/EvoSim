@@ -52,6 +52,8 @@ def random_charging_points(
     socket_distribution: Optional[Sequence[float]] = None,
     charger_types: Sequence[Chargers] = tuple(Chargers),
     charger_distribution: Optional[Sequence[float]] = None,
+    occupancy: Tuple[int, int] = (0, 1),
+    capacity: Tuple[int, int] = (1, 2),
     seed: Optional[Union[int, np.random.Generator]] = None,
     **kwargs,
 ) -> ChargingPoint:
@@ -69,6 +71,28 @@ def random_charging_points(
         charger_types: A list of :py:class:`~evosim.supply.Chargers` from which to
             choose randomly. Defaults to all available charger types.
         charger_distribution: weights when choosing the charger types.
+        capacity: A range from which to choose the maximum capacity for each charging
+            point. Defaults to a capacity of 1 for each charging point.
+
+            .. note::
+
+                The range given as ``(min, max)`` will allow capacities between ``min``
+                included and ``max`` excluded, as per python conventions.
+
+        occupancy: A range from which to choose the current occupancy for each charging
+            point. Defaults to an occupancy of 0. The occupancy is always smaller than
+            the capacity.
+
+            .. warning::
+
+                Owing to the simplicity of the implementation, the distribution of
+                occupancies is not quite uniform and may skew towards lower values.
+
+            .. note::
+
+                The range given as ``(min, max)`` will allow capacities between ``min``
+                included and ``max`` excluded, as per python conventions.
+
         seed: seed for the random number generators. Defaults to ``None``. See
             :py:func:`numpy.random.default_rng`. Alternatively, it can be a
             :py:class:`numpy.random.Generator` instance.
@@ -85,17 +109,55 @@ def random_charging_points(
     else:
         rng = np.random.default_rng(seed=seed)
 
+    capacity = min(*capacity), max(*capacity)
+    if capacity[0] < 1:
+        raise ValueError("The minimum capacity must be at least 1.")
+    if capacity[1] < 2:
+        raise ValueError("The maximum capacity must be at least 2 (excluded).")
+    occupancy = min(*occupancy), max(*occupancy)
+    if occupancy[0] < 0:
+        raise ValueError("The minimum occupancy must be at least 0.")
+    if occupancy[1] < 1:
+        raise ValueError("The maximum occupancy must be at least 1 (excluded).")
+
     lat = rng.uniform(high=np.max(latitude), low=np.min(latitude), size=n)
     lon = rng.uniform(high=np.max(longitude), low=np.min(longitude), size=n)
     socket = rng.choice(list(socket_types), size=n, replace=True, p=socket_distribution)
     charger = rng.choice(
         list(charger_types), size=n, replace=True, p=charger_distribution
     )
+    if capacity[0] == capacity[1] + 1 or capacity[0] == capacity[1]:
+        capacities = np.ones(n, dtype=int)
+    else:
+        capacities = rng.integers(low=capacity[0], high=capacity[1], size=n)
+    if occupancy[0] == occupancy[1] + 1 or occupancy[0] == occupancy[1]:
+        occupancies = np.ones(n, dtype=int)
+    else:
+        # TODO: random occupancies are not uniform
+        # The mod operation will skew the distribution towards lower values. For
+        # instance, if the capacity of a particular charging point is 4, but the maximum
+        # cpacity as a whole is 5, the occupancies are chosen as one of
+        # `[0 % 4, 1 % 4, 2 % 4, 3 % 4, 5 % 4]`, e.g. `[0, 1, 2, 3, 0]`, and `0` is
+        # twice as likely as any other value.
+        # When fixing, don't forget the **docstring**!
+        # labels: bug
+        occupancies = (
+            rng.integers(low=occupancy[0], high=occupancy[1], size=n) % capacities
+        )
+
     result: ChargingPoint = pd.DataFrame(
-        dict(latitude=lat, longitude=lon, socket=socket, charger=charger)
+        dict(
+            latitude=lat,
+            longitude=lon,
+            socket=socket,
+            charger=charger,
+            capacity=capacities,
+            occupancy=occupancies,
+        )
     )
     result["socket"] = result.socket.astype("category")
     result["charger"] = result.charger.astype("category")
+
     return dd.from_pandas(result, **kwargs) if kwargs else result
 
 
