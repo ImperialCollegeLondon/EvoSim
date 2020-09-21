@@ -133,6 +133,14 @@ def random_charging_points(
     if occupancy[0] == occupancy[1] + 1 or occupancy[0] == occupancy[1]:
         occupancies = np.ones(n, dtype=int)
     else:
+        # TODO: random occupancies are not uniform
+        # The mod operation will skew the distribution towards lower values. For
+        # instance, if the capacity of a particular charging point is 4, but the maximum
+        # cpacity as a whole is 5, the occupancies are chosen as one of
+        # `[0 % 4, 1 % 4, 2 % 4, 3 % 4, 5 % 4]`, e.g. `[0, 1, 2, 3, 0]`, and `0` is
+        # twice as likely as any other value.
+        # When fixing, don't forget the **docstring**!
+        # labels: bug
         occupancies = (
             rng.integers(low=occupancy[0], high=occupancy[1], size=n) % capacities
         )
