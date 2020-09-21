@@ -72,7 +72,7 @@ def random_charging_points(
 
     Returns:
         Union[dask.dataframe.DataFrame, pandas.DataFrame]: If no keyword arguments are
-        givent, then the funtion returns a :py:class:`pandas.DataFrame`. Otherwise, it
+        given, then the funtion returns a :py:class:`pandas.DataFrame`. Otherwise, it
         returns a :py:class:`dask.dataframe.DataFrame`.
     """
     rng = np.random.default_rng(seed=seed)
