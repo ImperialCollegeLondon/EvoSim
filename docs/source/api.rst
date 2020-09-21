@@ -8,11 +8,11 @@ Supply
 Enumerations
 ------------
 
-.. autoclass:: evosim.supply.ChargerTypes
+.. autoclass:: evosim.supply.Chargers
     :members:
     :undoc-members:
 
-.. autoclass:: evosim.supply.SocketTypes
+.. autoclass:: evosim.supply.Sockets
     :members:
     :undoc-members:
 
