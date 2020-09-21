@@ -35,3 +35,16 @@ Functions
 ---------
 
 .. autofunction:: evosim.electric_vehicles.random_electric_vehicles
+
+
+Matchers
+========
+
+Functions
+---------
+
+.. autofunction:: evosim.matchers.factory
+
+.. autofunction:: evosim.matchers.charging_point_availability
+
+.. autofunction:: evosim.matchers.socket_compatibility
