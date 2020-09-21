@@ -10,9 +10,9 @@ Charging Points
 
     pd.set_option('precision', 2)
 
-Charging points are a list of locations (latitude and longitude) with a socket and
-charger type. The simplest way to generate one is to use
-:py:func:`evosim.supply.random_charging_points`:
+Charging points are represented by a table with columns for the latitude, longitude,
+socket type and charger type. Potentially it can accept other columns as well. The
+simplest way to generate one is to use :py:func:`evosim.supply.random_charging_points`:
 
 .. doctest:: charging_points
 
