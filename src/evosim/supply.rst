@@ -3,19 +3,6 @@
 Charging Points
 ===============
 
-.. testsetup:: charging_points
-    
-    import pandas as pd
-    import numpy as np
-    import dask.dataframe as dd
-    import evosim
-
-    pd.options.display.precision = 2
-    pd.options.display.max_categories = 8
-    pd.options.display.max_rows = 20
-    pd.options.display.max_columns = 10
-    pd.options.display.width = 88
-
 Charging points are represented by a table with columns for the latitude, longitude,
 socket type, charger type, current occupancy and maximum capacity. Potentially it can
 accept other columns as well. The simplest way to generate one is to use

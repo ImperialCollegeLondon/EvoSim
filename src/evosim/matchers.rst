@@ -1,19 +1,6 @@
 Matchers
 ========
 
-.. testsetup:: matchers
-    
-    import pandas as pd
-    import numpy as np
-    import dask.dataframe as dd
-    import evosim
-
-    pd.options.display.precision = 2
-    pd.options.display.max_categories = 8
-    pd.options.display.max_rows = 20
-    pd.options.display.max_columns = 10
-    pd.options.display.width = 88
-    
 Matchers are functions that return true of false given charging points and electric
 vehicles. If one of the other are a sequence (e.g. a dataframe), then the matchers are
 applied element-wise. Matchers are stand-alone functions in :py:mod:`evosim.matchers`.

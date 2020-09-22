@@ -66,3 +66,16 @@ html_theme = "alabaster"
 html_static_path = ["_static"]
 
 autodoc_typehints = "description"
+
+doctest_global_setup = """
+import pandas as pd
+import numpy as np
+import dask.dataframe as dd
+import evosim
+
+pd.options.display.precision = 2
+pd.options.display.max_categories = 8
+pd.options.display.max_rows = 20
+pd.options.display.max_columns = 10
+pd.options.display.width = 88
+"""
