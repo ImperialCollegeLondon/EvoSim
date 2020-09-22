@@ -52,7 +52,7 @@ def random_charging_points(
     socket_distribution: Optional[Sequence[float]] = None,
     charger_types: Sequence[Chargers] = tuple(Chargers),
     charger_distribution: Optional[Sequence[float]] = None,
-    seed=None,
+    seed: Optional[Union[int, np.random.Generator]] = None,
     **kwargs,
 ) -> ChargingPoint:
     """Creates a randomly generated list of charging points.
@@ -70,7 +70,8 @@ def random_charging_points(
             choose randomly. Defaults to all available charger types.
         charger_distribution: weights when choosing the charger types.
         seed: seed for the random number generators. Defaults to ``None``. See
-            :py:func:`numpy.random.default_rng`.
+            :py:func:`numpy.random.default_rng`. Alternatively, it can be a
+            :py:class:`numpy.random.Generator` instance.
         **kwargs: If keywords are given, then they should be those of
             :py:func:`dask.dataframe.from_pandas`
 
@@ -79,7 +80,11 @@ def random_charging_points(
         given, then the funtion returns a :py:class:`pandas.DataFrame`. Otherwise, it
         returns a :py:class:`dask.dataframe.DataFrame`.
     """
-    rng = np.random.default_rng(seed=seed)
+    if isinstance(seed, np.random.Generator):
+        rng = seed
+    else:
+        rng = np.random.default_rng(seed=seed)
+
     lat = rng.uniform(high=np.max(latitude), low=np.min(latitude), size=n)
     lon = rng.uniform(high=np.max(longitude), low=np.min(longitude), size=n)
     socket = rng.choice(list(socket_types), size=n, replace=True, p=socket_distribution)

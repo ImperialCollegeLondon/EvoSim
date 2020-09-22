@@ -27,18 +27,18 @@ The simplest way to generate a list of EVs is to use
     >>> result = evosim.electric_vehicles.random_electric_vehicles(5, seed=1)
     >>> result
        latitude  longitude          socket charger  dest_lat  dest_long  \
-    0     51.48       0.24             CCS    SLOW     51.48       0.24
-    1     51.68       0.95         CHADEMO    FAST     51.68       0.95
-    2     51.31       0.22             CCS   RAPID     51.31       0.22
-    3     51.68       0.46  DC_COMBO_TYPE2    SLOW     51.68       0.46
-    4     51.39      -0.45         CHADEMO    SLOW     51.39      -0.45
+    0     51.48       0.24             CCS    SLOW     51.45   8.13e-01
+    1     51.68       0.95         CHADEMO    FAST     51.31  -9.28e-03
+    2     51.31       0.22             CCS   RAPID     51.43   3.49e-01
+    3     51.68       0.46  DC_COMBO_TYPE2    SLOW     51.34   1.22e+00
+    4     51.39      -0.45         CHADEMO    SLOW     51.37   1.18e+00
     <BLANKLINE>
-                       model
-    0  VOLKSWAGEN_PASSAT_GTE
-    1          TESLA_MODEL_S
-    2  VOLKSWAGEN_PASSAT_GTE
-    3            NISSAN_LEAF
-    4    VOLKSWAGEN_GOLF_GTE
+                        model
+    0               BMW_225XE
+    1           TESLA_MODEL_X
+    2           KIA_NIRO_PHEV
+    3             NISSAN_LEAF
+    4  VOLVO_XC90_TWIN_ENGINE
 
 Much as the chargers and sockets, the models a categorical array taking their values
 from :py:class:`evosim.electric_vehicles.Models`:
@@ -46,13 +46,13 @@ from :py:class:`evosim.electric_vehicles.Models`:
 .. doctest:: EVs
 
     >>> result.model
-    0    VOLKSWAGEN_PASSAT_GTE
-    1            TESLA_MODEL_S
-    2    VOLKSWAGEN_PASSAT_GTE
-    3              NISSAN_LEAF
-    4      VOLKSWAGEN_GOLF_GTE
+    0                 BMW_225XE
+    1             TESLA_MODEL_X
+    2             KIA_NIRO_PHEV
+    3               NISSAN_LEAF
+    4    VOLVO_XC90_TWIN_ENGINE
     Name: model, dtype: category
-    Categories (4, object): [VOLKSWAGEN_PASSAT_GTE, TESLA_MODEL_S, NISSAN_LEAF, VOLKSWAGEN_GOLF_GTE]
+    Categories (5, object): [BMW_225XE, TESLA_MODEL_X, KIA_NIRO_PHEV, NISSAN_LEAF, VOLVO_XC90_TWIN_ENGINE]
 
 Much as for generating random charging points,
 :py:func:`evosim.electric_vehicles.random_electric_vehicles` takes additional parameters

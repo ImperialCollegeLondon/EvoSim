@@ -61,7 +61,7 @@ def random_electric_vehicles(
     charger_types: Sequence[Chargers] = tuple(Chargers),
     charger_distribution: Optional[Sequence[float]] = None,
     model_types: Sequence[Models] = tuple(Models),
-    seed=None,
+    seed: Optional[Union[int, np.random.Generator]] = None,
     **kwargs,
 ) -> ElectricVehicles:
     """Creates a randomly generated list of charging points.
@@ -81,7 +81,8 @@ def random_electric_vehicles(
         model_types: A list of :py:class:`~evosim.electric_vehicles.Models` from which
             to choose randomly. Defaults to all known models.
         seed: seed for the random number generators. Defaults to ``None``. See
-            :py:func:`numpy.random.default_rng`.
+            :py:func:`numpy.random.default_rng`. Alternatively, it can be a
+            :py:class:`numpy.random.Generator` instance.
         **kwargs: If keywords are given, then they should be those of
             :py:func:`dask.dataframe.from_pandas`
 
@@ -92,6 +93,10 @@ def random_electric_vehicles(
     """
     from evosim.supply import random_charging_points
 
+    if isinstance(seed, np.random.Generator):
+        rng = seed
+    else:
+        rng = np.random.default_rng(seed=seed)
     result: ElectricVehicles = random_charging_points(
         n,
         latitude,
@@ -100,10 +105,9 @@ def random_electric_vehicles(
         socket_distribution,
         charger_types,
         charger_distribution,
-        seed=seed,
+        seed=rng,
     )
 
-    rng = np.random.default_rng(seed=seed)
     result["dest_lat"] = rng.uniform(
         high=np.max(latitude), low=np.min(latitude), size=n
     )
@@ -112,4 +116,6 @@ def random_electric_vehicles(
     )
     result["model"] = rng.choice(list(model_types), size=n, replace=True)
     result["model"] = result.model.astype("category")
-    return dd.from_pandas(result, **kwargs) if kwargs else result
+
+    is_dask = kwargs and any(v is not None for v in kwargs.values())
+    return dd.from_pandas(result, **kwargs) if is_dask else result
