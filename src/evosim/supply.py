@@ -93,9 +93,9 @@ def random_charging_points(
                 The range given as ``(min, max)`` will allow capacities between ``min``
                 included and ``max`` excluded, as per python conventions.
 
-        seed: seed for the random number generators. Defaults to ``None``. See
-            :py:func:`numpy.random.default_rng`. Alternatively, it can be a
-            :py:class:`numpy.random.Generator` instance.
+        seed (Optional[Union[int, numpy.random.Generator]]): seed for the random number
+            generators. Defaults to ``None``. See :py:func:`numpy.random.default_rng`.
+            Alternatively, it can be a :py:class:`numpy.random.Generator` instance.
         **kwargs: If keywords are given, then they should be those of
             :py:func:`dask.dataframe.from_pandas`
 
