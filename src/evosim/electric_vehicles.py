@@ -69,9 +69,9 @@ def random_electric_vehicles(
     Args:
         n: The number of charging points
         latitude: The range over which to create random current locations and
-            destinations. Defaults to the london, {LONDON_LATITUDE}.
+            destinations. Defaults to the London latitudinal range, {LONDON_LATITUDE}.
         longitude: The range over which to create random current locations and
-            destinations. Defaults to the london, {LONDON_LATITUDE}.
+            destinations. Defaults to the London longitudinal range, {LONDON_LONGITUDE}.
         socket_types: A list of :py:class:`~evosim.supply.Sockets` from which to
             choose randomly. Defaults to all available socket types.
         socket_distribution: weights when choosing the socket types.
@@ -119,3 +119,9 @@ def random_electric_vehicles(
 
     is_dask = kwargs and any(v is not None for v in kwargs.values())
     return dd.from_pandas(result, **kwargs) if is_dask else result
+
+
+# Ensures sphinx gets the interpolated docstring. Using an f-string does not work.
+random_electric_vehicles.__doc__ = random_electric_vehicles.__doc__.format(
+    LONDON_LATITUDE=LONDON_LATITUDE, LONDON_LONGITUDE=LONDON_LONGITUDE
+)
