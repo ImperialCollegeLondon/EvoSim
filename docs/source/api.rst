@@ -48,3 +48,17 @@ Functions
 .. autofunction:: evosim.matchers.charging_point_availability
 
 .. autofunction:: evosim.matchers.socket_compatibility
+Objectives
+==========
+
+Functions
+---------
+
+.. autofunction:: evosim.objectives.distance
+
+.. autofunction:: evosim.objectives.haversine_distance
+
+Data
+----
+
+.. autodata:: evosim.objectives.EARTH_RADIUS_KM
