@@ -52,3 +52,41 @@ Using the factory becomes interesting when we want to apply a combination of mat
     8    False
     9    False
     Name: socket, dtype: bool
+
+
+Some matchers, such as :py:func:`evosim.matchers.distance` also accept parameters in the
+form of keyword arguments. These parameters can be set form the outset by feeding 
+:py:func:`evosim.matchers.factory` a dictionary with a ``name`` and any parameter:
+
+.. doctest:: matchers
+    
+    >>> matcher = evosim.matchers.factory({"name": "distance", "max_distance": 10})
+    >>> matcher(evs, cps.loc[1])
+    0    False
+    1    False
+    2    False
+    3     True
+    4    False
+    5    False
+    6    False
+    7    False
+    8    False
+    9    False
+    dtype: bool
+
+    >>> matcher = evosim.matchers.factory({"name": "distance", "max_distance": 30})
+    >>> matcher(evs, cps.loc[1])
+    0     True
+    1    False
+    2    False
+    3     True
+    4    False
+    5    False
+    6    False
+    7    False
+    8    False
+    9    False
+    dtype: bool
+
+Multiple matchers can be combined using a list of dictionaries and strings, e.g.
+``[{...}, "...", {...}]``.

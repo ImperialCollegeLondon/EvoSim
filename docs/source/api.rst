@@ -51,6 +51,8 @@ Functions
 
 .. autofunction:: evosim.matchers.charger_compatibility
 
+.. autofunction:: evosim.matchers.distance
+
 Objectives
 ==========
 

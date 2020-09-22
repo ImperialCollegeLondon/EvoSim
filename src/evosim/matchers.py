@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Callable, Sequence, Text, Union
+from typing import Any, Callable, Mapping, Sequence, Text, Union
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
@@ -38,21 +38,55 @@ def socket_compatibility(vehicle, charging_point) -> bool:
     return vehicle.socket == charging_point.socket
 
 
+def distance(vehicle, charging_point, max_distance: float = 1) -> bool:
+    """Maximum distance between current vehicle location and charging point."""
+    from evosim.objectives import distance
+
+    return distance(vehicle, charging_point) < max_distance
+
+
+def distance_from_destination(vehicle, charging_point, max_distance: float = 1) -> bool:
+    """Maximum distance between vehicle destination and charging point."""
+    from evosim.objectives import distance
+
+    return (
+        distance(
+            vehicle[["dest_lat", "dest_long"]].rename(
+                columns=dict(dest_lat="latitude", dest_long="longitude")
+            ),
+            charging_point,
+        )
+        < max_distance
+    )
+
+
 def charger_compatibility(vehicle, charging_point) -> bool:
     """True if vehicle and charging point are compatible."""
     return vehicle.charger == charging_point.charger
 
 
-def single_factory(settings: Text) -> Callable[[Any, Any], bool]:
+def single_factory(settings: Union[Text, Mapping]) -> Callable[[Any, Any], bool]:
     """Transforms a string into a single matcher."""
     from evosim import matchers
+    from functools import partial
 
-    return getattr(matchers, settings)
-
-
-def factory(settings: Union[Sequence[Text], Text]) -> Callable[[Any, Any], bool]:
-    """Transforms a sequence of strings into a sequence of matchers."""
     if isinstance(settings, Text):
+        return getattr(matchers, settings)
+    if "name" not in settings:
+        raise ValueError("If a mapping, settings should have a `name` key-value pair.")
+
+    parameters = dict(**settings)
+    function = getattr(matchers, parameters.pop("name"))
+    if len(parameters) == 0:
+        return function
+    return partial(function, **parameters)
+
+
+def factory(
+    settings: Union[Sequence[Union[Text, Mapping]], Union[Text, Mapping]]
+) -> Callable[[Any, Any], bool]:
+    """Transforms a sequence of strings into a sequence of matchers."""
+    if isinstance(settings, (Text, Mapping)):
         return single_factory(settings)
 
     functions = [single_factory(setting) for setting in settings]
