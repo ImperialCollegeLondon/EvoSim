@@ -48,6 +48,9 @@ Functions
 .. autofunction:: evosim.matchers.charging_point_availability
 
 .. autofunction:: evosim.matchers.socket_compatibility
+
+.. autofunction:: evosim.matchers.charger_compatibility
+
 Objectives
 ==========
 
