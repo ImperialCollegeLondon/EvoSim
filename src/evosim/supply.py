@@ -119,6 +119,10 @@ def random_charging_points(
         raise ValueError("The minimum occupancy must be at least 0.")
     if occupancy[1] < 1:
         raise ValueError("The maximum occupancy must be at least 1 (excluded).")
+    if isinstance(seed, np.random.Generator):
+        rng = seed
+    else:
+        rng = np.random.default_rng(seed=seed)
 
     lat = rng.uniform(high=np.max(latitude), low=np.min(latitude), size=n)
     lon = rng.uniform(high=np.max(longitude), low=np.min(longitude), size=n)
@@ -158,7 +162,8 @@ def random_charging_points(
     result["socket"] = result.socket.astype("category")
     result["charger"] = result.charger.astype("category")
 
-    return dd.from_pandas(result, **kwargs) if kwargs else result
+    is_dask = kwargs and any(v is not None for v in kwargs.values())
+    return dd.from_pandas(result, **kwargs) if is_dask else result
 
 
 # Ensures sphinx gets the interpolated docstring. Using an f-string does not work.
