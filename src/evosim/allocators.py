@@ -45,6 +45,10 @@ def random_allocator(
     """
     vacancy_by_number = charging_points.capacity - charging_points.occupancy
     if vacancy_by_number.sum() < len(electric_vehicles):
+        # TODO: random allocator cannot deal with len(eVS) > len(vacancies)
+        # labels: enhancement
+        # The algorithm currently expects that the list of vacancies should be larger
+        # that the list of electric vehicles.
         raise NotImplementedError("Cannot deal with overbooking yet")
     if isinstance(seed, np.random.Generator):
         rng = seed
