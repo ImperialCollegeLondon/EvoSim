@@ -9,7 +9,7 @@ import pandas as pd
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
 
-ChargingPoint = Union[dd.DataFrame, pd.DataFrame]
+ChargingPoints = Union[dd.DataFrame, pd.DataFrame]
 """ A data structure representing a charging point. """
 
 LONDON_LATITUDE = 51.25, 51.70
@@ -56,7 +56,7 @@ def random_charging_points(
     capacity: Tuple[int, int] = (1, 2),
     seed: Optional[Union[int, np.random.Generator]] = None,
     **kwargs,
-) -> ChargingPoint:
+) -> ChargingPoints:
     """Creates a randomly generated list of charging points.
 
     Args:
@@ -149,7 +149,7 @@ def random_charging_points(
             rng.integers(low=occupancy[0], high=occupancy[1], size=n) % capacities
         )
 
-    result: ChargingPoint = pd.DataFrame(
+    result: ChargingPoints = pd.DataFrame(
         dict(
             latitude=lat,
             longitude=lon,
