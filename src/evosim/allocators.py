@@ -1,6 +1,7 @@
 from typing import Any, Callable, Optional, Union
 
 import numpy as np
+import pandas as pd
 
 from evosim.electric_vehicles import ElectricVehicles
 from evosim.supply import ChargingPoints
@@ -57,21 +58,27 @@ def random_allocator(
     if maxiter is None or maxiter <= 0:
         maxiter = len(electric_vehicles)
 
-    vacancies = [i for i, n in enumerate(vacancy_by_number) for _ in range(n)]
+    vacancies = np.array([i for i, n in enumerate(vacancy_by_number) for _ in range(n)])
     rng.shuffle(vacancies)
 
     assignement = -np.ones(len(electric_vehicles), dtype=int)
-    nevs = len(electric_vehicles)
+
+    unassigned = electric_vehicles.copy(deep=False)
     for _ in range(maxiter):
         is_match = matcher(
-            electric_vehicles, charging_points.loc[vacancies[:nevs]].reset_index()
+            unassigned.reset_index(drop=True),
+            charging_points.loc[vacancies[: len(unassigned)]].reset_index(drop=True),
+        ).to_numpy()
+        assignement[assignement < 0] = np.where(
+            is_match, vacancies[: len(unassigned)], -1
         )
-        assignement = np.where(
-            np.logical_and(assignement < 0, is_match), vacancies[:nevs], assignement
-        )
-        if (assignement >= 0).all():
+        unassigned = unassigned[~is_match]
+        vacancies = vacancies[~is_match]
+        if len(unassigned) == 0:
             break
-        vacancies = vacancies[1:] + vacancies[:1]
+        vacancies = np.roll(vacancies, shift=1)
     result = electric_vehicles.copy(deep=False)
-    result["allocation"] = assignement
+    result["allocation"] = pd.Series(
+        np.where(assignement < 0, pd.NA, assignement), dtype="Int64"
+    )
     return result
