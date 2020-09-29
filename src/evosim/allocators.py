@@ -5,19 +5,19 @@ import numpy as np
 import pandas as pd
 
 from evosim.electric_vehicles import ElectricVehicles
-from evosim.supply import ChargingPoints
+from evosim.charging_posts import ChargingPosts
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
 
 def random_allocator(
     electric_vehicles: ElectricVehicles,
-    charging_points: ChargingPoints,
+    charging_posts: ChargingPosts,
     matcher: Callable[[Any, Any], Any],
     maxiter: Optional[int] = None,
     seed: Optional[Union[int, np.random.Generator]] = None,
-) -> ChargingPoints:
-    """Randomly assigns EVs to charging points.
+) -> ChargingPosts:
+    """Randomly assigns EVs to charging posts.
 
     The implementation tries to make use of numpy's `vectorization
     <https://en.wikipedia.org/wiki/Array_programming>`__ and avoid explicit loops.
@@ -35,13 +35,13 @@ def random_allocator(
     Args:
         electric_vehicles (Union[dask.dataframe.DataFrame, pandas.DataFrame]): dataframe
             of electric vehicles
-        charging_points (Union[dask.dataframe.DataFrame, pandas.DataFrame]): dataframe
-            of charging_points
+        charging_posts (Union[dask.dataframe.DataFrame, pandas.DataFrame]): dataframe
+            of charging_posts
         matcher (Union[dask.dataframe.DataFrame, pandas.DataFrame]): a callable that
-            takes an electric_vehicle and an charging_point and returns true when the
+            takes an electric_vehicle and an charging_post and returns true when the
             two are compatible.
         maxiter: maximum number of iterations before giving up. If negative, zero, or
-            None, then defaults to the number of charging point vacancies.
+            None, then defaults to the number of charging post vacancies.
         seed (Optional[Union[int, numpy.random.Generator]]): seed for the random number
             generators. Defaults to ``None``. See :py:func:`numpy.random.default_rng`.
             Alternatively, it can be a :py:class:`numpy.random.Generator` instance.
@@ -49,9 +49,9 @@ def random_allocator(
     Returns:
         Union[dask.dataframe.DataFrame, pandas.DataFrame]: A shallow copy of the
         ``electric_vehicles`` dataframe with an extra column, "allocation", giving the
-        index into the ``charging_point`` dataframe.
+        index into the ``charging_post`` dataframe.
     """
-    vacancy_by_number = charging_points.capacity - charging_points.occupancy
+    vacancy_by_number = charging_posts.capacity - charging_posts.occupancy
     if vacancy_by_number.sum() < len(electric_vehicles):
         # TODO: random allocator cannot deal with len(eVS) > len(vacancies)
         # labels: enhancement
@@ -69,7 +69,7 @@ def random_allocator(
         # TODO: tighten random allocator's default maxiter
         # labels: enhancement
         # The default maximum number of iteration is equal to the number of charging
-        # point vacancies. But that could be tightened within the loop itself, whenever
+        # post vacancies. But that could be tightened within the loop itself, whenever
         # vacancies are allocated. Not sure how though.
         maxiter = len(vacancies)
 
@@ -81,7 +81,7 @@ def random_allocator(
     for _ in range(maxiter):
         is_match = matcher(
             unassigned.reset_index(drop=True),
-            charging_points.loc[vacancies[: len(unassigned)]].reset_index(drop=True),
+            charging_posts.loc[vacancies[: len(unassigned)]].reset_index(drop=True),
         ).to_numpy()
         assignment[assignment < 0] = np.where(
             is_match, vacancies[: len(unassigned)], -1

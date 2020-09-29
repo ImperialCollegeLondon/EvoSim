@@ -1,8 +1,8 @@
 Objectives
 ==========
 
-Objectives are functions that return a floating point number given charging points and
-electric vehicles: ``objective(electric_vehicle, charging_point) -> float``. If one of
+Objectives are functions that return a floating point number given charging posts and
+electric vehicles: ``objective(electric_vehicle, charging_post) -> float``. If one of
 the other are a sequence (e.g. a dataframe), then the objetive is applied element-wise
 and return an array. Objectives are stand-alone functions in
 :py:mod:`evosim.objectives`. 
@@ -19,8 +19,8 @@ They can be used as follows:
 
 .. doctest:: objectives
 
-    >>> a = evosim.supply.random_charging_points(5, seed=1)
-    >>> b = evosim.supply.random_charging_points(5, seed=2)
+    >>> a = evosim.charging_posts.random_charging_posts(5, seed=1)
+    >>> b = evosim.charging_posts.random_charging_posts(5, seed=2)
     >>> evosim.objectives.distance(a, b)
     0    41.30
     1    88.79

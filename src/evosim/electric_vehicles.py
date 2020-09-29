@@ -7,12 +7,12 @@ import numpy as np
 import pandas as pd
 
 from evosim import constants
-from evosim.supply import Sockets, Chargers
+from evosim.charging_posts import Chargers, Sockets
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
 ElectricVehicles = Union[dd.DataFrame, pd.DataFrame]
-""" A data structure representing a charging point. """
+""" A data structure representing an electric vehicle. """
 
 
 class Models(Enum):
@@ -65,21 +65,21 @@ def random_electric_vehicles(
     seed: Optional[Union[int, np.random.Generator]] = None,
     **kwargs,
 ) -> ElectricVehicles:
-    """Creates a randomly generated list of charging points.
+    """Creates a randomly generated list of charging posts.
 
     Args:
-        n: The number of charging points
+        n: The number of charging posts
         latitude: The range over which to create random current locations and
             destinations. Defaults to the :py:data:`London latitudinal range
             <evosim.constants.LONDON_LATITUDE>`.
         longitude: The range over which to create random current locations and
             destinations. Defaults to the :py:data:`London longitudinal range
             <evosim.constants.LONDON_LONGITUDE>`.
-        socket_types: A list of :py:class:`~evosim.supply.Sockets` from which to
+        socket_types: A list of :py:class:`~evosim.charging_posts.Sockets` from which to
             choose randomly. Defaults to all available socket types.
         socket_distribution: weights when choosing the socket types.
-        charger_types: A list of :py:class:`~evosim.supply.Chargers` from which to
-            choose randomly. Defaults to all available charger types.
+        charger_types: A list of :py:class:`~evosim.charging_posts.Chargers` from which
+            to choose randomly. Defaults to all available charger types.
         charger_distribution: weights when choosing the charger types.
         model_types: A list of :py:class:`~evosim.electric_vehicles.Models` from which
             to choose randomly. Defaults to all known models.
@@ -94,13 +94,13 @@ def random_electric_vehicles(
         givent, then the funtion returns a :py:class:`pandas.DataFrame`. Otherwise, it
         returns a :py:class:`dask.dataframe.DataFrame`.
     """
-    from evosim.supply import random_charging_points
+    from evosim.charging_posts import random_charging_posts
 
     if isinstance(seed, np.random.Generator):
         rng = seed
     else:
         rng = np.random.default_rng(seed=seed)
-    result: ElectricVehicles = random_charging_points(
+    result: ElectricVehicles = random_charging_posts(
         n,
         latitude,
         longitude,

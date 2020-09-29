@@ -1,16 +1,16 @@
-.. _charging-points:
+.. _charging-posts:
 
-Charging Points
-===============
+Charging Posts
+==============
 
-Charging points are represented by a table with columns for the latitude, longitude,
+Charging posts are represented by a table with columns for the latitude, longitude,
 socket type, charger type, current occupancy and maximum capacity. Potentially it can
 accept other columns as well. The simplest way to generate one is to use
-:py:func:`evosim.supply.random_charging_points`:
+:py:func:`evosim.charging_posts.random_charging_posts`:
 
-.. doctest:: charging_points
+.. doctest:: charging_posts
 
-    >>> result = evosim.supply.random_charging_points(5, seed=1)
+    >>> result = evosim.charging_posts.random_charging_posts(5, seed=1)
     >>> result
        latitude  longitude          socket charger  capacity  occupancy
     0     51.48       0.24             CCS    SLOW         1          0
@@ -22,9 +22,9 @@ accept other columns as well. The simplest way to generate one is to use
 The random ``seed`` is optional. It is provided here so that the code and output above
 can be tested reproducibly. By default, the function returns a
 :py:class:`pandas.DataFrame`. The ``socket`` and ``charger`` columns take their values
-from :py:class:`evosim.supply.Sockets` and :py:class:`evosim.supply.Chargers`:
+from :py:class:`evosim.charging_posts.Sockets` and :py:class:`evosim.charging_posts.Chargers`:
 
-.. doctest:: charging_points
+.. doctest:: charging_posts
 
     >>> result.socket
     0               CCS
@@ -51,16 +51,16 @@ from :py:class:`evosim.supply.Sockets` and :py:class:`evosim.supply.Chargers`:
     <Chargers.SLOW: (0, 7)>
 
 Note the range ``(0, 7)``. It indicates the power range of the
-:py:attr:`~evosim.supply.Chargers.SLOW` charger.
+:py:attr:`~evosim.charging_posts.Chargers.SLOW` charger.
 
 The range of latitude and longitude, the number of socket and charger types and their
 distributions can all be changed in the input. For instance, the following limits the
 sockets to two type and heavily favors one rather than the other:
 
-.. doctest:: charging_points
+.. doctest:: charging_posts
 
-    >>> from evosim.supply import Sockets
-    >>> evosim.supply.random_charging_points(
+    >>> from evosim.charging_posts import Sockets
+    >>> evosim.charging_posts.random_charging_posts(
     ...     n=10,
     ...     socket_types=list(Sockets)[:2],
     ...     socket_distribution=[0.2, 0.8],
@@ -80,8 +80,8 @@ sockets to two type and heavily favors one rather than the other:
     9     51.26      -0.04  TYPE2    FAST         1          0
 
 
-.. topic:: Creating a charging point of type :py:class:`dask.dataframe.DataFrame`
+.. topic:: Creating a charging post of type :py:class:`dask.dataframe.DataFrame`
 
-    Optionally, :py:func:`~evosim.supply.random_charging_points` can generate a
-    :py:class:`dask.dataframe.DataFrame` simply by supplying it with the requisite
+    Optionally, :py:func:`~evosim.charging_posts.random_charging_posts` can generate a
+    :py:class:`dask.dataframe.DataFrame` simply by charging_postsing it with the requisite
     arguments from :py:func:`dask.dataframe.from_pandas`.

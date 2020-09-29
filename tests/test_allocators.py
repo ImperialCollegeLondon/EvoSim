@@ -2,31 +2,31 @@ from pytest import raises
 
 
 def test_random_allocator_too_many_vehicles(rng):
-    from evosim.supply import random_charging_points
+    from evosim.charging_posts import random_charging_posts
     from evosim.electric_vehicles import random_electric_vehicles
     from evosim.allocators import random_allocator
     from evosim import matchers
 
     evs = random_electric_vehicles(100, seed=rng)
-    cps = random_charging_points(4, seed=rng, capacity=3, occupancy=3)
+    cps = random_charging_posts(4, seed=rng, capacity=3, occupancy=3)
     matcher = matchers.factory("socket_compatibility")
     with raises(NotImplementedError):
         random_allocator(evs, cps, matcher, seed=rng)
 
 
 def test_random_allocator_exact_match(rng):
-    from evosim.supply import random_charging_points
+    from evosim.charging_posts import random_charging_posts
     from evosim.electric_vehicles import random_electric_vehicles
     from evosim.allocators import random_allocator
     from evosim import matchers
 
-    # a set of charging points with a fully occupied point
-    cps = random_charging_points(40, seed=rng, capacity=3, occupancy=3)
+    # a set of charging posts with at least one fully occupied post
+    cps = random_charging_posts(40, seed=rng, capacity=3, occupancy=3)
     cps.loc[29, "occupancy"] = cps.loc[29, "capacity"]
 
     matcher = matchers.factory("socket_compatibility")
 
-    # exactly the cars needed to fill the charging points according ot the chosen
+    # exactly the cars needed to fill the charging posts according ot the chosen
     # matcher
     indices = [
         i for i, row in cps.iterrows() for _ in range(row.occupancy, row.capacity)
@@ -53,12 +53,12 @@ def test_random_allocator_exact_match(rng):
 
 
 def test_random_allocator_unassigned_cars(rng):
-    from evosim.supply import random_charging_points
+    from evosim.charging_posts import random_charging_posts
     from evosim.electric_vehicles import random_electric_vehicles
     from evosim.allocators import random_allocator
     from evosim import matchers
 
-    cps = random_charging_points(40, seed=rng, capacity=3, occupancy=3)
+    cps = random_charging_posts(40, seed=rng, capacity=3, occupancy=3)
     cps.loc[29, "occupancy"] = cps.loc[29, "capacity"]
 
     matcher = matchers.factory("socket_compatibility")

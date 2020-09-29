@@ -1,8 +1,8 @@
 Matchers
 ========
 
-Matchers are functions that return true or false given charging points and electric
-vehicles: ``matcher(electric_vehicle, charging_point) -> bool``.  If one or the other
+Matchers are functions that return true or false given charging posts and electric
+vehicles: ``matcher(electric_vehicle, charging_post) -> bool``.  If one of the other
 are a sequence (e.g. a dataframe), then the matchers are applied element-wise and return
 an array. Matchers are stand-alone functions in :py:mod:`evosim.matchers`.  They can be
 accessed directly or created via :py:mod:`evosim.matchers.factory`:
@@ -13,7 +13,7 @@ accessed directly or created via :py:mod:`evosim.matchers.factory`:
     >>> matcher is evosim.matchers.socket_compatibility
     True
 
-    >>> cps = evosim.supply.random_charging_points(5, seed=1)
+    >>> cps = evosim.charging_posts.random_charging_posts(5, seed=1)
     >>> evs = evosim.electric_vehicles.random_electric_vehicles(10, seed=1)
     >>> matcher(evs, cps.loc[0])
     0    False
@@ -30,7 +30,7 @@ accessed directly or created via :py:mod:`evosim.matchers.factory`:
 
 Here we create a matcher which checks for socket compatibility. We check that it is
 indeed just the relevant function from :py:mod:`evosim.matchers`. The we match the first
-charging point with the fleet of electric vehicles.
+charging post with the fleet of electric vehicles.
 
 Using the factory becomes interesting when we want to apply a combination of matchers
 (using ``and``):

@@ -1,19 +1,19 @@
 Allocators
 ==========
 
-Allocators are algorithms that allocate electric vehicles to charging points. They will
+Allocators are algorithms that allocate electric vehicles to charging posts. They will
 generally take as input arguments a dataframe of electric vehicles and a dataframe of
-charging points. They may also accept a matcher function from :py:mod:`evosim.matchers`,
+charging posts. They may also accept a matcher function from :py:mod:`evosim.matchers`,
 as well as an objective function from :py:mod:`evosim.objectives`. For the purpose of
 exposition, we can generate a random problem as done below:
 
 .. doctest:: random_allocator
 
     >>> rng = np.random.default_rng(1)
-    >>> socket_types = list(evosim.supply.Sockets)[:2]
-    >>> charger_types = list(evosim.supply.Chargers)[:2]
+    >>> socket_types = list(evosim.charging_posts.Sockets)[:2]
+    >>> charger_types = list(evosim.charging_posts.Chargers)[:2]
 
-    >>> cps = evosim.supply.random_charging_points(
+    >>> cps = evosim.charging_posts.random_charging_posts(
     ...     10,
     ...     capacity = 3,
     ...     socket_types=socket_types,
@@ -67,7 +67,7 @@ Random Allocation
 -----------------
 
 The random allocation algorithm :py:func:`~evosim.allocators.random_allocator` does just
-that: it randomly allocates the vehicles to a matching charging point. We can call it as
+that: it randomly allocates the vehicles to a matching charging post. We can call it as
 follows:
 
 .. doctest:: random_allocator
@@ -113,8 +113,8 @@ follows:
 
 The allocator returns a (:py:meth:`shallow <pandas.DataFrame.copy>`) copy the electric
 vehicles table with an extra column, ``allocation``. The column are either indices into
-the charging points table, or ``pandas.NA`` indicating that the cars could not be
-allocated to a charging point. We can check that the allocations do match:
+the charging posts table, or ``pandas.NA`` indicating that the cars could not be
+allocated to a charging post. We can check that the allocations do match:
 
 .. doctest:: random_allocator
 
@@ -126,7 +126,7 @@ allocated to a charging point. We can check that the allocations do match:
     True
 
 This snippet pares down electric vehicles to those that have been allocated a charging
-point. Then it generates a table with such charging points. Finally, it matches the two
+post. Then it generates a table with such charging posts. Finally, it matches the two
 table. In order to do so, the indices of the tables are reset so that they match.
 Retaining the meaning of the indices during table manipulation is a :py:mod:`pandas`
 feature which has to be done away with in this particular setting.
@@ -153,9 +153,9 @@ We can also check that each that the allocation targeted available space only:
     >>> np.logical_or(occupancy <= cps.capacity, occupancy.isna()).all()
     True
 
-The first line above groups allocations by the charging point they are targeting and
+The first line above groups allocations by the charging post they are targeting and
 then counts the number of new assignement. The second line computes the occupancy
-including new allocations. However, not all charging points are targeted. These points
+including new allocations. However, not all charging posts are targeted. These posts
 are not found in ``allocation``, and hence their occupancy is ``np.NaN``. This treatment
 of missing data is a feature of :py:mod:`pandas`. The last line shows that allocations
 targeted available spaces.
@@ -168,5 +168,5 @@ targeted available spaces.
     for _, unallocated in spare_evs.iterrows():
         assert not matcher(unallocated, spare_cps).any()
 
-Here we first figure out the spare (unallocated) vehicles and spare charging points. We
-then check the spare vehicles do not fit with any of the spare charging points.
+Here we first figure out the spare (unallocated) vehicles and spare charging posts. We
+then check the spare vehicles do not fit with any of the spare charging posts.

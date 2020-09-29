@@ -1,10 +1,10 @@
 Electric Vehicles
 =================
 
-Electric vehicles are defined in a similar fashion to :ref:`charging-points`.
-Indeed, electric vehicles contain the same attributes, e.g.  current latitude and
-longitude, socket and charger type, as well as extra attributes, such as the car model.
-The simplest way to generate a list of EVs is to use
+Electric vehicles are defined in a similar fashion to :ref:`charging-posts`. Indeed,
+electric vehicles contain the same attributes, e.g. current latitude and longitude,
+socket and charger type, as well as extra attributes, such as the car model. The
+simplest way to generate a list of EVs is to use
 :py:func:`evosim.electric_vehicles.random_electric_vehicles`:
 
 .. doctest:: EVs
@@ -40,6 +40,6 @@ from :py:class:`evosim.electric_vehicles.Models`:
     Name: model, dtype: category
     Categories (5, object): [BMW_225XE, TESLA_MODEL_X, KIA_NIRO_PHEV, NISSAN_LEAF, VOLVO_XC90_TWIN_ENGINE]
 
-Much as for generating random charging points,
+Much as for generating random charging posts,
 :py:func:`evosim.electric_vehicles.random_electric_vehicles` takes additional parameters
 to tailor the geographical location, model distribution, etc.

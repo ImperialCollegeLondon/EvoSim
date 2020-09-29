@@ -11,12 +11,12 @@ from evosim import constants
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
 
-ChargingPoints = Union[dd.DataFrame, pd.DataFrame]
-""" A data structure representing a charging point. """
+ChargingPosts = Union[dd.DataFrame, pd.DataFrame]
+""" A data structure representing a charging post. """
 
 
 class Sockets(Enum):
-    """Charging point socket types."""
+    """Charging post socket types."""
 
     TYPE1 = auto()
     TYPE2 = auto()
@@ -30,7 +30,7 @@ class Sockets(Enum):
 
 
 class Chargers(Enum):
-    """Charging point charging types.
+    """Charging post charging types.
 
     The values are the power range in kW.
     """
@@ -43,7 +43,7 @@ class Chargers(Enum):
         return self.name
 
 
-def random_charging_points(
+def random_charging_posts(
     n: int,
     latitude: Tuple[float, float] = constants.LONDON_LATITUDE,
     longitude: Tuple[float, float] = constants.LONDON_LONGITUDE,
@@ -55,27 +55,27 @@ def random_charging_points(
     occupancy: Optional[Union[Tuple[int, int], int]] = 0,
     seed: Optional[Union[int, np.random.Generator]] = None,
     **kwargs,
-) -> ChargingPoints:
-    """Creates a randomly generated list of charging points.
+) -> ChargingPosts:
+    """Creates a randomly generated list of charging posts.
 
     Args:
-        n: The number of charging points
+        n: The number of charging posts
         latitude: The range over which to create random current locations and
             destinations. Defaults to the :py:data:`London latitudinal range
             <evosim.constants.LONDON_LATITUDE>`.
         longitude: The range over which to create random current locations and
             destinations. Defaults to the :py:data:`London longitudinal range
             <evosim.constants.LONDON_LONGITUDE>`.
-        socket_types: A list of :py:class:`~evosim.supply.Sockets` from which to
+        socket_types: A list of :py:class:`~evosim.charging_posts.Sockets` from which to
             choose randomly. Defaults to all available socket types.
         socket_distribution: weights when choosing the socket types.
-        charger_types: A list of :py:class:`~evosim.supply.Chargers` from which to
-            choose randomly. Defaults to all available charger types.
+        charger_types: A list of :py:class:`~evosim.charging_posts.Chargers` from which
+            to choose randomly. Defaults to all available charger types.
         charger_distribution: weights when choosing the charger types.
         capacity: A range from which to choose the maximum capacity for each charging
-            point. The range can be given as ``(start, end)``, or as a single number, in
+            post. The range can be given as ``(start, end)``, or as a single number, in
             which case it defaults to ``1, capacity + 1``. Defaults to a capacity of 1
-            for each charging point.
+            for each charging post.
 
             .. note::
 
@@ -83,7 +83,7 @@ def random_charging_points(
                 included and ``max`` excluded, as per python conventions.
 
         occupancy: A range from which to choose the current occupancy for each charging
-            point. The range can be given as ``(start, end)``, or as a single number, in
+            post. The range can be given as ``(start, end)``, or as a single number, in
             which case it defaults to ``0, occupancy + 1``. Defaults to an occupancy of
             0.  The occupancy is always smaller than the capacity.
 
@@ -142,7 +142,7 @@ def random_charging_points(
     else:
         # TODO: random occupancies are not uniform
         # The mod operation will skew the distribution towards lower values. For
-        # instance, if the capacity of a particular charging point is 4, but the maximum
+        # instance, if the capacity of a particular charging post is 4, but the maximum
         # cpacity as a whole is 5, the occupancies are chosen as one of
         # `[0 % 4, 1 % 4, 2 % 4, 3 % 4, 5 % 4]`, e.g. `[0, 1, 2, 3, 0]`, and `0` is
         # twice as likely as any other value.
@@ -152,7 +152,7 @@ def random_charging_points(
             rng.integers(low=occupancy[0], high=occupancy[1], size=n) % capacities
         )
 
-    result: ChargingPoints = pd.DataFrame(
+    result: ChargingPosts = pd.DataFrame(
         dict(
             latitude=lat,
             longitude=lon,

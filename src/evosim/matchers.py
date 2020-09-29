@@ -4,22 +4,22 @@ from typing import Any, Callable, Mapping, Sequence, Text, Union
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
 
-def charging_point_availability(_, charging_point) -> bool:
-    """True if the charging point has some spare capacity.
+def charging_post_availability(_, charging_post) -> bool:
+    """True if the charging post has some spare capacity.
 
     This matcher checks whether there is any occupancy left. For a single charging
-    point, it is either ``True`` or ``False``.  It does not actually depend on the
+    post, it is either ``True`` or ``False``.  It does not actually depend on the
     vehicles. Hence, the result has not really changed even if both functions are
     applied.
 
     Example:
 
         >>> import evosim
-        >>> cps = evosim.supply.random_charging_points(5, seed=1)
+        >>> cps = evosim.charging_posts.random_charging_posts(5, seed=1)
         >>> evs = evosim.electric_vehicles.random_electric_vehicles(10, seed=1)
-        >>> evosim.matchers.charging_point_availability(None, cps.loc[0])
+        >>> evosim.matchers.charging_post_availability(None, cps.loc[0])
         True
-        >>> evosim.matchers.charging_point_availability(None, cps)
+        >>> evosim.matchers.charging_post_availability(None, cps)
         0    True
         1    True
         2    True
@@ -30,23 +30,23 @@ def charging_point_availability(_, charging_point) -> bool:
     This matcher must still conform to the same interface as all other matchers, so that
     it can be used with others via the factory.
     """
-    return charging_point.occupancy < charging_point.capacity
+    return charging_post.occupancy < charging_post.capacity
 
 
-def socket_compatibility(vehicle, charging_point) -> bool:
-    """True if vehicle and charging point are compatible."""
-    return vehicle.socket == charging_point.socket
+def socket_compatibility(vehicle, charging_post) -> bool:
+    """True if vehicle and charging post are compatible."""
+    return vehicle.socket == charging_post.socket
 
 
-def distance(vehicle, charging_point, max_distance: float = 1) -> bool:
-    """Maximum distance between current vehicle location and charging point."""
+def distance(vehicle, charging_post, max_distance: float = 1) -> bool:
+    """Maximum distance between current vehicle location and charging post."""
     from evosim.objectives import distance
 
-    return distance(vehicle, charging_point) < max_distance
+    return distance(vehicle, charging_post) < max_distance
 
 
-def distance_from_destination(vehicle, charging_point, max_distance: float = 1) -> bool:
-    """Maximum distance between vehicle destination and charging point."""
+def distance_from_destination(vehicle, charging_post, max_distance: float = 1) -> bool:
+    """Maximum distance between vehicle destination and charging post."""
     from evosim.objectives import distance
 
     return (
@@ -54,15 +54,15 @@ def distance_from_destination(vehicle, charging_point, max_distance: float = 1) 
             vehicle[["dest_lat", "dest_long"]].rename(
                 columns=dict(dest_lat="latitude", dest_long="longitude")
             ),
-            charging_point,
+            charging_post,
         )
         < max_distance
     )
 
 
-def charger_compatibility(vehicle, charging_point) -> bool:
-    """True if vehicle and charging point are compatible."""
-    return vehicle.charger == charging_point.charger
+def charger_compatibility(vehicle, charging_post) -> bool:
+    """True if vehicle and charging post are compatible."""
+    return vehicle.charger == charging_post.charger
 
 
 def single_factory(settings: Union[Text, Mapping]) -> Callable[[Any, Any], bool]:
@@ -91,10 +91,10 @@ def factory(
 
     functions = [single_factory(setting) for setting in settings]
 
-    def match(vehicle, charging_point) -> bool:
-        result = functions[0](vehicle, charging_point)
+    def match(vehicle, charging_post) -> bool:
+        result = functions[0](vehicle, charging_post)
         for function in functions[1:]:
-            result &= function(vehicle, charging_point)
+            result &= function(vehicle, charging_post)
         return result
 
     return match
