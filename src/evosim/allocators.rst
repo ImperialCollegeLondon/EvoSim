@@ -164,8 +164,8 @@ targeted available spaces.
 .. testcode:: random_allocator
 
     spare_evs = result.loc[result.allocation.isna()]
-    spare_cps = cps.loc[occupancy.fillna(0).astype(int) < cps.capacity]
-    for i, unallocated in spare_evs.iterrows():
+    spare_cps = cps.loc[occupancy.fillna(0) < cps.capacity]
+    for _, unallocated in spare_evs.iterrows():
         assert not matcher(unallocated, spare_cps).any()
 
 Here we first figure out the spare (unallocated) vehicles and spare charging points. We

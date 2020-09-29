@@ -20,10 +20,13 @@ def random_allocator(
     """Randomly assigns EVs to charging points.
 
     Args:
-        electric_vehicles: dataframe of electric vehicles
-        charging_points: dataframe of charging_points
-        matcher: a callable that takes an electric_vehicle and an charging_point and
-            returns true when the two are compatible.
+        electric_vehicles (Union[dask.dataframe.DataFrame, pandas.DataFrame]): dataframe
+            of electric vehicles
+        charging_points (Union[dask.dataframe.DataFrame, pandas.DataFrame]): dataframe
+            of charging_points
+        matcher (Union[dask.dataframe.DataFrame, pandas.DataFrame]): a callable that
+            takes an electric_vehicle and an charging_point and returns true when the
+            two are compatible.
         maxiter: maximum number of iterations before giving up. If negative, zero, or
             None, then defaults to the number of electric vehicles.
         seed (Optional[Union[int, numpy.random.Generator]]): seed for the random number
@@ -34,18 +37,6 @@ def random_allocator(
         Union[dask.dataframe.DataFrame, pandas.DataFrame]: A shallow copy of the
         ``electric_vehicles`` dataframe with an extra column, "allocation", giving the
         index into the ``charging_point`` dataframe.
-
-    Example:
-
-        >>> electric_vehicles = evosim.electric_vehicles.random_electric_vehicles(
-        ...     20, seed=1
-        ... )
-        >>> charging_points = evosim.supply.random_charging_points(
-        ...     15, seed=2, capacity=4, occupancy = 5
-        ... )
-        >>> matcher = evosim.matchers.socket_compatibility
-        >>> maxiter = 0
-        >>> seed = 10
     """
     vacancy_by_number = charging_points.capacity - charging_points.occupancy
     if vacancy_by_number.sum() < len(electric_vehicles):
