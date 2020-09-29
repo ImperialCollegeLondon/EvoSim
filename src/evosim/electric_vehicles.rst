@@ -40,7 +40,7 @@ The simplest way to generate a list of EVs is to use
     3             NISSAN_LEAF
     4  VOLVO_XC90_TWIN_ENGINE
 
-Much as the chargers and sockets, the models a categorical array taking their values
+Much as the chargers and sockets, the models are a categorical array taking their values
 from :py:class:`evosim.electric_vehicles.Models`:
 
 .. doctest:: EVs
