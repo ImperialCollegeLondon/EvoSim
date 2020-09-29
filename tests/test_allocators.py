@@ -47,8 +47,12 @@ def test_random_allocator_exact_match(rng):
     assert (new_assignements.index == available.index).all()
     assert (available.occupancy + new_assignements == available.capacity).all()
 
+    # all allocation do match
+    alloc_cps = cps.loc[result.allocation]
+    assert matcher(evs, alloc_cps.reset_index(drop=True)).all()
 
-def test_random_allocator_unassinged_cars(rng):
+
+def test_random_allocator_unassigned_cars(rng):
     from evosim.supply import random_charging_points
     from evosim.electric_vehicles import random_electric_vehicles
     from evosim.allocators import random_allocator
@@ -84,4 +88,11 @@ def test_random_allocator_unassinged_cars(rng):
     assert set(occupancy.index[occupancy.isna()]).isdisjoint(new_assignements.index)
     assert (
         occupancy.loc[~occupancy.isna()] <= available.capacity.loc[~occupancy.isna()]
+    ).all()
+
+    # all allocation do match
+    alloc_evs = result.loc[~result.allocation.isna()]
+    alloc_cps = cps.loc[alloc_evs.allocation]
+    assert matcher(
+        alloc_evs.reset_index(drop=True), alloc_cps.reset_index(drop=True)
     ).all()

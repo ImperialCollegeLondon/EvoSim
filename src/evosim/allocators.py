@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any, Callable, Optional, Union
 
 import numpy as np
@@ -5,6 +6,8 @@ import pandas as pd
 
 from evosim.electric_vehicles import ElectricVehicles
 from evosim.supply import ChargingPoints
+
+__doc__ = Path(__file__).with_suffix(".rst").read_text()
 
 
 def random_allocator(
@@ -73,7 +76,11 @@ def random_allocator(
             is_match, vacancies[: len(unassigned)], -1
         )
         unassigned = unassigned[~is_match]
-        vacancies = vacancies[~is_match]
+        vacancies = vacancies[
+            np.concatenate(
+                (~is_match, np.ones(len(vacancies) - len(is_match), dtype=bool))
+            )
+        ]
         if len(unassigned) == 0:
             break
         vacancies = np.roll(vacancies, shift=1)
