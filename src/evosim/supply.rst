@@ -1,3 +1,5 @@
+.. _charging-points:
+
 Charging Points
 ===============
 
@@ -58,6 +60,31 @@ from :py:class:`evosim.supply.Sockets` and :py:class:`evosim.supply.Chargers`:
 
 Note the range ``(0, 7)``. It indicates the power range of the
 :py:attr:`~evosim.supply.Chargers.SLOW` charger.
+
+The range of latitude and longitude, the number of socket and charger types and their
+distributions can all be changed in the input. For instance, the following limits the
+sockets to two type and heavily favors one rather than the other:
+
+.. doctest:: charging_points
+
+    >>> from evosim.supply import Sockets
+    >>> evosim.supply.random_charging_points(
+    ...     n=10,
+    ...     socket_types=list(Sockets)[:2],
+    ...     socket_distribution=[0.2, 0.8],
+    ...     seed=1
+    ... )
+       latitude  longitude socket charger
+    0     51.48       0.82  TYPE2    FAST
+    1     51.68       0.44  TYPE2    FAST
+    2     51.31       0.08  TYPE2    SLOW
+    3     51.68       0.88  TYPE2    SLOW
+    4     51.39       0.03  TYPE2    FAST
+    5     51.44       0.29  TYPE2    FAST
+    6     51.62      -0.27  TYPE2    FAST
+    7     51.43       0.21  TYPE2   RAPID
+    8     51.50      -0.14  TYPE1    FAST
+    9     51.26      -0.04  TYPE2    FAST
 
 
 .. topic:: Creating a charging point of type :py:class:`dask.dataframe.DataFrame`
