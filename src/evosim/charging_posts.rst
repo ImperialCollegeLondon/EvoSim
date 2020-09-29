@@ -36,7 +36,7 @@ from :py:class:`evosim.charging_posts.Sockets` and :py:class:`evosim.charging_po
     Categories (3, object): [CCS, CHADEMO, DC_COMBO_TYPE2]
 
     >>> result.socket[0]
-    <Sockets.CCS: 6>
+    <Sockets.CCS: 32>
 
     >>> result.charger
     0     SLOW
@@ -48,10 +48,7 @@ from :py:class:`evosim.charging_posts.Sockets` and :py:class:`evosim.charging_po
     Categories (3, object): [SLOW, FAST, RAPID]
 
     >>> result.charger[0]
-    <Chargers.SLOW: (0, 7)>
-
-Note the range ``(0, 7)``. It indicates the power range of the
-:py:attr:`~evosim.charging_posts.Chargers.SLOW` charger.
+    <Chargers.SLOW: 1>
 
 The range of latitude and longitude, the number of socket and charger types and their
 distributions can all be changed in the input. For instance, the following limits the
@@ -79,6 +76,20 @@ sockets to two type and heavily favors one rather than the other:
     8     51.50      -0.14  TYPE1    FAST         2          0
     9     51.26      -0.04  TYPE2    FAST         1          0
 
+Both chargers and sockets can accept multiple types simultaneously, and they can be
+queried accordingly:
+
+.. doctest:: charging_posts
+    
+    >>> Sockets.CCS | Sockets.TYPE1
+    <Sockets.CCS|TYPE1: 33>
+    >>> (Sockets.CCS | Sockets.TYPE1) & Sockets.TYPE1 == Sockets.TYPE1
+    True
+    >>> (Sockets.CCS | Sockets.TYPE1) & Sockets.TYPE2 == Sockets.TYPE2
+    False
+    >>> # Alternatively, we can compare to the "null" socket matching nothing
+    >>> (Sockets.CCS | Sockets.TYPE1) & Sockets.TYPE2 == Sockets(0)
+    True
 
 .. topic:: Creating a charging post of type :py:class:`dask.dataframe.DataFrame`
 

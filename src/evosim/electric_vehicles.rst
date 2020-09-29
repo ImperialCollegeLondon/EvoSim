@@ -42,4 +42,25 @@ from :py:class:`evosim.electric_vehicles.Models`:
 
 Much as for generating random charging posts,
 :py:func:`evosim.electric_vehicles.random_electric_vehicles` takes additional parameters
-to tailor the geographical location, model distribution, etc.
+to tailor the geographical location, model distribution, etc. For instance, we can
+create electric vehicles accepting multiple types of sockets:
+
+.. doctest:: EVs
+    :options: +NORMALIZE_WHITESPACE
+
+    >>> evosim.electric_vehicles.random_electric_vehicles(
+    ...     5, socket_multiplicity=3, seed=1
+    ... )
+       latitude  longitude                  socket charger  dest_lat  dest_long  \
+    0     51.48       0.24                     CCS    SLOW     51.69      -0.22
+    1     51.68       0.95  CHADEMO|DC_COMBO_TYPE2   RAPID     51.68       1.20
+    2     51.31       0.22        THREE_PIN_SQUARE    SLOW     51.58       0.40
+    3     51.68       0.46             TYPE2|TYPE1    SLOW     51.49      -0.30
+    4     51.39      -0.45                     CCS    FAST     51.37       0.59
+    <BLANKLINE>
+                           model
+    0  MITSUBISHI_OUTLANDER_PHEV
+    1  MINI_COUNTRYMAN_COOPER_SE
+    2        TOYOTA_PRIUS_PLUGIN
+    3       HYUNDAI_IONIQ_PLUGIN
+    4                RENAULT_ZOE

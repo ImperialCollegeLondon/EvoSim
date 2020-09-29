@@ -1,4 +1,4 @@
-from enum import Enum, auto
+from enum import Flag, auto
 from pathlib import Path
 from typing import Optional, Sequence, Tuple, Union
 
@@ -15,7 +15,7 @@ ChargingPosts = Union[dd.DataFrame, pd.DataFrame]
 """ A data structure representing a charging post. """
 
 
-class Sockets(Enum):
+class Sockets(Flag):
     """Charging post socket types."""
 
     TYPE1 = auto()
@@ -26,21 +26,18 @@ class Sockets(Enum):
     CCS = auto()
 
     def __str__(self):
-        return self.name
+        return super().__str__()[8:]
 
 
-class Chargers(Enum):
-    """Charging post charging types.
+class Chargers(Flag):
+    """Charging post charging types."""
 
-    The values are the power range in kW.
-    """
-
-    SLOW: Tuple[float, float] = (0, 7)
-    FAST: Tuple[float, float] = (7, 22)
-    RAPID: Tuple[float, float] = (43, 150)
+    SLOW = auto()
+    FAST = auto()
+    RAPID = auto()
 
     def __str__(self):
-        return self.name
+        return super().__str__()[9:]
 
 
 def random_charging_posts(
@@ -49,8 +46,10 @@ def random_charging_posts(
     longitude: Tuple[float, float] = constants.LONDON_LONGITUDE,
     socket_types: Sequence[Sockets] = tuple(Sockets),
     socket_distribution: Optional[Sequence[float]] = None,
+    socket_multiplicity: int = 1,
     charger_types: Sequence[Chargers] = tuple(Chargers),
     charger_distribution: Optional[Sequence[float]] = None,
+    charger_multiplicity: int = 1,
     capacity: Optional[Union[Tuple[int, int], int]] = 1,
     occupancy: Optional[Union[Tuple[int, int], int]] = 0,
     seed: Optional[Union[int, np.random.Generator]] = None,
@@ -69,9 +68,13 @@ def random_charging_posts(
         socket_types: A list of :py:class:`~evosim.charging_posts.Sockets` from which to
             choose randomly. Defaults to all available socket types.
         socket_distribution: weights when choosing the socket types.
+        socket_multiplicity: number of different types of socket each post can
+            accomodate.
         charger_types: A list of :py:class:`~evosim.charging_posts.Chargers` from which
             to choose randomly. Defaults to all available charger types.
         charger_distribution: weights when choosing the charger types.
+        charger_multiplicity: number of different types of chargers each post can
+            accomodate.
         capacity: A range from which to choose the maximum capacity for each charging
             post. The range can be given as ``(start, end)``, or as a single number, in
             which case it defaults to ``1, capacity + 1``. Defaults to a capacity of 1
@@ -129,10 +132,26 @@ def random_charging_posts(
 
     lat = rng.uniform(high=np.max(latitude), low=np.min(latitude), size=n)
     lon = rng.uniform(high=np.max(longitude), low=np.min(longitude), size=n)
-    socket = rng.choice(list(socket_types), size=n, replace=True, p=socket_distribution)
-    charger = rng.choice(
-        list(charger_types), size=n, replace=True, p=charger_distribution
+    socket = rng.choice(
+        list(socket_types),
+        size=(n, socket_multiplicity),
+        replace=True,
+        p=socket_distribution,
     )
+    if socket_multiplicity == 1:
+        socket = socket[:, 0]
+    else:
+        socket = [np.bitwise_or.reduce(u[: rng.integers(1, len(u))]) for u in socket]
+    charger = rng.choice(
+        list(charger_types),
+        size=(n, charger_multiplicity),
+        replace=True,
+        p=charger_distribution,
+    )
+    if charger_multiplicity == 1:
+        charger = charger[:, 0]
+    else:
+        charger = [np.bitwise_or.reduce(u[: rng.integers(1, len(u))]) for u in charger]
     if capacity[0] == capacity[1] + 1 or capacity[0] == capacity[1]:
         capacities = np.ones(n, dtype=int)
     else:

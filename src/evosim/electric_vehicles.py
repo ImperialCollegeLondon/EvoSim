@@ -59,8 +59,10 @@ def random_electric_vehicles(
     longitude: Tuple[float, float] = constants.LONDON_LONGITUDE,
     socket_types: Sequence[Sockets] = tuple(Sockets),
     socket_distribution: Optional[Sequence[float]] = None,
+    socket_multiplicity: int = 1,
     charger_types: Sequence[Chargers] = tuple(Chargers),
     charger_distribution: Optional[Sequence[float]] = None,
+    charger_multiplicity: int = 1,
     model_types: Sequence[Models] = tuple(Models),
     seed: Optional[Union[int, np.random.Generator]] = None,
     **kwargs,
@@ -106,8 +108,10 @@ def random_electric_vehicles(
         longitude,
         socket_types,
         socket_distribution,
+        socket_multiplicity,
         charger_types,
         charger_distribution,
+        charger_multiplicity,
         seed=rng,
     ).drop(columns=["occupancy", "capacity"])
 
