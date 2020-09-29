@@ -1,8 +1,16 @@
+/*
+ * Project: Evo-Sim
+ * Developed by: Irina Danes
+ */
+
 package chargingStation;
 
-import java.io.PrintWriter;
+import utils.ChargingType;
+import utils.Geolocation;
+import utils.SocketType;
+import chargingInfrastructure.Status;
 
-import vehicle.ChargingType;
+import java.io.PrintWriter;
 
 import static evoSim.Main.fileWriter;
 
@@ -83,4 +91,3 @@ public class ChargingPoint {
                 this.getStatus());
     }
 }
-

@@ -1,56 +1,59 @@
+/*
+ * Project: Evo-Sim
+ * Developed by: Irina Danes
+ */
+
 package evoSim;
+
+import chargingInfrastructure.Status;
+import chargingStation.ChargingPoint;
+import electricVehicle.ElectricVehicle;
+import utils.*;
 
 import java.io.*;
 import java.text.ParseException;
 import java.util.*;
 
-import chargingStation.ChargingPoint;
-import chargingStation.Geolocation;
-import chargingStation.Status;
-import scheduler.OptimalSolution;
-import vehicle.ElectricVehicle;
-
-import static scheduler.Dynamic.*;
-import static scheduler.Static.*;
-import static scheduler.OptimalSolution.*;
 import static chargingDemand.DemandGenerator.*;
+import static evoSim.Dynamic.*;
+import static evoSim.Static.*;
 import static chargingInfrastructure.SupplyGenerator.*;
-import static chargingStation.Statistics.*;
+import static utils.Statistics.*;
 
 public class Main {
 
     static final double willingToPayPercentage = 100.0;
 
-    public static final List<Double> randomDistances = new ArrayList<>();
-    public static final List<Double> greedyDistances = new ArrayList<>();
-    public static final List<Double> heuristicDistances3 = new ArrayList<>();
-    public static final List<Double> dynamicDistances = new ArrayList<>();
+    static final List<Double> randomDistances = new ArrayList<>();
+    static final List<Double> greedyDistances = new ArrayList<>();
+    static final List<Double> topkDistances = new ArrayList<>();
+    static final List<Double> dynamicDistances = new ArrayList<>();
 
-    public static boolean distanceConstraint = false;
-    public static boolean timeConstraint = false;
+    static boolean distanceConstraint = false;
+    static boolean timeConstraint = false;
 
-    // TODO: remove map (used to store initial status of CPs to evaluate all 3 approaches
-    //  because after allocating the EV, its status changes to UNAVAILABLE.
-
-    public static final Map<ChargingPoint, Status> map = new HashMap();
+    static final HashMap<ChargingPoint, Status> map = new HashMap<>();
     public static FileWriter fileWriter;
     public static PrintWriter printWriter;
 
     public static void main(String[] args) throws IOException, InterruptedException, ParseException {
-    	   	
-    	String directory = args[0];
-    	
-    	String nbEvsParameter = args[1];
-    	String[] nbEvsList = nbEvsParameter.split(";");
-        int[] experiments = new int[nbEvsList.length];
-        for (int i = 0; i < nbEvsList.length; i++) {
-            experiments[i] = Integer.parseInt(nbEvsList[i]);
+
+        int numberOfExperiments = Integer.parseInt(args[0]);
+        int[] experiments = new int[numberOfExperiments];
+        for (int i = 1; i <= numberOfExperiments; i++) {
+            experiments[i - 1] = Integer.parseInt(args[i]);
         }
-        String date = args[2];
-        String time = args[3];
-        
-        String constraint = args[4];
-        switch (constraint) {
+        String date = args[numberOfExperiments + 1];
+        String time = args[numberOfExperiments + 2];
+
+        String time_distance = "none";
+        if (args.length > numberOfExperiments + 3) {
+            time_distance = args[numberOfExperiments + 3];
+            if (args.length > numberOfExperiments + 4) {
+                time_distance = "both";
+            }
+
+            switch (time_distance) {
                 case "distance":
                     distanceConstraint = true;
                     break;
@@ -61,35 +64,31 @@ public class Main {
                     distanceConstraint = true;
                     timeConstraint = true;
                     break;
+            }
         }
-         
+
         for (int number : experiments) {
-        	
-        	System.out.println(number);
-        	
             try {
-            	fileWriter = new FileWriter("results_" + number + "_" + 
-            						date + "_" + 
-            						time.replace(":", "") + "_" + 
-            						constraint + ".txt");
+                fileWriter = new FileWriter("results_" + number + "_" + date + "_" + time + "_" + time_distance + ".txt");
             } catch (IOException e) {
-            	e.printStackTrace();
+                e.printStackTrace();
             }
             printWriter = new PrintWriter(fileWriter);
 
             randomDistances.clear();
             greedyDistances.clear();
-            heuristicDistances3.clear();
+            topkDistances.clear();
             dynamicDistances.clear();
-//            OptimalSolution.binPackingDistances.clear();
+            OptimalSolution.binPackingDistances.clear();
 
             List<ChargingPoint> cps = new ArrayList<>();
             List<ElectricVehicle> evs = new ArrayList<>();
 
-            Long random_execution_time;
-            Long greedy_execution_time;
-            Long topk_execution_time;
-            Long dynamic_execution_time;
+            long random_execution_time;
+            long greedy_execution_time;
+            long topk_execution_time;
+            long dynamic_execution_time;
+            long optimal_execution_times;
 
 //            ElectricVehicle.printEVheadings();
 //            readEVsFromFile(evs,"data/correct" + number + ".txt");
@@ -101,26 +100,12 @@ public class Main {
 //            }
 
 //            ChargingPoint.printCPheadings();
-            generateCPfromFile(directory, cps, date + " " + time);
+            generateCPfromFile(cps, date + " " + time);
+
 
             System.out.println(evs.size() + " EVs, " + cps.size() + " CPs.");
-
             printWriter.println(evs.size() + " EVs, " + cps.size() + " CPs.");
             printWriter.println();
-
-//            generateCPs(cps, 8000);
-
-//            HashMap<String, Integer> cpareasmap = getCpAreas(cps);
-//            cpareasmap.forEach((k,v) -> {
-//                try {
-//                generateCPsInArea(cps, k, v);
-//            } catch (IOException | InterruptedException ex) {
-//                ex.printStackTrace();
-//            }
-//        });
-//
-////            generateCPsInArea(cps, "SW", 100);
-//            getCpAreas(cps);
 
 
             for (ChargingPoint cp : cps) {
@@ -151,25 +136,25 @@ public class Main {
 
             startTime = System.currentTimeMillis();
             System.out.println("Running top-k algorithm - static version");
-            heuristicMap(evs, cps);
+            topKMap(evs, cps);
             endTime = System.currentTimeMillis();
             topk_execution_time = endTime - startTime;
-
 
             for (ChargingPoint cp : cps) {
                 map.put(cp, cp.getStatus());
             }
+
+//            startTime = System.currentTimeMillis();
+//            System.out.println("Running optimal algorithm");
+//            optimisation(cps, evs);
+//            endTime = System.currentTimeMillis();
+//            optimal_execution_times = endTime - startTime;
 
             startTime = System.currentTimeMillis();
             System.out.println("Running scheduling algorithm - dynamic version");
             schedule(evs, cps, 0);
             endTime = System.currentTimeMillis();
             dynamic_execution_time = endTime - startTime;
-
-//            startTime = System.currentTimeMillis();
-//            optimisation(cps, evs);
-//            endTime = System.currentTimeMillis();
-//            optimal_execution_times.add(endTime - startTime);
 
 
             printWriter.println("Random: (in kms)");
@@ -185,8 +170,8 @@ public class Main {
             printWriter.println();
 
             printWriter.println("Top-k: (in kms)");
-            printWriter.println("Allocated: " + Math.round((double) heuristicDistances3.size() / number * 100 * 100.0) / 100.0 + "% (" + heuristicDistances3.size() + "/" + number + ")");
-            computeStatistics(heuristicDistances3, printWriter);
+            printWriter.println("Allocated: " + Math.round((double) topkDistances.size() / number * 100 * 100.0) / 100.0 + "% (" + topkDistances.size() + "/" + number + ")");
+            computeStatistics(topkDistances, printWriter);
 //            printUnallocatedEVs(Static.unallocatedEVs);
             printWriter.println();
             printWriter.println();
@@ -195,7 +180,7 @@ public class Main {
             printWriter.println("Allocated: " + Math.round((double) dynamicDistances.size() / number * 100 * 100.0) / 100.0 + "% (" + dynamicDistances.size() + "/" + number + ")");
             computeStatistics(dynamicDistances, printWriter);
             printWriter.println("Time: (in minutes)");
-            computeStatistics(max, printWriter);
+            computeStatistics(times, printWriter);
 //            printUnallocatedEVs(Dynamic.unallocatedEVs);
             printWriter.println();
             printWriter.println();
@@ -203,7 +188,7 @@ public class Main {
 
 //            printWriter.println("Optimal: ");
 //            printWriter.println("Allocated: " + Math.round((double) OptimalSolution.binPackingDistances.size() / number * 100 * 100.0) / 100.0 + "% (" + OptimalSolution.binPackingDistances.size() + "/" + number + ")");
-//            computeStatistics(OptimalSolution.binPackingDistances);
+//            computeStatistics(OptimalSolution.binPackingDistances, printWriter);
 
 
             printWriter.println("Random distances:");
@@ -211,7 +196,15 @@ public class Main {
             printWriter.println("Greedy distances:");
             printWriter.println(greedyDistances);
             printWriter.println("Top-k distances:");
-            printWriter.println(heuristicDistances3);
+            printWriter.println(topkDistances);
+
+//            printWriter.println("Optimal distances:");
+//            printWriter.println(OptimalSolution.binPackingDistances);
+            printWriter.println();
+            printWriter.println("Dynamic distances:");
+            printWriter.println(dynamicDistances);
+            printWriter.println("Dynamic times:");
+            printWriter.println(times);
 
             printWriter.println();
             printWriter.println("Execution times: ");
@@ -219,9 +212,7 @@ public class Main {
             printWriter.println("Greedy: " + greedy_execution_time);
             printWriter.println("Top-k: " + topk_execution_time);
             printWriter.println("Dynamic: " + dynamic_execution_time);
-
-//            Process p = Runtime.getRuntime().exec("python3 /home/ubuntu/Desktop/ev_project/src/ev_project/plots.py");
-//            int exitVal = p.waitFor();
+//            printWriter.println("Optimal: " + optimal_execution_times);
 
             ElectricVehicle.lastIndex = 0;
             ChargingPoint.lastIndex = 0;
@@ -229,26 +220,6 @@ public class Main {
         }
 
         printWriter.close();
-    }
-
-    public static double getDistance(Geolocation l1, Geolocation l2) {
-        double lat1 = l1.getX();
-        double lon1 = l1.getY();
-        double lat2 = l2.getX();
-        double lon2 = l2.getY();
-        if ((lat1 == lat2) && (lon1 == lon2)) {
-            return 0;
-        } else {
-            double theta = lon1 - lon2;
-            double dist = Math.sin(Math.toRadians(lat1)) * Math.sin(Math.toRadians(lat2)) +
-                    Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-                            Math.cos(Math.toRadians(theta));
-            dist = Math.acos(dist);
-            dist = Math.toDegrees(dist);
-            dist = dist * 60 * 1.1515;  // dist in MILES
-            dist = dist * 1.609344;  // dist in KMS
-            return Math.round(dist * 100.0) / 100.0;
-        }
     }
 
     public static void optimisation(List<ChargingPoint> cps, List<ElectricVehicle> evs) {
@@ -259,7 +230,7 @@ public class Main {
         return map.get(cp) == Status.AVAILABLE &&
                 cp.getChargingType() == ev.getChargingType() &&
                 ((cp.getPrice() > 0 && ev.getWillingToPay()) || (cp.getPrice() == 0))
-                && (!distanceConstraint || getDistance(cp.getLocation(), ev.getDestination()) <= ev.getDistanceConstraint());
+                && (!distanceConstraint || Geolocation.getDistance(cp.getLocation(), ev.getDestination()) <= ev.getDistanceConstraint());
     }
 
 }

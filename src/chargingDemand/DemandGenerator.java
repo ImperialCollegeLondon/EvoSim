@@ -1,10 +1,15 @@
+/*
+ * Project: Evo-Sim
+ * Developed by: Irina Danes
+ */
+
 package chargingDemand;
 
-import vehicle.BatteryLevel;
-import vehicle.CarModel;
-import vehicle.ChargingType;
-import vehicle.DistanceConstraint;
-import vehicle.ElectricVehicle;
+import electricVehicle.BatteryLevel;
+import electricVehicle.CarModel;
+import electricVehicle.DistanceConstraint;
+import electricVehicle.ElectricVehicle;
+import utils.*;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -12,10 +17,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
 import java.util.Random;
-
-import chargingStation.Geolocation;
-import chargingStation.SocketType;
-
 
 public class DemandGenerator {
 
@@ -78,4 +79,3 @@ public class DemandGenerator {
     }
 
 }
-
