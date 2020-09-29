@@ -31,3 +31,15 @@ def test_distance_from_destination(npartitions):
     if hasattr(current, "compute"):
         current = current.compute()
     assert (dest != current).any()
+
+
+def test_socket_compatibility(rng):
+    from evosim.charging_posts import random_charging_posts
+    from evosim.electric_vehicles import random_electric_vehicles
+    from evosim.matchers import socket_compatibility
+
+    cps = random_charging_posts(10, seed=rng, socket_multiplicity=4)
+    evs = random_electric_vehicles(10, seed=rng, socket_multiplicity=4)
+    result = socket_compatibility(cps, evs)
+    expected = [bool(a & b) for a, b in zip(evs.socket, cps.socket)]
+    assert (result == expected).all()

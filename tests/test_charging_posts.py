@@ -10,8 +10,6 @@ def test_random_dask_charging_post(rng, n=6):
     assert set(charging_posts.columns).issubset(
         ["latitude", "longitude", "socket", "charger", "occupancy", "capacity"]
     )
-    assert charging_posts.socket.dtype == "category"
-    assert charging_posts.charger.dtype == "category"
 
 
 def test_random_charging_post_with_capacity(rng):

@@ -181,8 +181,6 @@ def random_charging_posts(
             occupancy=occupancies,
         )
     )
-    result["socket"] = result.socket.astype("category")
-    result["charger"] = result.charger.astype("category")
 
     is_dask = kwargs and any(v is not None for v in kwargs.values())
     return dd.from_pandas(result, **kwargs) if is_dask else result

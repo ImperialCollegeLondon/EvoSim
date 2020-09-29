@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence, Text, Union
 
+import numpy as np
+
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
 
@@ -35,7 +37,7 @@ def charging_post_availability(_, charging_post) -> bool:
 
 def socket_compatibility(vehicle, charging_post) -> bool:
     """True if vehicle and charging post are compatible."""
-    return vehicle.socket == charging_post.socket
+    return np.bitwise_and(vehicle.socket, charging_post.socket)
 
 
 def distance(vehicle, charging_post, max_distance: float = 1) -> bool:
@@ -62,7 +64,7 @@ def distance_from_destination(vehicle, charging_post, max_distance: float = 1) -
 
 def charger_compatibility(vehicle, charging_post) -> bool:
     """True if vehicle and charging post are compatible."""
-    return vehicle.charger == charging_post.charger
+    return np.bitwise_and(vehicle.charger, charging_post.charger)
 
 
 def single_factory(settings: Union[Text, Mapping]) -> Callable[[Any, Any], bool]:

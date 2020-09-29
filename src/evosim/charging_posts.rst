@@ -32,8 +32,7 @@ from :py:class:`evosim.charging_posts.Sockets` and :py:class:`evosim.charging_po
     2               CCS
     3    DC_COMBO_TYPE2
     4           CHADEMO
-    Name: socket, dtype: category
-    Categories (3, object): [CCS, CHADEMO, DC_COMBO_TYPE2]
+    Name: socket, dtype: object
 
     >>> result.socket[0]
     <Sockets.CCS: 32>
@@ -44,8 +43,7 @@ from :py:class:`evosim.charging_posts.Sockets` and :py:class:`evosim.charging_po
     2    RAPID
     3     SLOW
     4     SLOW
-    Name: charger, dtype: category
-    Categories (3, object): [SLOW, FAST, RAPID]
+    Name: charger, dtype: object
 
     >>> result.charger[0]
     <Chargers.SLOW: 1>
@@ -90,6 +88,15 @@ queried accordingly:
     >>> # Alternatively, we can compare to the "null" socket matching nothing
     >>> (Sockets.CCS | Sockets.TYPE1) & Sockets.TYPE2 == Sockets(0)
     True
+    >>> # or use bool to convert to boolean
+    >>> bool((Sockets.CCS | Sockets.TYPE1) & Sockets.TYPE2)
+    False
+    >>> # or use numpy's bitwise_and when working with arrays
+    >>> np.bitwise_and(
+    ...     np.array([Sockets.TYPE2, Sockets.CCS | Sockets.TYPE1]),
+    ...     np.array([Sockets.TYPE2, Sockets.TYPE2])
+    ... ).astype(bool)
+    array([ True, False])
 
 .. topic:: Creating a charging post of type :py:class:`dask.dataframe.DataFrame`
 
