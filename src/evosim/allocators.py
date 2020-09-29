@@ -28,7 +28,7 @@ def random_allocator(
             takes an electric_vehicle and an charging_point and returns true when the
             two are compatible.
         maxiter: maximum number of iterations before giving up. If negative, zero, or
-            None, then defaults to the number of electric vehicles.
+            None, then defaults to the number of charging point vacancies.
         seed (Optional[Union[int, numpy.random.Generator]]): seed for the random number
             generators. Defaults to ``None``. See :py:func:`numpy.random.default_rng`.
             Alternatively, it can be a :py:class:`numpy.random.Generator` instance.
@@ -49,10 +49,17 @@ def random_allocator(
         rng = seed
     else:
         rng = np.random.default_rng(seed=seed)
-    if maxiter is None or maxiter <= 0:
-        maxiter = len(electric_vehicles)
 
     vacancies = np.array([i for i, n in enumerate(vacancy_by_number) for _ in range(n)])
+
+    if maxiter is None or maxiter <= 0:
+        # TODO: tighten random allocator's default maxiter
+        # labels: enhancement
+        # The default maximum number of iteration is equal to the number of charging
+        # point vacancies. But that could be tightened within the loop itself, whenever
+        # vacancies are allocated. Not sure how though.
+        maxiter = len(vacancies)
+
     rng.shuffle(vacancies)
 
     assignement = -np.ones(len(electric_vehicles), dtype=int)
