@@ -9,6 +9,6 @@
 .. automodule :: evosim.objectives
 """
 __version__ = "0.1.0"
-__all__ = ["supply", "electric_vehicles", "matchers"]
+__all__ = ["supply", "electric_vehicles", "matchers", "objectives"]
 
-from evosim import supply, electric_vehicles, matchers
+from evosim import electric_vehicles, matchers, objectives, supply
