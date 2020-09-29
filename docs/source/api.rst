@@ -63,11 +63,6 @@ Functions
 
 .. autofunction:: evosim.objectives.haversine_distance
 
-Data
-----
-
-.. autodata:: evosim.objectives.EARTH_RADIUS_KM
-
 Allocators
 ==========
 
@@ -75,3 +70,13 @@ Functions
 ---------
 
 .. autofunction:: evosim.allocators.random_allocator
+
+Constants
+=========
+
+.. autodata:: evosim.constants.LONDON_LATITUDE
+
+.. autodata:: evosim.constants.LONDON_LONGITUDE
+
+.. autodata:: evosim.constants.EARTH_RADIUS_KM
+

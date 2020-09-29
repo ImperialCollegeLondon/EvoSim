@@ -6,7 +6,8 @@ import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 
-from evosim.supply import LONDON_LATITUDE, LONDON_LONGITUDE, Chargers, Sockets
+from evosim import constants
+from evosim.supply import Sockets, Chargers
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
@@ -54,8 +55,8 @@ class Models(Enum):
 
 def random_electric_vehicles(
     n: int,
-    latitude: Tuple[float, float] = LONDON_LATITUDE,
-    longitude: Tuple[float, float] = LONDON_LONGITUDE,
+    latitude: Tuple[float, float] = constants.LONDON_LATITUDE,
+    longitude: Tuple[float, float] = constants.LONDON_LONGITUDE,
     socket_types: Sequence[Sockets] = tuple(Sockets),
     socket_distribution: Optional[Sequence[float]] = None,
     charger_types: Sequence[Chargers] = tuple(Chargers),
@@ -69,9 +70,11 @@ def random_electric_vehicles(
     Args:
         n: The number of charging points
         latitude: The range over which to create random current locations and
-            destinations. Defaults to the London latitudinal range, {LONDON_LATITUDE}.
+            destinations. Defaults to the :py:data:`London latitudinal range
+            <evosim.constants.LONDON_LATITUDE>`.
         longitude: The range over which to create random current locations and
-            destinations. Defaults to the London longitudinal range, {LONDON_LONGITUDE}.
+            destinations. Defaults to the :py:data:`London longitudinal range
+            <evosim.constants.LONDON_LONGITUDE>`.
         socket_types: A list of :py:class:`~evosim.supply.Sockets` from which to
             choose randomly. Defaults to all available socket types.
         socket_distribution: weights when choosing the socket types.
@@ -119,9 +122,3 @@ def random_electric_vehicles(
 
     is_dask = kwargs and any(v is not None for v in kwargs.values())
     return dd.from_pandas(result, **kwargs) if is_dask else result
-
-
-# Ensures sphinx gets the interpolated docstring. Using an f-string does not work.
-random_electric_vehicles.__doc__ = random_electric_vehicles.__doc__.format(
-    LONDON_LATITUDE=LONDON_LATITUDE, LONDON_LONGITUDE=LONDON_LONGITUDE
-)

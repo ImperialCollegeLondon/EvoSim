@@ -6,14 +6,13 @@ import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 
+from evosim import constants
+
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
 
 ChargingPoints = Union[dd.DataFrame, pd.DataFrame]
 """ A data structure representing a charging point. """
-
-LONDON_LATITUDE = 51.25, 51.70
-LONDON_LONGITUDE = -0.5, 1.25
 
 
 class Sockets(Enum):
@@ -46,8 +45,8 @@ class Chargers(Enum):
 
 def random_charging_points(
     n: int,
-    latitude: Tuple[float, float] = LONDON_LATITUDE,
-    longitude: Tuple[float, float] = LONDON_LONGITUDE,
+    latitude: Tuple[float, float] = constants.LONDON_LATITUDE,
+    longitude: Tuple[float, float] = constants.LONDON_LONGITUDE,
     socket_types: Sequence[Sockets] = tuple(Sockets),
     socket_distribution: Optional[Sequence[float]] = None,
     charger_types: Sequence[Chargers] = tuple(Chargers),
@@ -61,10 +60,12 @@ def random_charging_points(
 
     Args:
         n: The number of charging points
-        latitude: The range over which to create random charging point locations.
-            Defaults to the london, {LONDON_LATITUDE}.
-        longitude: The range over which to create random charging point locations
-            Defaults to the london, {LONDON_LONGITUDE} .
+        latitude: The range over which to create random current locations and
+            destinations. Defaults to the :py:data:`London latitudinal range
+            <evosim.constants.LONDON_LATITUDE>`.
+        longitude: The range over which to create random current locations and
+            destinations. Defaults to the :py:data:`London longitudinal range
+            <evosim.constants.LONDON_LONGITUDE>`.
         socket_types: A list of :py:class:`~evosim.supply.Sockets` from which to
             choose randomly. Defaults to all available socket types.
         socket_distribution: weights when choosing the socket types.
@@ -166,9 +167,3 @@ def random_charging_points(
 
     is_dask = kwargs and any(v is not None for v in kwargs.values())
     return dd.from_pandas(result, **kwargs) if is_dask else result
-
-
-# Ensures sphinx gets the interpolated docstring. Using an f-string does not work.
-random_charging_points.__doc__ = random_charging_points.__doc__.format(
-    LONDON_LATITUDE=LONDON_LATITUDE, LONDON_LONGITUDE=LONDON_LONGITUDE
-)
