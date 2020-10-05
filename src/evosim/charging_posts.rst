@@ -97,9 +97,3 @@ queried accordingly:
     ...     np.array([Sockets.TYPE2, Sockets.TYPE2])
     ... ).astype(bool)
     array([ True, False])
-
-.. topic:: Creating a charging post of type :py:class:`dask.dataframe.DataFrame`
-
-    Optionally, :py:func:`~evosim.charging_posts.random_charging_posts` can generate a
-    :py:class:`dask.dataframe.DataFrame` simply by charging_postsing it with the requisite
-    arguments from :py:func:`dask.dataframe.from_pandas`.

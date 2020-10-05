@@ -4,19 +4,16 @@ from typing import Any, Callable, Optional, Union
 import numpy as np
 import pandas as pd
 
-from evosim.electric_vehicles import ElectricVehicles
-from evosim.charging_posts import ChargingPosts
-
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
 
 def random_allocator(
-    electric_vehicles: ElectricVehicles,
-    charging_posts: ChargingPosts,
+    electric_vehicles: pd.DataFrame,
+    charging_posts: pd.DataFrame,
     matcher: Callable[[Any, Any], Any],
     maxiter: Optional[int] = None,
     seed: Optional[Union[int, np.random.Generator]] = None,
-) -> ChargingPosts:
+) -> pd.DataFrame:
     """Randomly assigns EVs to charging posts.
 
     The implementation tries to make use of numpy's `vectorization
@@ -33,13 +30,10 @@ def random_allocator(
     #. rinse and repeat from step 2
 
     Args:
-        electric_vehicles (Union[dask.dataframe.DataFrame, pandas.DataFrame]): dataframe
-            of electric vehicles
-        charging_posts (Union[dask.dataframe.DataFrame, pandas.DataFrame]): dataframe
-            of charging_posts
-        matcher (Union[dask.dataframe.DataFrame, pandas.DataFrame]): a callable that
-            takes an electric_vehicle and an charging_post and returns true when the
-            two are compatible.
+        electric_vehicles (pandas.DataFrame): dataframe of electric vehicles
+        charging_posts (pandas.DataFrame): dataframe of charging_posts
+        matcher: a callable that takes an electric_vehicle and an charging_post and
+            returns true when the two are compatible.
         maxiter: maximum number of iterations before giving up. If negative, zero, or
             None, then defaults to the number of charging post vacancies.
         seed (Optional[Union[int, numpy.random.Generator]]): seed for the random number
@@ -47,9 +41,9 @@ def random_allocator(
             Alternatively, it can be a :py:class:`numpy.random.Generator` instance.
 
     Returns:
-        Union[dask.dataframe.DataFrame, pandas.DataFrame]: A shallow copy of the
-        ``electric_vehicles`` dataframe with an extra column, "allocation", giving the
-        index into the ``charging_post`` dataframe.
+        pandas.DataFrame: A shallow copy of the ``electric_vehicles`` dataframe with an
+        extra column, "allocation", giving the index into the ``charging_post``
+        dataframe.
     """
     vacancy_by_number = charging_posts.capacity - charging_posts.occupancy
     if vacancy_by_number.sum() < len(electric_vehicles):

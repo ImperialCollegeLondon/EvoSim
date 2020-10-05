@@ -1,17 +1,3 @@
-import dask.dataframe as dd
-
-
-def test_random_dask_charging_post(rng, n=6):
-    from evosim.charging_posts import random_charging_posts
-
-    charging_posts = random_charging_posts(n, seed=rng, npartitions=1)
-    assert isinstance(charging_posts, dd.DataFrame)
-    assert len(charging_posts) == n
-    assert set(charging_posts.columns).issubset(
-        ["latitude", "longitude", "socket", "charger", "occupancy", "capacity"]
-    )
-
-
 def test_random_charging_post_with_capacity(rng):
     from evosim.charging_posts import random_charging_posts
 

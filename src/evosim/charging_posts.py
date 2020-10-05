@@ -2,17 +2,12 @@ from enum import Flag, auto
 from pathlib import Path
 from typing import Optional, Sequence, Tuple, Union
 
-import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 
 from evosim import constants
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
-
-
-ChargingPosts = Union[dd.DataFrame, pd.DataFrame]
-""" A data structure representing a charging post. """
 
 
 class Sockets(Flag):
@@ -54,8 +49,8 @@ def random_charging_posts(
     occupancy: Optional[Union[Tuple[int, int], int]] = 0,
     seed: Optional[Union[int, np.random.Generator]] = None,
     **kwargs,
-) -> ChargingPosts:
-    """Creates a randomly generated list of charging posts.
+) -> pd.DataFrame:
+    """Generates a random table representing the charging posts infrastructure.
 
     Args:
         n: The number of charging posts
@@ -103,13 +98,9 @@ def random_charging_posts(
         seed (Optional[Union[int, numpy.random.Generator]]): seed for the random number
             generators. Defaults to ``None``. See :py:func:`numpy.random.default_rng`.
             Alternatively, it can be a :py:class:`numpy.random.Generator` instance.
-        **kwargs: If keywords are given, then they should be those of
-            :py:func:`dask.dataframe.from_pandas`
 
     Returns:
-        Union[dask.dataframe.DataFrame, pandas.DataFrame]: If no keyword arguments are
-        given, then the funtion returns a :py:class:`pandas.DataFrame`. Otherwise, it
-        returns a :py:class:`dask.dataframe.DataFrame`.
+        pandas.DataFrame: A dataframe representing the charging posts.
     """
     if isinstance(capacity, int):
         capacity = (1, capacity + 1)
@@ -171,7 +162,7 @@ def random_charging_posts(
             rng.integers(low=occupancy[0], high=occupancy[1], size=n) % capacities
         )
 
-    result: ChargingPosts = pd.DataFrame(
+    return pd.DataFrame(
         dict(
             latitude=lat,
             longitude=lon,
@@ -181,6 +172,3 @@ def random_charging_posts(
             occupancy=occupancies,
         )
     )
-
-    is_dask = kwargs and any(v is not None for v in kwargs.values())
-    return dd.from_pandas(result, **kwargs) if is_dask else result

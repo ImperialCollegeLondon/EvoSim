@@ -2,7 +2,6 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Optional, Sequence, Tuple, Union
 
-import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 
@@ -10,9 +9,6 @@ from evosim import constants
 from evosim.charging_posts import Chargers, Sockets
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
-
-ElectricVehicles = Union[dd.DataFrame, pd.DataFrame]
-""" A data structure representing an electric vehicle. """
 
 
 class Models(Enum):
@@ -66,8 +62,8 @@ def random_electric_vehicles(
     model_types: Sequence[Models] = tuple(Models),
     seed: Optional[Union[int, np.random.Generator]] = None,
     **kwargs,
-) -> ElectricVehicles:
-    """Creates a randomly generated list of charging posts.
+) -> pd.DataFrame:
+    """Generates a random table representing a fleet of electric vehicles.
 
     Args:
         n: The number of charging posts
@@ -88,13 +84,9 @@ def random_electric_vehicles(
         seed (Optional[Union[int, numpy.random.Generator]]): seed for the random number
             generators. Defaults to ``None``. See :py:func:`numpy.random.default_rng`.
             Alternatively, it can be a :py:class:`numpy.random.Generator` instance.
-        **kwargs: If keywords are given, then they should be those of
-            :py:func:`dask.dataframe.from_pandas`
 
     Returns:
-        Union[dask.dataframe.DataFrame, pandas.DataFrame]: If no keyword arguments are
-        givent, then the funtion returns a :py:class:`pandas.DataFrame`. Otherwise, it
-        returns a :py:class:`dask.dataframe.DataFrame`.
+        pandas.DataFrame: A dataframe representing the fleet of electric vehicles.
     """
     from evosim.charging_posts import random_charging_posts
 
@@ -102,7 +94,7 @@ def random_electric_vehicles(
         rng = seed
     else:
         rng = np.random.default_rng(seed=seed)
-    result: ElectricVehicles = random_charging_posts(
+    result = random_charging_posts(
         n,
         latitude,
         longitude,
@@ -124,5 +116,4 @@ def random_electric_vehicles(
     result["model"] = rng.choice(list(model_types), size=n, replace=True)
     result["model"] = result.model.astype("category")
 
-    is_dask = kwargs and any(v is not None for v in kwargs.values())
-    return dd.from_pandas(result, **kwargs) if is_dask else result
+    return result
