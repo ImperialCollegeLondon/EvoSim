@@ -62,7 +62,7 @@ def random_allocator(
 
     rng.shuffle(vacancies)
 
-    assignement = -np.ones(len(electric_vehicles), dtype=int)
+    assignment = -np.ones(len(electric_vehicles), dtype=int)
 
     unassigned = electric_vehicles.copy(deep=False)
     for _ in range(maxiter):
@@ -70,7 +70,7 @@ def random_allocator(
             unassigned.reset_index(drop=True),
             charging_points.loc[vacancies[: len(unassigned)]].reset_index(drop=True),
         ).to_numpy()
-        assignement[assignement < 0] = np.where(
+        assignment[assignment < 0] = np.where(
             is_match, vacancies[: len(unassigned)], -1
         )
         unassigned = unassigned[~is_match]
@@ -84,6 +84,6 @@ def random_allocator(
         vacancies = np.roll(vacancies, shift=1)
     result = electric_vehicles.copy(deep=False)
     result["allocation"] = pd.Series(
-        np.where(assignement < 0, pd.NA, assignement), dtype="Int64"
+        np.where(assignment < 0, pd.NA, assignment), dtype="Int64"
     )
     return result
