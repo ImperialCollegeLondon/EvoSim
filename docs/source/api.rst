@@ -35,3 +35,35 @@ Functions
 ---------
 
 .. autofunction:: evosim.electric_vehicles.random_electric_vehicles
+
+
+Matchers
+========
+
+Functions
+---------
+
+.. autofunction:: evosim.matchers.factory
+
+.. autofunction:: evosim.matchers.charging_point_availability
+
+.. autofunction:: evosim.matchers.socket_compatibility
+
+.. autofunction:: evosim.matchers.charger_compatibility
+
+.. autofunction:: evosim.matchers.distance
+
+Objectives
+==========
+
+Functions
+---------
+
+.. autofunction:: evosim.objectives.distance
+
+.. autofunction:: evosim.objectives.haversine_distance
+
+Data
+----
+
+.. autodata:: evosim.objectives.EARTH_RADIUS_KM

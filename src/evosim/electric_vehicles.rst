@@ -1,20 +1,6 @@
 Electric Vehicles
 =================
 
-.. testsetup:: EVs
-    
-    import pandas as pd
-    import numpy as np
-    import dask.dataframe as dd
-    import evosim
-
-    pd.options.display.precision = 2
-    pd.options.display.max_categories = 8
-    pd.options.display.max_rows = 20
-    pd.options.display.max_columns = 10
-    pd.options.display.width = 88
-    
-
 Electric vehicles are defined in a similar fashion to :ref:`charging-points`.
 Indeed, electric vehicles contain the same attributes, e.g.  current latitude and
 longitude, socket and charger type, as well as extra attributes, such as the car model.

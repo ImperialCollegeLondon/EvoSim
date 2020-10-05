@@ -80,9 +80,9 @@ def random_electric_vehicles(
         charger_distribution: weights when choosing the charger types.
         model_types: A list of :py:class:`~evosim.electric_vehicles.Models` from which
             to choose randomly. Defaults to all known models.
-        seed: seed for the random number generators. Defaults to ``None``. See
-            :py:func:`numpy.random.default_rng`. Alternatively, it can be a
-            :py:class:`numpy.random.Generator` instance.
+        seed (Optional[Union[int, numpy.random.Generator]]): seed for the random number
+            generators. Defaults to ``None``. See :py:func:`numpy.random.default_rng`.
+            Alternatively, it can be a :py:class:`numpy.random.Generator` instance.
         **kwargs: If keywords are given, then they should be those of
             :py:func:`dask.dataframe.from_pandas`
 
@@ -106,7 +106,7 @@ def random_electric_vehicles(
         charger_types,
         charger_distribution,
         seed=rng,
-    )
+    ).drop(columns=["occupancy", "capacity"])
 
     result["dest_lat"] = rng.uniform(
         high=np.max(latitude), low=np.min(latitude), size=n

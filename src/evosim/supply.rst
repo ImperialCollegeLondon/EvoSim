@@ -3,29 +3,21 @@
 Charging Points
 ===============
 
-.. testsetup:: charging_points
-    
-    import pandas as pd
-    import numpy as np
-    import dask.dataframe as dd
-    import evosim
-
-    pd.set_option('precision', 2)
-
 Charging points are represented by a table with columns for the latitude, longitude,
-socket type and charger type. Potentially it can accept other columns as well. The
-simplest way to generate one is to use :py:func:`evosim.supply.random_charging_points`:
+socket type, charger type, current occupancy and maximum capacity. Potentially it can
+accept other columns as well. The simplest way to generate one is to use
+:py:func:`evosim.supply.random_charging_points`:
 
 .. doctest:: charging_points
 
     >>> result = evosim.supply.random_charging_points(5, seed=1)
     >>> result
-       latitude  longitude          socket charger
-    0     51.48       0.24             CCS    SLOW
-    1     51.68       0.95         CHADEMO    FAST
-    2     51.31       0.22             CCS   RAPID
-    3     51.68       0.46  DC_COMBO_TYPE2    SLOW
-    4     51.39      -0.45         CHADEMO    SLOW
+       latitude  longitude          socket charger  capacity  occupancy
+    0     51.48       0.24             CCS    SLOW         1          0
+    1     51.68       0.95         CHADEMO    FAST         1          0
+    2     51.31       0.22             CCS   RAPID         1          0
+    3     51.68       0.46  DC_COMBO_TYPE2    SLOW         1          0
+    4     51.39      -0.45         CHADEMO    SLOW         1          0
 
 The random ``seed`` is optional. It is provided here so that the code and output above
 can be tested reproducibly. By default, the function returns a
@@ -72,19 +64,20 @@ sockets to two type and heavily favors one rather than the other:
     ...     n=10,
     ...     socket_types=list(Sockets)[:2],
     ...     socket_distribution=[0.2, 0.8],
-    ...     seed=1
+    ...     capacity=(1, 5),
+    ...     seed=1,
     ... )
-       latitude  longitude socket charger
-    0     51.48       0.82  TYPE2    FAST
-    1     51.68       0.44  TYPE2    FAST
-    2     51.31       0.08  TYPE2    SLOW
-    3     51.68       0.88  TYPE2    SLOW
-    4     51.39       0.03  TYPE2    FAST
-    5     51.44       0.29  TYPE2    FAST
-    6     51.62      -0.27  TYPE2    FAST
-    7     51.43       0.21  TYPE2   RAPID
-    8     51.50      -0.14  TYPE1    FAST
-    9     51.26      -0.04  TYPE2    FAST
+       latitude  longitude socket charger  capacity  occupancy
+    0     51.48       0.82  TYPE2    FAST         4          0
+    1     51.68       0.44  TYPE2    FAST         4          0
+    2     51.31       0.08  TYPE2    SLOW         2          0
+    3     51.68       0.88  TYPE2    SLOW         1          0
+    4     51.39       0.03  TYPE2    FAST         3          0
+    5     51.44       0.29  TYPE2    FAST         3          0
+    6     51.62      -0.27  TYPE2    FAST         4          0
+    7     51.43       0.21  TYPE2   RAPID         2          0
+    8     51.50      -0.14  TYPE1    FAST         2          0
+    9     51.26      -0.04  TYPE2    FAST         1          0
 
 
 .. topic:: Creating a charging point of type :py:class:`dask.dataframe.DataFrame`
