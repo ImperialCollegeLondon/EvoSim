@@ -1,8 +1,8 @@
 Matchers
 ========
 
-Matchers are functions that return true of false given charging points and electric
-vehicles: ``matcher(electric_vehicle, charging_point) -> bool``.  If one of the other
+Matchers are functions that return true or false given charging points and electric
+vehicles: ``matcher(electric_vehicle, charging_point) -> bool``.  If one or the other
 are a sequence (e.g. a dataframe), then the matchers are applied element-wise and return
 an array. Matchers are stand-alone functions in :py:mod:`evosim.matchers`.  They can be
 accessed directly or created via :py:mod:`evosim.matchers.factory`:
@@ -55,7 +55,7 @@ Using the factory becomes interesting when we want to apply a combination of mat
 
 
 Some matchers, such as :py:func:`evosim.matchers.distance` also accept parameters in the
-form of keyword arguments. These parameters can be set form the outset by feeding 
+form of keyword arguments. These parameters can be set from the outset by feeding 
 :py:func:`evosim.matchers.factory` a dictionary with a ``name`` and any parameter:
 
 .. doctest:: matchers
