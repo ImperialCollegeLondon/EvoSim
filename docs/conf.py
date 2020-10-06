@@ -50,7 +50,6 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "numpy": ("http://docs.scipy.org/doc/numpy/", None),
     "pandas": ("http://pandas.pydata.org/pandas-docs/stable", None),
-    "dask": ("http://dask.pydata.org/en/stable/", None),
 }
 
 # -- Options for HTML output -------------------------------------------------
@@ -72,7 +71,6 @@ html_show_sourcelink = True
 doctest_global_setup = """
 import pandas as pd
 import numpy as np
-import dask.dataframe as dd
 import evosim
 
 pd.options.display.precision = 2
