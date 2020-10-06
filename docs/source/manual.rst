@@ -2,4 +2,4 @@
 Developer Manual
 ================
 
-.. automodule:: evosim
+.. include:: generated/index.rst

@@ -67,3 +67,11 @@ Data
 ----
 
 .. autodata:: evosim.objectives.EARTH_RADIUS_KM
+
+Allocators
+==========
+
+Functions
+---------
+
+.. autofunction:: evosim.allocators.random_allocator

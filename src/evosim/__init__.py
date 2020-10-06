@@ -1,14 +1,5 @@
-"""EVOLVE simulation framework.
-
-.. automodule :: evosim.supply
-
-.. automodule :: evosim.electric_vehicles
-
-.. automodule :: evosim.matchers
-
-.. automodule :: evosim.objectives
-"""
+"""EVOLVE simulation framework."""
 __version__ = "0.1.0"
-__all__ = ["supply", "electric_vehicles", "matchers", "objectives"]
+__all__ = ["supply", "electric_vehicles", "matchers", "objectives", "allocators"]
 
-from evosim import electric_vehicles, matchers, objectives, supply
+from evosim import allocators, electric_vehicles, matchers, objectives, supply

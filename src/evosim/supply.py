@@ -9,7 +9,7 @@ import pandas as pd
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
 
-ChargingPoint = Union[dd.DataFrame, pd.DataFrame]
+ChargingPoints = Union[dd.DataFrame, pd.DataFrame]
 """ A data structure representing a charging point. """
 
 LONDON_LATITUDE = 51.25, 51.70
@@ -52,11 +52,11 @@ def random_charging_points(
     socket_distribution: Optional[Sequence[float]] = None,
     charger_types: Sequence[Chargers] = tuple(Chargers),
     charger_distribution: Optional[Sequence[float]] = None,
-    occupancy: Tuple[int, int] = (0, 1),
-    capacity: Tuple[int, int] = (1, 2),
+    capacity: Optional[Union[Tuple[int, int], int]] = 1,
+    occupancy: Optional[Union[Tuple[int, int], int]] = 0,
     seed: Optional[Union[int, np.random.Generator]] = None,
     **kwargs,
-) -> ChargingPoint:
+) -> ChargingPoints:
     """Creates a randomly generated list of charging points.
 
     Args:
@@ -72,7 +72,9 @@ def random_charging_points(
             choose randomly. Defaults to all available charger types.
         charger_distribution: weights when choosing the charger types.
         capacity: A range from which to choose the maximum capacity for each charging
-            point. Defaults to a capacity of 1 for each charging point.
+            point. The range can be given as ``(start, end)``, or as a single number, in
+            which case it defaults to ``1, capacity + 1``. Defaults to a capacity of 1
+            for each charging point.
 
             .. note::
 
@@ -80,8 +82,9 @@ def random_charging_points(
                 included and ``max`` excluded, as per python conventions.
 
         occupancy: A range from which to choose the current occupancy for each charging
-            point. Defaults to an occupancy of 0. The occupancy is always smaller than
-            the capacity.
+            point. The range can be given as ``(start, end)``, or as a single number, in
+            which case it defaults to ``0, occupancy + 1``. Defaults to an occupancy of
+            0.  The occupancy is always smaller than the capacity.
 
             .. warning::
 
@@ -104,11 +107,10 @@ def random_charging_points(
         given, then the funtion returns a :py:class:`pandas.DataFrame`. Otherwise, it
         returns a :py:class:`dask.dataframe.DataFrame`.
     """
-    if isinstance(seed, np.random.Generator):
-        rng = seed
-    else:
-        rng = np.random.default_rng(seed=seed)
-
+    if isinstance(capacity, int):
+        capacity = (1, capacity + 1)
+    if isinstance(occupancy, int):
+        occupancy = (0, occupancy + 1)
     capacity = min(*capacity), max(*capacity)
     if capacity[0] < 1:
         raise ValueError("The minimum capacity must be at least 1.")
@@ -149,7 +151,7 @@ def random_charging_points(
             rng.integers(low=occupancy[0], high=occupancy[1], size=n) % capacities
         )
 
-    result: ChargingPoint = pd.DataFrame(
+    result: ChargingPoints = pd.DataFrame(
         dict(
             latitude=lat,
             longitude=lon,
