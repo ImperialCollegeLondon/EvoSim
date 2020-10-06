@@ -3,11 +3,11 @@ from pytest import raises
 
 def test_random_allocator_too_many_vehicles(rng):
     from evosim.charging_posts import random_charging_posts
-    from evosim.electric_vehicles import random_electric_vehicles
+    from evosim.fleet import random_fleet
     from evosim.allocators import random_allocator
     from evosim import matchers
 
-    evs = random_electric_vehicles(100, seed=rng)
+    evs = random_fleet(100, seed=rng)
     cps = random_charging_posts(4, seed=rng, capacity=3, occupancy=3)
     matcher = matchers.factory("socket_compatibility")
     with raises(NotImplementedError):
@@ -16,7 +16,7 @@ def test_random_allocator_too_many_vehicles(rng):
 
 def test_random_allocator_exact_match(rng):
     from evosim.charging_posts import random_charging_posts
-    from evosim.electric_vehicles import random_electric_vehicles
+    from evosim.fleet import random_fleet
     from evosim.allocators import random_allocator
     from evosim import matchers
 
@@ -31,7 +31,7 @@ def test_random_allocator_exact_match(rng):
     indices = [
         i for i, row in cps.iterrows() for _ in range(row.occupancy, row.capacity)
     ]
-    evs = random_electric_vehicles(len(indices), seed=rng)
+    evs = random_fleet(len(indices), seed=rng)
     rng.shuffle(indices)
     evs["socket"] = cps.socket.loc[indices].reset_index().socket
 
@@ -54,7 +54,7 @@ def test_random_allocator_exact_match(rng):
 
 def test_random_allocator_unassigned_cars(rng):
     from evosim.charging_posts import random_charging_posts
-    from evosim.electric_vehicles import random_electric_vehicles
+    from evosim.fleet import random_fleet
     from evosim.allocators import random_allocator
     from evosim import matchers
 
@@ -66,7 +66,7 @@ def test_random_allocator_unassigned_cars(rng):
     indices = [
         i for i, row in cps.iterrows() for _ in range(row.occupancy, row.capacity)
     ]
-    evs = random_electric_vehicles(len(indices), seed=rng)
+    evs = random_fleet(len(indices), seed=rng)
     rng.shuffle(indices)
     evs["socket"] = cps.socket.loc[indices].reset_index().socket
     unassigned = [1, 3, 5, 7, 11]

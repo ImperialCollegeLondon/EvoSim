@@ -18,7 +18,7 @@ def charging_post_availability(_, charging_post) -> bool:
 
         >>> import evosim
         >>> cps = evosim.charging_posts.random_charging_posts(5, seed=1)
-        >>> evs = evosim.electric_vehicles.random_electric_vehicles(10, seed=1)
+        >>> evs = evosim.fleet.random_fleet(10, seed=1)
         >>> evosim.matchers.charging_post_availability(None, cps.loc[0])
         True
         >>> evosim.matchers.charging_post_availability(None, cps)

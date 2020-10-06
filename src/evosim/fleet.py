@@ -49,7 +49,7 @@ class Models(Enum):
         return self.name
 
 
-def random_electric_vehicles(
+def random_fleet(
     n: int,
     latitude: Tuple[float, float] = constants.LONDON_LATITUDE,
     longitude: Tuple[float, float] = constants.LONDON_LONGITUDE,
@@ -79,7 +79,7 @@ def random_electric_vehicles(
         charger_types: A list of :py:class:`~evosim.charging_posts.Chargers` from which
             to choose randomly. Defaults to all available charger types.
         charger_distribution: weights when choosing the charger types.
-        model_types: A list of :py:class:`~evosim.electric_vehicles.Models` from which
+        model_types: A list of :py:class:`~evosim.fleet.Models` from which
             to choose randomly. Defaults to all known models.
         seed (Optional[Union[int, numpy.random.Generator]]): seed for the random number
             generators. Defaults to ``None``. See :py:func:`numpy.random.default_rng`.

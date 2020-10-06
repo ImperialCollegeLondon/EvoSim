@@ -27,14 +27,14 @@ Electric Vehicles
 Enumerations
 ------------
 
-.. autoclass:: evosim.electric_vehicles.Models
+.. autoclass:: evosim.fleet.Models
     :members:
     :undoc-members:
 
 Functions
 ---------
 
-.. autofunction:: evosim.electric_vehicles.random_electric_vehicles
+.. autofunction:: evosim.fleet.random_fleet
 
 
 Matchers

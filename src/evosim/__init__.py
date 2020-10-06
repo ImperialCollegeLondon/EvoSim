@@ -2,10 +2,10 @@
 __version__ = "0.1.0"
 __all__ = [
     "charging_posts",
-    "electric_vehicles",
+    "fleet",
     "matchers",
     "objectives",
     "allocators",
 ]
 
-from evosim import allocators, charging_posts, electric_vehicles, matchers, objectives
+from evosim import allocators, charging_posts, fleet, matchers, objectives

@@ -8,7 +8,7 @@ __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
 
 def random_allocator(
-    electric_vehicles: pd.DataFrame,
+    fleet: pd.DataFrame,
     charging_posts: pd.DataFrame,
     matcher: Callable[[Any, Any], Any],
     maxiter: Optional[int] = None,
@@ -30,7 +30,7 @@ def random_allocator(
     #. rinse and repeat from step 2
 
     Args:
-        electric_vehicles (pandas.DataFrame): dataframe of electric vehicles
+        fleet (pandas.DataFrame): dataframe of electric vehicles
         charging_posts (pandas.DataFrame): dataframe of charging_posts
         matcher: a callable that takes an electric_vehicle and an charging_post and
             returns true when the two are compatible.
@@ -41,12 +41,11 @@ def random_allocator(
             Alternatively, it can be a :py:class:`numpy.random.Generator` instance.
 
     Returns:
-        pandas.DataFrame: A shallow copy of the ``electric_vehicles`` dataframe with an
-        extra column, "allocation", giving the index into the ``charging_post``
-        dataframe.
+        pandas.DataFrame: A shallow copy of the ``fleet`` dataframe with an extra
+        column, "allocation", giving the index into the ``charging_post`` dataframe.
     """
     vacancy_by_number = charging_posts.capacity - charging_posts.occupancy
-    if vacancy_by_number.sum() < len(electric_vehicles):
+    if vacancy_by_number.sum() < len(fleet):
         # TODO: random allocator cannot deal with len(eVS) > len(vacancies)
         # labels: enhancement
         # The algorithm currently expects that the list of vacancies should be larger
@@ -69,9 +68,9 @@ def random_allocator(
 
     rng.shuffle(vacancies)
 
-    assignment = -np.ones(len(electric_vehicles), dtype=int)
+    assignment = -np.ones(len(fleet), dtype=int)
 
-    unassigned = electric_vehicles.copy(deep=False)
+    unassigned = fleet.copy(deep=False)
     for _ in range(maxiter):
         is_match = matcher(
             unassigned.reset_index(drop=True),
@@ -89,7 +88,7 @@ def random_allocator(
         if len(unassigned) == 0:
             break
         vacancies = np.roll(vacancies, shift=1)
-    result = electric_vehicles.copy(deep=False)
+    result = fleet.copy(deep=False)
     result["allocation"] = pd.Series(
         np.where(assignment < 0, pd.NA, assignment), dtype="Int64"
     )

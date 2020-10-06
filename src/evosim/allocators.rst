@@ -33,7 +33,7 @@ exposition, we can generate a random problem as done below:
     8     51.50      -0.14  TYPE2    SLOW         2          0
     9     51.26      -0.04  TYPE2    FAST         2          0
 
-    >>> evs = evosim.electric_vehicles.random_electric_vehicles(
+    >>> evs = evosim.fleet.random_fleet(
     ...     rng.integers(low=len(cps.capacity), high=cps.capacity.sum()),
     ...     socket_types=socket_types,
     ...     charger_types=charger_types,

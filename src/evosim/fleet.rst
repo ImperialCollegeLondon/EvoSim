@@ -1,16 +1,15 @@
 Electric Vehicles
 =================
 
-Electric vehicles are defined in a similar fashion to :ref:`charging-posts`. Indeed,
-electric vehicles contain the same attributes, e.g. current latitude and longitude,
-socket and charger type, as well as extra attributes, such as the car model. The
-simplest way to generate a list of EVs is to use
-:py:func:`evosim.electric_vehicles.random_electric_vehicles`:
+A fleet of electric vehicles are defined in a similar fashion to :ref:`charging-posts`.
+Indeed, the fleet contains the same attributes, e.g. current latitude and longitude,
+socket and charger type, as well as extra attributes, such as the car model.  The
+simplest way to generate a fleet is to use :py:func:`evosim.fleet.random_fleet`:
 
 .. doctest:: EVs
     :options: +NORMALIZE_WHITESPACE
 
-    >>> result = evosim.electric_vehicles.random_electric_vehicles(5, seed=1)
+    >>> result = evosim.fleet.random_fleet(5, seed=1)
     >>> result
        latitude  longitude          socket charger  dest_lat  dest_long  \
     0     51.48       0.24             CCS    SLOW     51.45   8.13e-01
@@ -27,7 +26,7 @@ simplest way to generate a list of EVs is to use
     4  VOLVO_XC90_TWIN_ENGINE
 
 Much as the chargers and sockets, the models are a categorical array taking their values
-from :py:class:`evosim.electric_vehicles.Models`:
+from :py:class:`evosim.fleet.Models`:
 
 .. doctest:: EVs
 
@@ -40,17 +39,14 @@ from :py:class:`evosim.electric_vehicles.Models`:
     Name: model, dtype: category
     Categories (5, object): [BMW_225XE, TESLA_MODEL_X, KIA_NIRO_PHEV, NISSAN_LEAF, VOLVO_XC90_TWIN_ENGINE]
 
-Much as for generating random charging posts,
-:py:func:`evosim.electric_vehicles.random_electric_vehicles` takes additional parameters
-to tailor the geographical location, model distribution, etc. For instance, we can
-create electric vehicles accepting multiple types of sockets:
+Much as for generating random charging posts, :py:func:`evosim.fleet.random_fleet` takes
+additional parameters to tailor the geographical location, model distribution, etc. For
+instance, we can create electric vehicles accepting multiple types of sockets:
 
 .. doctest:: EVs
     :options: +NORMALIZE_WHITESPACE
 
-    >>> evosim.electric_vehicles.random_electric_vehicles(
-    ...     5, socket_multiplicity=3, seed=1
-    ... )
+    >>> evosim.fleet.random_fleet(5, socket_multiplicity=3, seed=1)
        latitude  longitude                  socket charger  dest_lat  dest_long  \
     0     51.48       0.24                     CCS    SLOW     51.69      -0.22
     1     51.68       0.95  CHADEMO|DC_COMBO_TYPE2   RAPID     51.68       1.20
