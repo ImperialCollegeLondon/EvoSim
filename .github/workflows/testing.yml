@@ -7,6 +7,7 @@ on:
 
 jobs:
   testing:
+    name: install and test package on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
