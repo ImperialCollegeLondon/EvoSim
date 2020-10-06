@@ -19,6 +19,19 @@ def random_allocator(
 ) -> ChargingPoints:
     """Randomly assigns EVs to charging points.
 
+    The implementation tries to make use of numpy's `vectorization
+    <https://en.wikipedia.org/wiki/Array_programming>`__ and avoid explicit loops.
+    Hence, it runs the matcher elementwise on all unallocated vehicles and charging
+    posts at the same time. It proceeds as follows
+
+    #. create a list of available infrastructure and shuffle it. Charging posts with
+       more than one availabe spot are duplicated.
+    #. run the matcher on the fleet vs the infrastructure list above
+    #. remove matched vehicles and posts from the fleet and infrastructure
+    #. cycle the infastructure list (remove the first item and put it at the back)
+       so that each vehicle can be matched to a different post
+    #. rinse and repeat from step 2
+
     Args:
         electric_vehicles (Union[dask.dataframe.DataFrame, pandas.DataFrame]): dataframe
             of electric vehicles
