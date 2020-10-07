@@ -51,7 +51,7 @@ Using the factory becomes interesting when we want to apply a combination of mat
     7     True
     8    False
     9    False
-    Name: socket, dtype: bool
+    dtype: bool
 
 
 Some matchers, such as :py:func:`evosim.matchers.distance` also accept parameters in the
