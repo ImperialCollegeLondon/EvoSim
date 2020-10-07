@@ -1,17 +1,28 @@
-from pytest import raises
-
-
 def test_random_allocator_too_many_vehicles(rng):
     from evosim.charging_posts import random_charging_posts
     from evosim.fleet import random_fleet
     from evosim.allocators import random_allocator
     from evosim import matchers
 
-    evs = random_fleet(100, seed=rng)
+    evs = random_fleet(20, seed=rng)
     cps = random_charging_posts(4, seed=rng, capacity=3, occupancy=3)
+
+    # exactly the cars needed to fill the charging posts according ot the chosen
+    # matcher
+    cps_indices = [
+        i for i, row in cps.iterrows() for _ in range(row.occupancy, row.capacity)
+    ]
+    rng.shuffle(cps_indices)
+    evs_indices = list(evs.index)
+    rng.shuffle(evs_indices)
+    evs.loc[evs_indices[: len(cps_indices)], "socket"] = cps.socket.loc[
+        cps_indices
+    ].to_numpy()
+
     matcher = matchers.factory("socket_compatibility")
-    with raises(NotImplementedError):
-        random_allocator(evs, cps, matcher, seed=rng)
+    result = random_allocator(evs, cps, matcher, seed=rng)
+    new_assignements = result.groupby("allocation").allocation.count()
+    assert (new_assignements + cps.occupancy == cps.capacity).all()
 
 
 def test_random_allocator_exact_match(rng):
