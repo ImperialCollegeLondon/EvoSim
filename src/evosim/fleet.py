@@ -2,16 +2,13 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Optional, Sequence, Tuple, Union
 
-import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 
-from evosim.supply import LONDON_LATITUDE, LONDON_LONGITUDE, Chargers, Sockets
+from evosim import constants
+from evosim.charging_posts import Chargers, Sockets
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
-
-ElectricVehicles = Union[dd.DataFrame, pd.DataFrame]
-""" A data structure representing a charging point. """
 
 
 class Models(Enum):
@@ -52,59 +49,65 @@ class Models(Enum):
         return self.name
 
 
-def random_electric_vehicles(
+def random_fleet(
     n: int,
-    latitude: Tuple[float, float] = LONDON_LATITUDE,
-    longitude: Tuple[float, float] = LONDON_LONGITUDE,
+    latitude: Tuple[float, float] = constants.LONDON_LATITUDE,
+    longitude: Tuple[float, float] = constants.LONDON_LONGITUDE,
     socket_types: Sequence[Sockets] = tuple(Sockets),
     socket_distribution: Optional[Sequence[float]] = None,
+    socket_multiplicity: int = 1,
     charger_types: Sequence[Chargers] = tuple(Chargers),
     charger_distribution: Optional[Sequence[float]] = None,
+    charger_multiplicity: int = 1,
     model_types: Sequence[Models] = tuple(Models),
     seed: Optional[Union[int, np.random.Generator]] = None,
     **kwargs,
-) -> ElectricVehicles:
-    """Creates a randomly generated list of charging points.
+) -> pd.DataFrame:
+    """Generates a random table representing a fleet of electric vehicles.
 
     Args:
-        n: The number of charging points
+        n: The number of charging posts
         latitude: The range over which to create random current locations and
-            destinations. Defaults to the London latitudinal range, {LONDON_LATITUDE}.
+            destinations. Defaults to the :py:data:`London latitudinal range
+            <evosim.constants.LONDON_LATITUDE>`.
         longitude: The range over which to create random current locations and
-            destinations. Defaults to the London longitudinal range, {LONDON_LONGITUDE}.
-        socket_types: A list of :py:class:`~evosim.supply.Sockets` from which to
+            destinations. Defaults to the :py:data:`London longitudinal range
+            <evosim.constants.LONDON_LONGITUDE>`.
+        socket_types: A list of :py:class:`~evosim.charging_posts.Sockets` from which to
             choose randomly. Defaults to all available socket types.
         socket_distribution: weights when choosing the socket types.
-        charger_types: A list of :py:class:`~evosim.supply.Chargers` from which to
-            choose randomly. Defaults to all available charger types.
+        socket_multiplicity: number of different types of socket each post can
+            accomodate.
+        charger_types: A list of :py:class:`~evosim.charging_posts.Chargers` from which
+            to choose randomly. Defaults to all available charger types.
         charger_distribution: weights when choosing the charger types.
-        model_types: A list of :py:class:`~evosim.electric_vehicles.Models` from which
+        charger_multiplicity: number of different types of chargers each post can
+            accomodate.
+        model_types: A list of :py:class:`~evosim.fleet.Models` from which
             to choose randomly. Defaults to all known models.
         seed (Optional[Union[int, numpy.random.Generator]]): seed for the random number
             generators. Defaults to ``None``. See :py:func:`numpy.random.default_rng`.
             Alternatively, it can be a :py:class:`numpy.random.Generator` instance.
-        **kwargs: If keywords are given, then they should be those of
-            :py:func:`dask.dataframe.from_pandas`
 
     Returns:
-        Union[dask.dataframe.DataFrame, pandas.DataFrame]: If no keyword arguments are
-        givent, then the funtion returns a :py:class:`pandas.DataFrame`. Otherwise, it
-        returns a :py:class:`dask.dataframe.DataFrame`.
+        pandas.DataFrame: A dataframe representing the fleet of electric vehicles.
     """
-    from evosim.supply import random_charging_points
+    from evosim.charging_posts import random_charging_posts
 
     if isinstance(seed, np.random.Generator):
         rng = seed
     else:
         rng = np.random.default_rng(seed=seed)
-    result: ElectricVehicles = random_charging_points(
+    result = random_charging_posts(
         n,
         latitude,
         longitude,
         socket_types,
         socket_distribution,
+        socket_multiplicity,
         charger_types,
         charger_distribution,
+        charger_multiplicity,
         seed=rng,
     ).drop(columns=["occupancy", "capacity"])
 
@@ -117,11 +120,4 @@ def random_electric_vehicles(
     result["model"] = rng.choice(list(model_types), size=n, replace=True)
     result["model"] = result.model.astype("category")
 
-    is_dask = kwargs and any(v is not None for v in kwargs.values())
-    return dd.from_pandas(result, **kwargs) if is_dask else result
-
-
-# Ensures sphinx gets the interpolated docstring. Using an f-string does not work.
-random_electric_vehicles.__doc__ = random_electric_vehicles.__doc__.format(
-    LONDON_LATITUDE=LONDON_LATITUDE, LONDON_LONGITUDE=LONDON_LONGITUDE
-)
+    return result

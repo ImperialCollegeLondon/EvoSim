@@ -14,7 +14,6 @@ include = ["*.rst"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-dask = {extras = ["dataframe"], version = "^2.26.0"}
 numpy = "^1.19.2"
 pandas = "^1.1.2"
 
@@ -29,7 +28,6 @@ pre-commit = "^2.4.0"
 pytest-mypy = "^0.6.2"
 pytest-cov = "^2.9.0"
 pytest-flake8 = "^1.0.6"
-pytest-mock = "^3.1.1"
 bump2version = "^1.0.0"
 
 [tool.isort]

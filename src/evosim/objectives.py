@@ -2,14 +2,13 @@ from pathlib import Path
 
 import numpy as np
 
+from evosim import constants
+
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
-EARTH_RADIUS_KM: float = 6731
-""" Radius of the Earth in kilometers. """
 
-
-def distance(a, b, radius=EARTH_RADIUS_KM):
-    """Great circle distance between two points.
+def distance(a, b, radius=constants.EARTH_RADIUS_KM):
+    """Great circle distance between two geographic locations.
 
     Computes the distance using a formula derived from the `spherical laws of cosine
     <https://en.wikipedia.org/wiki/Great-circle_distance>`__. It may suffer from large
@@ -17,10 +16,10 @@ def distance(a, b, radius=EARTH_RADIUS_KM):
     :py:func:`~evosim.objectives.haversine_distance` should be preferred.
 
     Args:
-        a: latitude and longitude of point A in degrees.
-        b: latitude and longitude of point B in degrees.
+        a: latitude and longitude of geographic location A in degrees.
+        b: latitude and longitude of geographic location B in degrees.
         radius: Radius of the Earth in kilometers. Defaults to
-            :py:data:`~evosim.objectives.EARTH_RADIUS_KM`.
+            :py:data:`~evosim.constants.EARTH_RADIUS_KM`.
 
     Returns:
         distance in kilometers.
@@ -37,8 +36,8 @@ def distance(a, b, radius=EARTH_RADIUS_KM):
     )
 
 
-def haversine_distance(a, b, radius=EARTH_RADIUS_KM):
-    """Great circle distance between two points.
+def haversine_distance(a, b, radius=constants.EARTH_RADIUS_KM):
+    """Great circle distance between two geographic location.
 
     Implements the `haversine formula for the great circle
     <https://en.wikipedia.org/wiki/Great-circle_distance>`__. It is more computationally
@@ -46,10 +45,10 @@ def haversine_distance(a, b, radius=EARTH_RADIUS_KM):
     computing small distances with single precision floating points.
 
     Args:
-        a: latitude and longitude of point A in degrees.
-        b: latitude and longitude of point B in degrees.
+        a: latitude and longitude of geographic location A in degrees.
+        b: latitude and longitude of geographic location B in degrees.
         radius: Radius of the Earth in kilometers. Defaults to
-            :py:data:`~evosim.objectives.EARTH_RADIUS_KM`.
+            :py:data:`~evosim.constants.EARTH_RADIUS_KM`.
 
     Returns:
         distance in kilometers.

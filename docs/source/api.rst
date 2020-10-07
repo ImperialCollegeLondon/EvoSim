@@ -2,24 +2,24 @@
 Developer API catalogue
 =======================
 
-Supply
-======
+Charging Posts
+==============
 
 Enumerations
 ------------
 
-.. autoclass:: evosim.supply.Chargers
+.. autoclass:: evosim.charging_posts.Chargers
     :members:
     :undoc-members:
 
-.. autoclass:: evosim.supply.Sockets
+.. autoclass:: evosim.charging_posts.Sockets
     :members:
     :undoc-members:
 
 Functions
 ---------
 
-.. autofunction:: evosim.supply.random_charging_points
+.. autofunction:: evosim.charging_posts.random_charging_posts
 
 Electric Vehicles
 =================
@@ -27,14 +27,14 @@ Electric Vehicles
 Enumerations
 ------------
 
-.. autoclass:: evosim.electric_vehicles.Models
+.. autoclass:: evosim.fleet.Models
     :members:
     :undoc-members:
 
 Functions
 ---------
 
-.. autofunction:: evosim.electric_vehicles.random_electric_vehicles
+.. autofunction:: evosim.fleet.random_fleet
 
 
 Matchers
@@ -45,7 +45,7 @@ Functions
 
 .. autofunction:: evosim.matchers.factory
 
-.. autofunction:: evosim.matchers.charging_point_availability
+.. autofunction:: evosim.matchers.charging_post_availability
 
 .. autofunction:: evosim.matchers.socket_compatibility
 
@@ -63,11 +63,6 @@ Functions
 
 .. autofunction:: evosim.objectives.haversine_distance
 
-Data
-----
-
-.. autodata:: evosim.objectives.EARTH_RADIUS_KM
-
 Allocators
 ==========
 
@@ -75,3 +70,13 @@ Functions
 ---------
 
 .. autofunction:: evosim.allocators.random_allocator
+
+Constants
+=========
+
+.. autodata:: evosim.constants.LONDON_LATITUDE
+
+.. autodata:: evosim.constants.LONDON_LONGITUDE
+
+.. autodata:: evosim.constants.EARTH_RADIUS_KM
+
