@@ -73,6 +73,7 @@ import pandas as pd
 import numpy as np
 import evosim
 
+pd.options.mode.chained_assignment = "raise"
 pd.options.display.precision = 2
 pd.options.display.max_categories = 8
 pd.options.display.max_rows = 20
