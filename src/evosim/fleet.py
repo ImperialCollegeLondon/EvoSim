@@ -76,9 +76,13 @@ def random_fleet(
         socket_types: A list of :py:class:`~evosim.charging_posts.Sockets` from which to
             choose randomly. Defaults to all available socket types.
         socket_distribution: weights when choosing the socket types.
+        socket_multiplicity: number of different types of socket each post can
+            accomodate.
         charger_types: A list of :py:class:`~evosim.charging_posts.Chargers` from which
             to choose randomly. Defaults to all available charger types.
         charger_distribution: weights when choosing the charger types.
+        charger_multiplicity: number of different types of chargers each post can
+            accomodate.
         model_types: A list of :py:class:`~evosim.fleet.Models` from which
             to choose randomly. Defaults to all known models.
         seed (Optional[Union[int, numpy.random.Generator]]): seed for the random number
