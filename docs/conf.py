@@ -11,6 +11,13 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 from datetime import datetime  # noqa: E402
+import sys
+
+if sys.version_info >= (3, 8) and sys.platform == "win32":
+    # See: https://github.com/jupyter/jupyter_client/issues/583
+    import asyncio
+
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 # -- Project information -----------------------------------------------------
 
