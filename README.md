@@ -23,7 +23,8 @@ The only pre-requisite is python 3.8 or higher and [git](https://git-scm.com/).
 ## Initial setup
 
 The pre-requisite for development are python 3.8 or higher, the python package manager
-[poetry](https://python-poetry.org/), and [git](https://git-scm.com/).
+[poetry](https://python-poetry.org/), [git](https://git-scm.com/), as well as 
+[pandoc](https://pandoc.org/installing.html) to create parts of the documentation.
 
 EvoSim can be installed for development with:
 
@@ -51,9 +52,6 @@ it, then run:
 ```bash
 pre-commit install
 ```
-
-Finally, to create the documentation it is necessary to install
-[pandoc](https://pandoc.org/installing.html).
 
 ## Testing
 
