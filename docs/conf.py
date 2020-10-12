@@ -108,4 +108,17 @@ def generate_docstring_files():
     (location / "index.rst").write_text(index)
 
 
+def generate_installation():
+    """Generate installation instructions from readme."""
+    from pathlib import Path
+
+    readme = (Path(__file__).parent.parent / "README.md").read_text()
+    location = Path(__file__).parent / "source" / "generated"
+    location.mkdir(exist_ok=True)
+    (location / "installation.md").write_text(
+        "# Installation\n" + readme[readme.find("# Installation") :].replace("#", "##")
+    )
+
+
 generate_docstring_files()
+generate_installation()

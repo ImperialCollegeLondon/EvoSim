@@ -52,6 +52,9 @@ it, then run:
 pre-commit install
 ```
 
+Finally, to create the documentation it is necessary to install
+[pandoc](https://pandoc.org/installing.html).
+
 ## Testing
 
 EvoSim is developed using the [Test Driven Development
@@ -88,7 +91,9 @@ The documentation can be generated with:
 poetry run sphinx-build -b html docs build
 ```
 
-Then open the file "build/index.html" with a browser.
+Then open the file "build/index.html" with a browser. Note that is necessary to install
+[pandoc](https://pandoc.org/installing.html) to convert the how-to notebooks which are
+part of the documentation.
 
 ## Preparing a new release
 
