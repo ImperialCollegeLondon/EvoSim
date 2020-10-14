@@ -55,6 +55,8 @@ Functions
 
 .. autofunction:: evosim.matchers.classify
 
+.. autofunction:: evosim.matchers.classify_with_fleet
+
 Objectives
 ==========
 
