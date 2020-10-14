@@ -1,7 +1,8 @@
 from pathlib import Path
-from typing import Any, Callable, Mapping, Sequence, Text, Union
+from typing import Any, Callable, Generator, Mapping, Sequence, Text, Union
 
 import numpy as np
+import pandas as pd
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
@@ -105,3 +106,81 @@ def factory(
         return result
 
     return match
+
+
+def classify(
+    data: pd.DataFrame, matcher: Matcher, revisit: bool = False
+) -> Generator[pd.Series, None, None]:
+    """Partitions a fleet or infrastructure into classes matching the matcher.
+
+    This method breaks up the input ``data`` into classes by figuring which rows match
+    each other according to the input ``matcher`` method.
+
+    .. note::
+
+        The result of this method is not necessarily unique. For instance, there can be
+        `matcher` function where there exists a row ``i`` in ``matcher(data, data[0])``
+        for which ``matcher(data, data[0]) != matcher(data, data[i])``. In  that case,
+        if we where to start the classification with `i` it would likely yield a
+        different set of classes.
+
+    Args:
+        data: Dataframe to split into classes
+        matcher: Method by which to create classes
+        revisit: If ``True`` then rows can be part of more than one class.
+
+    Example:
+
+        This method is actually a generator, meant to be used in a loop. Below, we
+        immediatly materialize the loop into a list:
+
+        >>> data = evosim.charging_posts.random_charging_posts(
+        ...     50, seed=1, socket_multiplicity=3,
+        ... )
+        >>> matcher = evosim.matchers.factory("socket_compatibility")
+        >>> classes = [u for u in evosim.matchers.classify(data, matcher)]
+
+        Each item in ``classes`` is an array of boolean values indicating whether a
+        particular row of the input dataframe is part of the class. We can verify that
+        the classes have different sizes:
+
+        >>> [u.sum() for u in classes]
+        [7, 20, 10, 10, 3]
+
+        We can also verify that each class matches its first row:
+
+        >>> [matcher(data[u], data[u].iloc[0]).all() for u in classes]
+        [True, True, True, True, True]
+
+        Finally, the concatenation of the classes yields the original data:
+
+        >>> (pd.concat((data[u] for u in classes)).sort_index() == data).all()
+        latitude     True
+        longitude    True
+        socket       True
+        charger      True
+        capacity     True
+        occupancy    True
+        dtype: bool
+
+        By default, the classification will only include each row once. However, it is
+        possible to create overlapping classes. We can verify that ovelapping classes
+        have smaller sizes than non-overlapping classes:
+
+        >>> overlap = [u for u in evosim.matchers.classify(data, matcher, revisit=True)]
+        >>> [u.sum() for u in overlap]
+        [7, 21, 12, 12, 11]
+        >>> [u.sum() <= v.sum() for u, v in zip(classes, overlap)]
+        [True, True, True, True, True]
+
+        Furthermore each non-overlapping class is as subset of the relevant overlapping
+        class:
+
+        >>> [set(u.index).issubset(v.index) for u, v in zip(classes, overlap)]
+        [True, True, True, True, True]
+    """
+    visitless = np.ones(len(data), dtype=bool)
+    while visitless.any():
+        is_match = matcher(data, data.iloc[np.argmax(visitless)])
+        yield is_match if revisit else np.logical_and(is_match, visitless)
+        visitless = np.logical_and(~is_match.to_numpy(), visitless)

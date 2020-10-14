@@ -53,6 +53,8 @@ Functions
 
 .. autofunction:: evosim.matchers.distance
 
+.. autofunction:: evosim.matchers.classify
+
 Objectives
 ==========
 
