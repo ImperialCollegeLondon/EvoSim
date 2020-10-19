@@ -111,7 +111,7 @@ def random_overbooking(
 ):
     """Random allocation for overbooked infrastructure.
 
-    The infrastructure is overbooked when there are more electric vehicles the spare
+    The infrastructure is overbooked when there are more electric vehicles than spare
     posts. In that case, we first try and allocate a random subset of vehicles. Then,
     we match left-over vehicles with whatever capacity is still available from the first
     step.
