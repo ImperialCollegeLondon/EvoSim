@@ -1,58 +1,115 @@
-# Poetry Template
+# EvoSim
 
-![build status](../../workflows/ci/badge.svg)
+Simulation package for the [EVOLVE](https://www.imperial.ac.uk/evolve-project) project:
+Electric Vehicle fleet Optimisation for lowering vehicle Emissions.
 
-This is a minimal Python 3.8 application that uses [poetry](https://python-poetry.org) for packaging and dependency management. It also provides [pre-commit](https://pre-commit.com/) hooks (for [Black](https://black.readthedocs.io/en/stable/) and [Flake8](https://flake8.pycqa.org/en/latest/)) and automated tests using [pytest](https://pytest.org/), [Coverage.py](https://coverage.readthedocs.io/) and [GitHub Actions](https://github.com/features/actions). Documentation can be generated with [Sphinx](https://www.sphinx-doc.org/en/master/), and version numbers updated with [bump2version](https://github.com/c4urself/bump2version). It was developed by the [Imperial College Research Computing Service](https://www.imperial.ac.uk/admin-services/ict/self-service/research-support/rcs/) while developing the control software for the [SPARTA](https://www.nature.com/articles/s41467-018-06397-6) system.
+![Build Status](https://github.com/ImperialCollegeLondon/EvoSim/workflows/ci/badge.svg)
 
-To use this repository as a template for your own application:
+# Installation for users
 
-1. [Download and install Poetry](https://python-poetry.org/docs/#installation) following the instructions for your OS.
-1. Click the green "Use this template" button above
-1. Name and create your repository
-1. Clone your new repository and make it your working directory
-1. Replace instances of `poetry_template` with your own application name. Edit:
-   - `pyproject.toml`
-   - `tests/test_poetry_template.py`
-   - The `poetry_template` directory name and `poetry_template/__main__.py`
-   - `docs/source/conf.py`
-   - `setup.cfg`
-1. Set up the virtual environment:
+The latest package can be installed with:
 
+```bash
+pip install git+https://github.com/ImperialCollegeLondon/EvoSim.git@main
+```
+
+Specific versions or branches (e.g. "develop") can be installed by replacing "main" with
+the name of the commit, tag, or branch.
+
+The only pre-requisite is python 3.8 or higher and [git](https://git-scm.com/).
+
+# Installation for Developers
+
+## Initial setup
+
+The pre-requisite for development are python 3.8 or higher, the python package manager
+[poetry](https://python-poetry.org/), [git](https://git-scm.com/), as well as 
+[pandoc](https://pandoc.org/installing.html) to create parts of the documentation.
+
+EvoSim can be installed for development with:
+
+```bash
+# Clone the repository
+git clone https://github.com/ImperialCollegeLondon/EvoSim
+# Move to the directory with the source files
+cd EvoSim
+# Switch to a new branch
+git switch -c my_new_branch origin/develop
+# Install a virtual environment with the EvoSim package
+poetry install
+# Start hacking!!
+```
+
+All development should occur in a branch starting from "develop". It should be merged
+back into the development branch "develop" via a pull-request.
+
+It is recommended to use [pre-commit](https://pre-commit.com/). It will run a number of
+tests before each commit to help maintain code quality. For instance, it will run
+[black](https://github.com/psf/black) to ensure the code is formatted in a consistent
+manner. To enable [pre-commit](https://pre-commit.com/) on your worktree, first install
+it, then run:
+
+```bash
+pre-commit install
+```
+
+## Testing
+
+EvoSim is developed using the [Test Driven Development
+methodology](https://en.wikipedia.org/wiki/Test-driven_development). In practice, it
+means many test have been written ensuring that each part of the code works as expected.
+There are two types of tests:
+
+- unittest: in the "tests/" subdirectory. They check the internal implementation of
+    EvoSim.
+
+    ```bash
+    poetry run pytest
+    ```
+
+- doctest: in the "\*.rst" files with the source code. These tests are part of the
+    documentation and document how EvoSim can be used and enhanced by developers.
+
+    ```bash
+    poetry run sphinx-build -E -b doctest docs build
+    ```
+
+Linux, MacOS, and Window Linux Subsystem users can run both types of tests with:
+
+```bash
+make tests
+```
+
+
+## Documentation
+
+The documentation can be generated with:
+
+```bash
+poetry run sphinx-build -b html docs build
+```
+
+Then open the file "build/index.html" with a browser. Note that is necessary to install
+[pandoc](https://pandoc.org/installing.html) to convert the how-to notebooks which are
+part of the documentation.
+
+## Preparing a new release
+
+Once it is time for a new release, run the following steps:
+
+1. create a new branch:
+   
    ```bash
-   poetry install
+   git fetch origin
+   git switch -c release_XXX origin/develop
    ```
 
-1. Activate the virtual environment (alternatively, ensure any python-related command is preceded by `poetry run`):
+1. bump the version up 
 
    ```bash
-   poetry shell
+   poetry run bump2version minor
    ```
 
-1. Install the git hooks:
-
-   ```bash
-   pre-commit install
-   ```
-
-1. Run the main app:
-
-   ```bash
-   python 
-   ```
-
-1. Run the tests:
-
-   ```bash
-   pytest
-   ```
-
-1. Build the documentation:
-
-   ```bash
-   sphinx-build -b html docs/source/ docs/build/
-   ```
-
-1. Edit/replace `.py` files, `setup.cfg` and `.github/workflows/python-package.yml` as required.
-1. Add new requirements with `poetry add` or by manually adding them to `pyproject.toml`
-
-For a more traditional `pip`-based project template, try [Pytest Application Template](https://github.com/ImperialCollegeLondon/pytest_template_application).
+1. open a PR against "develop" and merge
+1. open a PR from "develop" to "main" and merge
+1. release [via github](https://docs.github.com/en/github/administering-a-repository/managing-releases-in-a-repository)
