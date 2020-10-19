@@ -11,6 +11,13 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 from datetime import datetime  # noqa: E402
+import sys
+
+if sys.version_info >= (3, 8) and sys.platform == "win32":
+    # See: https://github.com/jupyter/jupyter_client/issues/583
+    import asyncio
+
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 # -- Project information -----------------------------------------------------
 
@@ -28,6 +35,7 @@ release = "0.1.0"
 # ones.
 extensions = [
     "recommonmark",
+    "nbsphinx",
     "sphinx.ext.doctest",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
@@ -73,6 +81,7 @@ import pandas as pd
 import numpy as np
 import evosim
 
+pd.options.mode.chained_assignment = "raise"
 pd.options.display.precision = 2
 pd.options.display.max_categories = 8
 pd.options.display.max_rows = 20
@@ -106,4 +115,17 @@ def generate_docstring_files():
     (location / "index.rst").write_text(index)
 
 
+def generate_installation():
+    """Generate installation instructions from readme."""
+    from pathlib import Path
+
+    readme = (Path(__file__).parent.parent / "README.md").read_text()
+    location = Path(__file__).parent / "source" / "generated"
+    location.mkdir(exist_ok=True)
+    (location / "installation.md").write_text(
+        "# Installation\n" + readme[readme.find("# Installation") :].replace("#", "##")
+    )
+
+
 generate_docstring_files()
+generate_installation()

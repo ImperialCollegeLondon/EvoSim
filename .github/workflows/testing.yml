@@ -21,6 +21,22 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+
+    - name: Install pandoc on ubuntu
+      if: startsWith(matrix.os, 'ubuntu')
+      run: |
+          sudo apt-get update
+          sudo apt install -y pandoc
+
+    - name: Install pandoc on macos
+      if: startsWith(matrix.os, 'macos')
+      run: brew install pandoc
+
+    - name: Install pandoc on windows
+      if: startsWith(matrix.os, 'windows')
+      uses: crazy-max/ghaction-chocolatey@v1
+      with:
+        args: install pandoc
     
     - name: Install Poetry
       run: |

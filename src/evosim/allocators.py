@@ -1,8 +1,10 @@
 from pathlib import Path
-from typing import Any, Callable, Optional, Union
+from typing import Callable, Optional, Union
 
 import numpy as np
 import pandas as pd
+
+from evosim.matchers import Matcher
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
@@ -10,7 +12,7 @@ __doc__ = Path(__file__).with_suffix(".rst").read_text()
 def random_allocator(
     fleet: pd.DataFrame,
     charging_posts: pd.DataFrame,
-    matcher: Callable[[Any, Any], Any],
+    matcher: Matcher,
     maxiter: Optional[int] = None,
     seed: Optional[Union[int, np.random.Generator]] = None,
 ) -> pd.DataFrame:
@@ -44,19 +46,24 @@ def random_allocator(
         pandas.DataFrame: A shallow copy of the ``fleet`` dataframe with an extra
         column, "allocation", giving the index into the ``charging_post`` dataframe.
     """
+    from functools import partial
+
     vacancy_by_number = charging_posts.capacity - charging_posts.occupancy
-    if vacancy_by_number.sum() < len(fleet):
-        # TODO: random allocator cannot deal with len(eVS) > len(vacancies)
-        # labels: enhancement
-        # The algorithm currently expects that the list of vacancies should be larger
-        # that the list of electric vehicles.
-        raise NotImplementedError("Cannot deal with overbooking yet")
     if isinstance(seed, np.random.Generator):
         rng = seed
     else:
         rng = np.random.default_rng(seed=seed)
+    if vacancy_by_number.sum() < len(fleet):
+        return random_overbooking(
+            fleet,
+            charging_posts,
+            seed=rng,
+            method=partial(
+                random_allocator, maxiter=maxiter, seed=rng, matcher=matcher
+            ),
+        )
 
-    vacancies = np.array([i for i, n in enumerate(vacancy_by_number) for _ in range(n)])
+    vacancies = np.array([i for i, n in vacancy_by_number.items() for _ in range(n)])
 
     if maxiter is None or maxiter <= 0:
         # TODO: tighten random allocator's default maxiter
@@ -64,7 +71,7 @@ def random_allocator(
         # The default maximum number of iteration is equal to the number of charging
         # post vacancies. But that could be tightened within the loop itself, whenever
         # vacancies are allocated. Not sure how though.
-        maxiter = len(vacancies)
+        maxiter = len(vacancies) + 1
 
     rng.shuffle(vacancies)
 
@@ -89,7 +96,75 @@ def random_allocator(
             break
         vacancies = np.roll(vacancies, shift=1)
     result = fleet.copy(deep=False)
-    result["allocation"] = pd.Series(
-        np.where(assignment < 0, pd.NA, assignment), dtype="Int64"
+    result["allocation"] = assignment
+    result["allocation"] = result.allocation.where(result.allocation >= 0).astype(
+        "Int64"
     )
+    return result
+
+
+def random_overbooking(
+    fleet: pd.DataFrame,
+    charging_posts: pd.DataFrame,
+    method: Callable[[pd.DataFrame, pd.DataFrame], pd.DataFrame],
+    seed: Optional[Union[int, np.random.Generator]] = None,
+):
+    """Random allocation for overbooked infrastructure.
+
+    The infrastructure is overbooked when there are more electric vehicles than spare
+    posts. In that case, we first try and allocate a random subset of vehicles. Then,
+    we match left-over vehicles with whatever capacity is still available from the first
+    step.
+
+    Args:
+        fleet (pandas.DataFrame): dataframe of electric vehicles
+        charging_posts (pandas.DataFrame): dataframe of charging_posts
+        method: an allocator method taking only two argument, the fleet and the charging
+            post infrastructure. It could be something like
+            ``functools.partial(random_allocator, matcher=matcher)``.
+        seed (Optional[Union[int, numpy.random.Generator]]): seed for the random number
+            generators. Defaults to ``None``. See :py:func:`numpy.random.default_rng`.
+            Alternatively, it can be a :py:class:`numpy.random.Generator` instance.
+
+    Returns:
+        pandas.DataFrame: A shallow copy of the ``fleet`` dataframe with an extra
+        column, "allocation", giving the index into the ``charging_post`` dataframe.
+    """
+    if isinstance(seed, np.random.Generator):
+        rng = seed
+    else:
+        rng = np.random.default_rng(seed=seed)
+
+    vacancy_by_number = charging_posts.capacity - charging_posts.occupancy
+    if vacancy_by_number.sum() >= len(fleet):
+        return method(fleet, charging_posts)
+
+    # pick a subfleet to service first
+    subfleet_filter = np.ones(len(fleet), dtype=bool)
+    subfleet_filter[: len(fleet) - vacancy_by_number.sum()] = False
+    rng.shuffle(subfleet_filter)
+
+    # create the result table
+    result = fleet.copy(deep=False)
+
+    # service the subfleet and copy allocations
+    allocated_subfleet = method(fleet.loc[subfleet_filter], charging_posts)
+    result["allocation"] = np.full_like(
+        allocated_subfleet.allocation, pd.NA, shape=len(result)
+    )
+    result.loc[subfleet_filter, "allocation"] = allocated_subfleet.allocation
+
+    # check if there is spare capacity to service the leftover fleet
+    allocation = charging_posts.occupancy.copy(deep=True)
+    new_alloc = allocated_subfleet.groupby("allocation").allocation.count()
+    allocation.loc[new_alloc.index] += new_alloc
+    infrastructure = charging_posts.copy(deep=False).drop(columns="occupancy")
+    infrastructure["occupancy"] = allocation
+    spare_cps = infrastructure.loc[infrastructure.occupancy < infrastructure.capacity]
+    if len(spare_cps) == 0:
+        return result
+    # service leftover fleet
+    leftover = random_overbooking(fleet.loc[~subfleet_filter], spare_cps, method)
+    result.loc[~subfleet_filter, "allocation"] = leftover.allocation
+
     return result

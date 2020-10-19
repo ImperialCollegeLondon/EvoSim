@@ -5,6 +5,8 @@ import numpy as np
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
+Matcher = Callable[[Any, Any], Any]
+
 
 def charging_post_availability(_, charging_post) -> bool:
     """True if the charging post has some spare capacity.
@@ -96,7 +98,10 @@ def factory(
     def match(vehicle, charging_post) -> bool:
         result = functions[0](vehicle, charging_post)
         for function in functions[1:]:
-            result &= function(vehicle, charging_post)
+            intermediate = function(vehicle, charging_post)
+            if isinstance(intermediate, np.ndarray):
+                intermediate = intermediate.astype(bool)
+            result = np.logical_and(result, intermediate)
         return result
 
     return match

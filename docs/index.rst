@@ -9,9 +9,10 @@ Optimisation for lowering vehicle Emissions.
    :maxdepth: 2
    :caption: Contents:
 
-   source/installation.md
+   source/generated/installation.md
    source/manual.rst
    source/api.rst
+   source/howto/index.rst
 
 
 Indices and tables

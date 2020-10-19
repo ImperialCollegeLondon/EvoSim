@@ -153,12 +153,12 @@ We can also check that each that the allocation targeted available space only:
     >>> np.logical_or(occupancy <= cps.capacity, occupancy.isna()).all()
     True
 
-The first line above groups allocations by the charging post they are targeting and
-then counts the number of new assignement. The second line computes the occupancy
-including new allocations. However, not all charging posts are targeted. These posts
-are not found in ``allocation``, and hence their occupancy is ``np.NaN``. This treatment
-of missing data is a feature of :py:mod:`pandas`. The last line shows that allocations
-targeted available spaces.
+The first line above groups allocations by the charging post they are targeting and then
+counts the number of new assignment. The second line computes the occupancy including
+new allocations. However, not all charging posts are targeted. These posts are not found
+in ``allocation``, and hence their occupancy is ``np.NaN``. This treatment of missing
+data is a feature of :py:mod:`pandas`. The last line shows that allocations targeted
+available spaces.
 
 
 .. testcode:: random_allocator

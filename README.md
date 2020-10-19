@@ -23,7 +23,8 @@ The only pre-requisite is python 3.8 or higher and [git](https://git-scm.com/).
 ## Initial setup
 
 The pre-requisite for development are python 3.8 or higher, the python package manager
-[poetry](https://python-poetry.org/), and [git](https://git-scm.com/).
+[poetry](https://python-poetry.org/), [git](https://git-scm.com/), as well as 
+[pandoc](https://pandoc.org/installing.html) to create parts of the documentation.
 
 EvoSim can be installed for development with:
 
@@ -88,7 +89,9 @@ The documentation can be generated with:
 poetry run sphinx-build -b html docs build
 ```
 
-Then open the file "build/index.html" with a browser.
+Then open the file "build/index.html" with a browser. Note that is necessary to install
+[pandoc](https://pandoc.org/installing.html) to convert the how-to notebooks which are
+part of the documentation.
 
 ## Preparing a new release
 
