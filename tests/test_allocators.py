@@ -21,8 +21,8 @@ def test_random_allocator_too_many_vehicles(rng):
 
     matcher = matchers.factory("socket_compatibility")
     result = random_allocator(evs, cps, matcher, seed=rng)
-    new_assignements = result.groupby("allocation").allocation.count()
-    assert (new_assignements + cps.occupancy == cps.capacity).all()
+    new_assignments = result.groupby("allocation").allocation.count()
+    assert (new_assignments + cps.occupancy == cps.capacity).all()
 
 
 def test_random_allocator_exact_match(rng):
@@ -54,9 +54,9 @@ def test_random_allocator_exact_match(rng):
 
     # all allocations target available spaces
     available = cps.loc[cps.occupancy < cps.capacity]
-    new_assignements = result.groupby("allocation").allocation.count()
-    assert (new_assignements.index == available.index).all()
-    assert (available.occupancy + new_assignements == available.capacity).all()
+    new_assignments = result.groupby("allocation").allocation.count()
+    assert (new_assignments.index == available.index).all()
+    assert (available.occupancy + new_assignments == available.capacity).all()
 
     # all allocation do match
     alloc_cps = cps.loc[result.allocation]
@@ -94,9 +94,9 @@ def test_random_allocator_unassigned_cars(rng):
 
     # all allocations target available spaces
     available = cps.loc[cps.occupancy < cps.capacity]
-    new_assignements = result.groupby("allocation").allocation.count()
-    occupancy = available.occupancy + new_assignements
-    assert set(occupancy.index[occupancy.isna()]).isdisjoint(new_assignements.index)
+    new_assignments = result.groupby("allocation").allocation.count()
+    occupancy = available.occupancy + new_assignments
+    assert set(occupancy.index[occupancy.isna()]).isdisjoint(new_assignments.index)
     assert (
         occupancy.loc[~occupancy.isna()] <= available.capacity.loc[~occupancy.isna()]
     ).all()
