@@ -53,9 +53,14 @@ Functions
 
 .. autofunction:: evosim.matchers.distance
 
+.. autofunction:: evosim.matchers.match_all_to_all
+
 .. autofunction:: evosim.matchers.classify
 
 .. autofunction:: evosim.matchers.classify_with_fleet
+
+.. autofunction:: evosim.matchers.to_namedtuple
+
 
 Objectives
 ==========

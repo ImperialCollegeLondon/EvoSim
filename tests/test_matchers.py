@@ -1,3 +1,4 @@
+import numpy as np
 from pytest import mark
 
 
@@ -43,3 +44,39 @@ def test_socket_compatibility(rng):
     result = socket_compatibility(cps, evs)
     expected = [bool(a & b) for a, b in zip(evs.socket, cps.socket)]
     assert (result == expected).all()
+
+
+def test_all_to_all_indices(rng: np.random.Generator):
+    from evosim.charging_posts import random_charging_posts
+    from evosim.fleet import random_fleet
+    from evosim import matchers
+
+    infrastructure = random_charging_posts(40, seed=rng)
+    fleet = random_fleet(100, seed=rng)
+    matcher = matchers.factory(["socket_compatibility", "charger_compatibility"])
+
+    indices = rng.integers(low=0, high=len(infrastructure), size=(len(fleet), 4))
+    result = matchers.match_all_to_all(fleet, infrastructure, matcher, indices=indices)
+
+    for i in range(indices.shape[1]):
+        column = matcher(
+            fleet, infrastructure.iloc[indices[:, i]].set_index(fleet.index)
+        )
+        assert (result[:, i] == column).all()
+
+
+def test_all_to_all_labels(rng: np.random.Generator):
+    from evosim.charging_posts import random_charging_posts
+    from evosim.fleet import random_fleet
+    from evosim import matchers
+
+    infrastructure = random_charging_posts(40, seed=rng)
+    fleet = random_fleet(100, seed=rng)
+    matcher = matchers.factory(["socket_compatibility", "charger_compatibility"])
+
+    labels = rng.integers(low=0, high=len(infrastructure), size=len(fleet))
+    result = matchers.match_all_to_all(fleet, infrastructure, matcher, labels=labels)
+
+    for i in range(len(infrastructure)):
+        column = matcher(fleet, infrastructure.loc[labels[i]])
+        assert (result[:, i] == column).all()

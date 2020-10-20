@@ -1,5 +1,15 @@
 from pathlib import Path
-from typing import Any, Callable, Iterator, Mapping, Sequence, Text, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Iterator,
+    Mapping,
+    Optional,
+    Sequence,
+    Text,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 import pandas as pd
@@ -40,7 +50,10 @@ def charging_post_availability(_, charging_post) -> bool:
 
 def socket_compatibility(vehicle, charging_post) -> bool:
     """True if vehicle and charging post are compatible."""
-    return np.bitwise_and(vehicle.socket, charging_post.socket)
+    result = np.bitwise_and(vehicle.socket, charging_post.socket)
+    if isinstance(result, (np.ndarray, pd.Series)):
+        return result.astype(bool)
+    return result
 
 
 def distance(vehicle, charging_post, max_distance: float = 1) -> bool:
@@ -67,7 +80,10 @@ def distance_from_destination(vehicle, charging_post, max_distance: float = 1) -
 
 def charger_compatibility(vehicle, charging_post) -> bool:
     """True if vehicle and charging post are compatible."""
-    return np.bitwise_and(vehicle.charger, charging_post.charger)
+    result = np.bitwise_and(vehicle.charger, charging_post.charger)
+    if isinstance(result, (np.ndarray, pd.Series)):
+        return result.astype(bool)
+    return result
 
 
 def single_factory(settings: Union[Text, Mapping]) -> Callable[[Any, Any], bool]:
@@ -125,13 +141,13 @@ def classify(
         different set of classes.
 
     Args:
-        data: table to split into classes
+        data (pandas.DataFrame): table to split into classes
         matcher: Method by which to create classes
         revisit: If ``True`` then rows can be part of more than one class.
 
     Returns:
-        Iterator[pd.Series]: a boolean array indicating whether each row of the input
-        table ``data`` is part of the class.
+        Iterator[pandas.Series]: a boolean array indicating whether each row of the
+        input table ``data`` is part of the class.
 
     Example:
 
@@ -210,11 +226,17 @@ def classify_with_fleet(
 ) -> Iterator[Tuple[pd.Series, pd.Series]]:
     """Creates classes of matching charging_posts and subfleets.
 
-    Using :py:func:`~evosim.matcher.classify`, this function creates matching classes of
-    charging posts. It then pairs each with a matching subfleet.
+    Using :py:func:`~evosim.matchers.classify`, this function creates matching classes
+    of charging posts. It then pairs each with a matching subfleet.
+
+    Args:
+        charging_posts (pandas.DataFrame): the table of charging posts.
+        matcher: a function to compare charging posts and electric vehicles.
+        fleet (pandas.DataFrame): the table of electric vehicles.
+        revisit: if `True`, then the classes can overlap.
 
     Returns:
-        Iterator[Tuple[pd.Series, pd.Series]]: a named 2-tuple of boolean arrays
+        Iterator[Tuple[pandas.Series, pandas.Series]]: a named 2-tuple of boolean arrays
         indicating whether each row of the input table ``charging_posts`` and ``fleet``
         is part of the class.
 
@@ -271,3 +293,67 @@ def classify_with_fleet(
         yieldee = is_match if revisit else np.logical_and(is_match, visitless)
         yield ChargingPostsAndFleet(infrastructure, yieldee)
         visitless = np.logical_and(~is_match.to_numpy(), visitless)
+
+
+def to_namedtuple(data: pd.DataFrame, transform: Optional[Callable] = None):
+    """Convert dataframe to namedtuple and apply transformation to each column.
+
+    The main use case is to perform a matrix-wise match between a fleet and charging
+    posts, as per :py:func:`~evosim.matchers.match_all_to_all`.
+
+    Args:
+        data (pandas.DataFrame): a dataframe to transform to a named tuple.
+        transform: an optional operation applied to each column.
+    """
+    from collections import namedtuple
+
+    if transform is None:
+        transform = pd.Series.to_numpy
+
+    DataTuple = namedtuple("DataTuple", [str(u) for u in data.columns])  # type: ignore
+    args = {str(k): transform(data[k]) for k in data.columns}
+    return DataTuple(**args)  # type: ignore
+
+
+def match_all_to_all(
+    fleet: pd.DataFrame,
+    charging_posts: pd.DataFrame,
+    matcher: Matcher,
+    labels: Optional[Sequence] = None,
+    indices: Optional[Sequence[int]] = None,
+) -> np.ndarray:
+    """Match a fleet with each charging post (or a subset therein).
+
+    Essentially, this is an outer product between the fleet and the charging posts where
+    the product is the matcher.
+
+    Args:
+        fleet (pandas.DataFrame): fleet of electric vehicles
+        charging_posts (pandas.DataFrame): infrastructure against which to match each
+            vehicle of the fleet.
+        matcher: matching function to apply between each vehicle and charging posts.
+        labels: if present, this is an array of labels (i.e.
+            :py:meth:`pandas.DataFrame.loc`) into the chargin_posts. It cannot be used
+            in conjunction with `indices`.
+        indices: if present, this should a matrix of indices (i.e.
+            :py:meth:`pandas.DataFrame.iloc`) into the charging posts. It cannot be use
+            in conjunction with `labels`.
+
+    Returns:
+        A boolean numpy matrix (fleet vs charing posts) indicating each match.
+    """
+    fleet_nt = to_namedtuple(fleet, lambda x: x.to_numpy()[:, None])
+    if indices is None and labels is None:
+        infrastructure_nt = to_namedtuple(charging_posts, lambda x: x.to_numpy()[None])
+    elif indices is not None and labels is None:
+        infrastructure_nt = to_namedtuple(
+            charging_posts, lambda x: x.to_numpy()[indices]
+        )
+    elif indices is None and labels is not None:
+        infrastructure_nt = to_namedtuple(
+            charging_posts.loc[labels], lambda x: x.to_numpy()[None]
+        )
+    else:
+        msg = "`indices` and `labels` cannot both be given at the same time."
+        raise ValueError(msg)
+    return matcher(fleet_nt, infrastructure_nt)
