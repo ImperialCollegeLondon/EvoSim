@@ -12,15 +12,14 @@ exposition, we can generate a random problem as done below:
     >>> rng = np.random.default_rng(1)
     >>> socket_types = list(evosim.charging_posts.Sockets)[:2]
     >>> charger_types = list(evosim.charging_posts.Chargers)[:2]
-
-    >>> cps = evosim.charging_posts.random_charging_posts(
+    >>> infrastructure = evosim.charging_posts.random_charging_posts(
     ...     10,
     ...     capacity = 3,
     ...     socket_types=socket_types,
     ...     charger_types=charger_types,
     ...     seed=rng,
     ... )
-    >>> cps
+    >>> infrastructure
        latitude  longitude socket charger  capacity  occupancy
     0     51.48       0.82  TYPE1    SLOW         2          0
     1     51.68       0.44  TYPE2    FAST         2          0
@@ -33,13 +32,16 @@ exposition, we can generate a random problem as done below:
     8     51.50      -0.14  TYPE2    SLOW         2          0
     9     51.26      -0.04  TYPE2    FAST         2          0
 
-    >>> evs = evosim.fleet.random_fleet(
-    ...     rng.integers(low=len(cps.capacity), high=cps.capacity.sum()),
+    >>> fleet = evosim.fleet.random_fleet(
+    ...     rng.integers(
+    ...         low=len(infrastructure.capacity),
+    ...         high=infrastructure.capacity.sum()
+    ...     ),
     ...     socket_types=socket_types,
     ...     charger_types=charger_types,
     ...     seed=rng,
     ... )
-    >>> evs
+    >>> fleet
         latitude  longitude socket charger  dest_lat  dest_long                      model
     0      51.27  -1.65e-01  TYPE2    SLOW     51.62       0.64             CITROEN_C_ZERO
     1      51.49   9.04e-01  TYPE2    SLOW     51.28       0.25                   BMW_330E
@@ -73,7 +75,9 @@ follows:
 .. doctest:: random_allocator
     :options: +NORMALIZE_WHITESPACE
 
-    >>> result = evosim.allocators.random_allocator(evs, cps, matcher, seed=rng)
+    >>> result = evosim.allocators.random_allocator(
+    ...     fleet, infrastructure, matcher, seed=rng
+    ... )
     >>> result
         latitude  longitude socket charger  dest_lat  dest_long  \
     0      51.27  -1.65e-01  TYPE2    SLOW     51.62       0.64
@@ -111,62 +115,63 @@ follows:
     14              TESLA_MODEL_X           9
     15   PORSCHE_PANAMERA_EHYBRID        <NA>
 
-The allocator returns a (:py:meth:`shallow <pandas.DataFrame.copy>`) copy the electric
-vehicles table with an extra column, ``allocation``. The column are either indices into
-the charging posts table, or ``pandas.NA`` indicating that the cars could not be
-allocated to a charging post. We can check that the allocations do match:
+The allocator returns a (:py:meth:`shallow <pandas.DataFrame.copy>`) shallow copy of the
+electric vehicles table with an extra column, ``allocation``. Each element of the
+allocation column is either a label into the charging posts table, or ``pandas.NA``,
+indicating that the car could not be allocated to a charging post. We can check that the
+allocations do match:
 
 .. doctest:: random_allocator
 
-    >>> alloc_evs = result.loc[~result.allocation.isna()]
-    >>> alloc_cps = cps.loc[alloc_evs.allocation.to_numpy()]
-    >>> matcher(
-    ...     alloc_evs.reset_index(drop=True), alloc_cps.reset_index(drop=True)
-    ... ).all()
+    >>> alloc_fleet = result.dropna()
+    >>> alloc_infra = infrastructure.loc[alloc_fleet.allocation]
+    >>> matcher(alloc_fleet, alloc_infra.set_index(alloc_fleet.index)).all()
     True
 
 This snippet pares down electric vehicles to those that have been allocated a charging
 post. Then it generates a table with such charging posts. Finally, it matches the two
-table. In order to do so, the indices of the tables are reset so that they match.
-Retaining the meaning of the indices during table manipulation is a :py:mod:`pandas`
-feature which has to be done away with in this particular setting.
+table. In order to do so, the labels of the allocated infrastructure table are set to
+match the allocated fleet. This feature of :py:mod:`pandas` ensure we are comparing
+like-to-like.
 
 We can also check that each that the allocation targeted available space only:
 
 .. doctest:: random_allocator
 
-    >>> allocation = result.groupby("allocation").allocation.count()
-    >>> occupancy = allocation + cps.occupancy
+    >>> allocation = (
+    ...     result.allocation.value_counts(dropna=True).reindex_like(infrastructure)
+    ... )
+    >>> occupancy = allocation + infrastructure.occupancy
     >>> occupancy
-    0    2.0
-    1    2.0
-    2    NaN
-    3    1.0
-    4    1.0
-    5    1.0
-    6    NaN
-    7    2.0
-    8    2.0
-    9    2.0
-    dtype: float64
+    0       2
+    1       2
+    2    <NA>
+    3       1
+    4       1
+    5       1
+    6    <NA>
+    7       2
+    8       2
+    9       2
+    dtype: Int64
 
-    >>> np.logical_or(occupancy <= cps.capacity, occupancy.isna()).all()
+    >>> (occupancy <= infrastructure.capacity).all()
     True
 
-The first line above groups allocations by the charging post they are targeting and then
-counts the number of new assignment. The second line computes the occupancy including
-new allocations. However, not all charging posts are targeted. These posts are not found
-in ``allocation``, and hence their occupancy is ``np.NaN``. This treatment of missing
-data is a feature of :py:mod:`pandas`. The last line shows that allocations targeted
-available spaces.
+The first line above counts the number of occurances of each allocation. The second line
+computes the occupancy including new allocations. However, not all charging posts are
+targeted. These posts are not found in ``allocation``, and hence their occupancy is
+``np.NaN``. This treatment of missing data is a feature of :py:mod:`pandas`. The last
+line shows that allocations targeted available spaces (note that :py:mod:`pandas`
+automatically dropped the missing value from the aggregation operation).
 
 
 .. testcode:: random_allocator
 
-    spare_evs = result.loc[result.allocation.isna()]
-    spare_cps = cps.loc[occupancy.fillna(0) < cps.capacity]
-    for _, unallocated in spare_evs.iterrows():
-        assert not matcher(unallocated, spare_cps).any()
+    spare_fleet = result.loc[result.allocation.isna()]
+    spare_infra = infrastructure.loc[occupancy.fillna(0) < infrastructure.capacity]
+    for _, unallocated in spare_fleet.iterrows():
+        assert not matcher(unallocated, spare_infra).any()
 
 Here we first figure out the spare (unallocated) vehicles and spare charging posts. We
 then check the spare vehicles do not fit with any of the spare charging posts.
