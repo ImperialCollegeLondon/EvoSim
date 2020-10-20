@@ -168,3 +168,28 @@ def random_overbooking(
     result.loc[~subfleet_filter, "allocation"] = leftover.allocation
 
     return result
+
+
+def _pick_first(group):
+    """Pick only as many as there are vacancies."""
+    nvacancies = group.vacancies.iloc[0]
+    if len(group) < nvacancies:
+        return group.assignment
+    return group.assignment.where(np.arange(len(group), dtype=int) < nvacancies, pd.NaT)
+
+
+def _void_overbooking(
+    fleet: pd.DataFrame, charging_posts: pd.DataFrame, assignment: pd.Series
+) -> pd.Series:
+    """Set overbooked allocations to NaT."""
+    vacancies = charging_posts.capacity - charging_posts.occupancy
+    assigned = pd.DataFrame(dict(assignment=assignment), index=fleet.index)
+    assigned["vacancies"] = (
+        vacancies.reindex(assigned.assignment).fillna(0).astype(int).to_numpy()
+    )
+
+    x = assigned.groupby("assignment").apply(_pick_first)
+    x.index.names = "fleet", "charging_posts"
+    assigned = assigned.drop(columns="assignment")
+    assigned["assignment"] = x.reset_index("fleet", drop=True)
+    return assigned.assignment

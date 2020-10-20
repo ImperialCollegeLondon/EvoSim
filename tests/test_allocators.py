@@ -1,3 +1,6 @@
+import pandas as pd
+
+
 def test_random_allocator_too_many_vehicles(rng):
     from evosim.charging_posts import random_charging_posts
     from evosim.fleet import random_fleet
@@ -107,3 +110,35 @@ def test_random_allocator_unassigned_cars(rng):
     assert matcher(
         alloc_evs.reset_index(drop=True), alloc_cps.reset_index(drop=True)
     ).all()
+
+
+def test_avoid_overbooking(rng):
+    from evosim.charging_posts import random_charging_posts
+    from evosim.fleet import random_fleet
+    from evosim.allocators import _void_overbooking
+
+    infrastructure = random_charging_posts(20, seed=rng, capacity=5, occupancy=2)
+    fleet = random_fleet(100, seed=rng)
+    fleet["assignment"] = rng.choice(infrastructure.index, size=len(fleet))
+    fleet["assignment"] = fleet.assignment.astype("Int64")
+    fleet.loc[fleet.index.isin(rng.choice(fleet.index, size=50)), "assignment"] = pd.NaT
+
+    notoverbooked = _void_overbooking(fleet, infrastructure, fleet.assignment)
+    assert (notoverbooked == fleet.assignment).dropna().all()
+    assert (notoverbooked.dropna().index.isin(fleet.assignment.dropna().index)).all()
+
+    notoverbooking = notoverbooked.value_counts().reindex_like(infrastructure).fillna(0)
+    is_overbooked = (
+        notoverbooking + infrastructure.occupancy
+    ) > infrastructure.capacity
+    assert not is_overbooked.any()
+
+    booking = fleet.assignment.value_counts().reindex_like(infrastructure).fillna(0)
+    was_overbooked = (booking + infrastructure.occupancy) > infrastructure.capacity
+    assert (
+        ((notoverbooking + infrastructure.occupancy) == infrastructure.capacity)
+        .loc[was_overbooked]
+        .all()
+    )
+    assert (notoverbooking == booking).loc[~was_overbooked].all()
+    assert not (notoverbooking == booking).loc[was_overbooked].any()
