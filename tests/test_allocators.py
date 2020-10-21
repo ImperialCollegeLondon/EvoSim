@@ -142,3 +142,21 @@ def test_void_overbooking(rng):
     )
     assert (notoverbooking == booking).loc[~was_overbooked].all()
     assert not (notoverbooking == booking).loc[was_overbooked].any()
+
+
+def test_void_overbooking_single_alloc(rng):
+    from evosim.charging_posts import random_charging_posts
+    from evosim.fleet import random_fleet
+    from evosim.allocators import _void_overbooking
+
+    infrastructure = random_charging_posts(20, seed=rng, capacity=5, occupancy=2)
+    fleet = random_fleet(100, seed=rng)
+    fleet["allocation"] = 1
+    fleet["allocation"] = fleet.allocation.astype("Int64")
+    fleet.loc[fleet.index.isin(rng.choice(fleet.index, size=50)), "allocation"] = pd.NaT
+
+    notoverbooked = _void_overbooking(fleet, infrastructure, fleet.allocation)
+    assert (notoverbooked == fleet.allocation).dropna().all()
+    assert (notoverbooked.dropna().index.isin(fleet.allocation.dropna().index)).all()
+    assert len(notoverbooked.dropna().unique()) == 1
+    assert notoverbooked.dropna().unique()[0] == 1

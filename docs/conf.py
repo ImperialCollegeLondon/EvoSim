@@ -6,12 +6,13 @@
 
 # -- Path setup --------------------------------------------------------------
 
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-from datetime import datetime  # noqa: E402
 import sys
+
+# documentation root, use os.path.abspath to make it absolute, like shown here.
+from datetime import datetime  # noqa: E402
 
 if sys.version_info >= (3, 8) and sys.platform == "win32":
     # See: https://github.com/jupyter/jupyter_client/issues/583
@@ -58,6 +59,7 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "numpy": ("http://docs.scipy.org/doc/numpy/", None),
     "pandas": ("http://pandas.pydata.org/pandas-docs/stable", None),
+    "sklearn": ("https://scikit-learn.org/stable", None),
 }
 
 # -- Options for HTML output -------------------------------------------------
@@ -87,6 +89,7 @@ pd.options.display.max_categories = 8
 pd.options.display.max_rows = 20
 pd.options.display.max_columns = 10
 pd.options.display.width = 88
+np.set_printoptions(linewidth=88)
 """
 
 
