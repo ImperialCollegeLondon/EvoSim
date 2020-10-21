@@ -24,8 +24,8 @@ def test_random_allocator_too_many_vehicles(rng):
 
     matcher = matchers.factory("socket_compatibility")
     result = random_allocator(evs, cps, matcher, seed=rng)
-    new_assignments = result.groupby("allocation").allocation.count()
-    assert (new_assignments + cps.occupancy == cps.capacity).all()
+    new_allocations = result.groupby("allocation").allocation.count()
+    assert (new_allocations + cps.occupancy == cps.capacity).all()
 
 
 def test_random_allocator_exact_match(rng):
@@ -57,9 +57,9 @@ def test_random_allocator_exact_match(rng):
 
     # all allocations target available spaces
     available = cps.loc[cps.occupancy < cps.capacity]
-    new_assignments = result.groupby("allocation").allocation.count()
-    assert (new_assignments.index == available.index).all()
-    assert (available.occupancy + new_assignments == available.capacity).all()
+    new_allocations = result.groupby("allocation").allocation.count()
+    assert (new_allocations.index == available.index).all()
+    assert (available.occupancy + new_allocations == available.capacity).all()
 
     # all allocation do match
     alloc_cps = cps.loc[result.allocation]
@@ -97,35 +97,35 @@ def test_random_allocator_unassigned_cars(rng):
 
     # all allocations target available spaces
     available = cps.loc[cps.occupancy < cps.capacity]
-    new_assignments = result.groupby("allocation").allocation.count()
-    occupancy = available.occupancy + new_assignments
-    assert set(occupancy.index[occupancy.isna()]).isdisjoint(new_assignments.index)
+    new_allocations = result.groupby("allocation").allocation.count()
+    occupancy = available.occupancy + new_allocations
+    assert set(occupancy.index[occupancy.isna()]).isdisjoint(new_allocations.index)
     assert (
-        occupancy.loc[~occupancy.isna()] <= available.capacity.loc[~occupancy.isna()]
+        occupancy.loc[occupancy.notna()] <= available.capacity.loc[occupancy.notna()]
     ).all()
 
     # all allocation do match
-    alloc_evs = result.loc[~result.allocation.isna()]
+    alloc_evs = result.loc[result.allocation.notna()]
     alloc_cps = cps.loc[alloc_evs.allocation]
     assert matcher(
         alloc_evs.reset_index(drop=True), alloc_cps.reset_index(drop=True)
     ).all()
 
 
-def test_avoid_overbooking(rng):
+def test_void_overbooking(rng):
     from evosim.charging_posts import random_charging_posts
     from evosim.fleet import random_fleet
     from evosim.allocators import _void_overbooking
 
     infrastructure = random_charging_posts(20, seed=rng, capacity=5, occupancy=2)
     fleet = random_fleet(100, seed=rng)
-    fleet["assignment"] = rng.choice(infrastructure.index, size=len(fleet))
-    fleet["assignment"] = fleet.assignment.astype("Int64")
-    fleet.loc[fleet.index.isin(rng.choice(fleet.index, size=50)), "assignment"] = pd.NaT
+    fleet["allocation"] = rng.choice(infrastructure.index, size=len(fleet))
+    fleet["allocation"] = fleet.allocation.astype("Int64")
+    fleet.loc[fleet.index.isin(rng.choice(fleet.index, size=50)), "allocation"] = pd.NaT
 
-    notoverbooked = _void_overbooking(fleet, infrastructure, fleet.assignment)
-    assert (notoverbooked == fleet.assignment).dropna().all()
-    assert (notoverbooked.dropna().index.isin(fleet.assignment.dropna().index)).all()
+    notoverbooked = _void_overbooking(fleet, infrastructure, fleet.allocation)
+    assert (notoverbooked == fleet.allocation).dropna().all()
+    assert (notoverbooked.dropna().index.isin(fleet.allocation.dropna().index)).all()
 
     notoverbooking = notoverbooked.value_counts().reindex_like(infrastructure).fillna(0)
     is_overbooked = (
@@ -133,7 +133,7 @@ def test_avoid_overbooking(rng):
     ) > infrastructure.capacity
     assert not is_overbooked.any()
 
-    booking = fleet.assignment.value_counts().reindex_like(infrastructure).fillna(0)
+    booking = fleet.allocation.value_counts().reindex_like(infrastructure).fillna(0)
     was_overbooked = (booking + infrastructure.occupancy) > infrastructure.capacity
     assert (
         ((notoverbooking + infrastructure.occupancy) == infrastructure.capacity)
