@@ -138,33 +138,21 @@ vehicle to the nearest compatible post.
 .. doctest:: greedy_allocator
     :options: +NORMALIZE_WHITESPACE
 
-    >>> alloc = evosim.allocators.greedy_allocator(
-    ...     fleet, charging_posts, matcher, seed=rng
-    ... )
-    >>> alloc.iloc[:10]
-         latitude  longitude socket charger  dest_lat  dest_long  \
-    376     51.29       1.05  TYPE2    SLOW     51.37       0.91
-    16      51.32       1.20  TYPE2    FAST     51.38       0.83
-    365     51.42       0.84  TYPE2    SLOW     51.59       0.22
-    82      51.46       0.73  TYPE2    FAST     51.53       0.60
-    107     51.67      -0.47  TYPE2    SLOW     51.53      -0.16
-    217     51.49       1.11  TYPE2    SLOW     51.31      -0.16
-    396     51.62       0.66  TYPE2    SLOW     51.55       1.16
-    56      51.39       1.13  TYPE2    FAST     51.43       0.21
-    250     51.36       0.45  TYPE1    FAST     51.70       0.39
-    40      51.46       0.24  TYPE2    SLOW     51.40       0.03
+    >>> result = evosim.allocators.greedy_allocator(fleet, charging_posts, matcher)
+    >>> result.iloc[:5]
+         latitude  longitude socket charger  dest_lat  dest_long                   model  \
+    376     51.29       1.05  TYPE2    SLOW     51.37       0.91  HYUNDAI_IONIQ_ELECTRIC
+    16      51.32       1.20  TYPE2    FAST     51.38       0.83     MERCEDES_BENZ_E350E
+    365     51.42       0.84  TYPE2    SLOW     51.59       0.22                  BMW_I3
+    82      51.46       0.73  TYPE2    FAST     51.53       0.60              BMW_X5_40E
+    107     51.67      -0.47  TYPE2    SLOW     51.53      -0.16           JAGUAR_I_PACE
     <BLANKLINE>
-                             model  allocation
-    376     HYUNDAI_IONIQ_ELECTRIC        <NA>
-    16         MERCEDES_BENZ_E350E        <NA>
-    365                     BMW_I3        <NA>
-    82                  BMW_X5_40E        <NA>
-    107              JAGUAR_I_PACE        <NA>
-    217                  BMW_225XE        <NA>
-    396  MINI_COUNTRYMAN_COOPER_SE          13
-    56       VOLKSWAGEN_PASSAT_GTE          30
-    250      VOLVO_V90_TWIN_ENGINE        <NA>
-    40                 RENAULT_ZOE        <NA>
+         allocation
+    376          13
+    16           30
+    365          27
+    82           23
+    107        <NA>
 
 In the same vein as for :py:func:`~evosim.allocators.random_allocator`, the function
 returns a shallow copy of the ``fleet`` with an ``allocation`` column holding the label
@@ -250,10 +238,10 @@ first empty matching post:
     vacancies = (
         charging_posts.capacity
         - charging_posts.occupancy
-        - alloc.allocation.value_counts().reindex_like(charging_posts).fillna(0)
+        - result.allocation.value_counts().reindex_like(charging_posts).fillna(0)
     )
 
-    iterator = enumerate(alloc.itertuples(index=False))
+    iterator = enumerate(result.itertuples(index=False))
     for i, vehicle in iterator:
 
         post_labels = charging_posts.iloc[indices[i, match[i, indices[i]]]].index

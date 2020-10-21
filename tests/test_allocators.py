@@ -160,3 +160,35 @@ def test_void_overbooking_single_alloc(rng):
     assert (notoverbooked.dropna().index.isin(fleet.allocation.dropna().index)).all()
     assert len(notoverbooked.dropna().unique()) == 1
     assert notoverbooked.dropna().unique()[0] == 1
+
+
+def test_greedy_allocator(rng):
+    from evosim.charging_posts import Sockets, Chargers, random_charging_posts
+    from evosim.fleet import random_fleet
+    from evosim import matchers
+    from evosim.allocators import greedy_allocator
+
+    sockets = list(Sockets)[:2]
+    chargers = list(Chargers)[:2]
+    charging_posts = random_charging_posts(
+        100, capacity=3, socket_types=sockets, charger_types=chargers, seed=rng,
+    ).sample(50, random_state=2)
+    fleet = random_fleet(
+        200, socket_types=sockets, charger_types=chargers, seed=rng
+    ).sample(100, random_state=3)
+    matcher = matchers.factory(["socket_compatibility", "charger_compatibility"])
+
+    result = greedy_allocator(fleet, charging_posts, matcher)
+
+    alloc_fleet = result.dropna()
+    alloc_infra = charging_posts.loc[alloc_fleet.allocation]
+    assert matcher(alloc_fleet, alloc_infra.set_index(alloc_fleet.index)).all()
+
+    allocation = result.allocation.value_counts().reindex_like(charging_posts)
+    occupancy = allocation + charging_posts.occupancy
+    assert (occupancy <= charging_posts.capacity).all()
+
+    spare_fleet = result.loc[result.allocation.isna()]
+    spare_infra = charging_posts.loc[occupancy.fillna(0) < charging_posts.capacity]
+    for _, unallocated in spare_fleet.iterrows():
+        assert not matcher(unallocated, spare_infra).any()
