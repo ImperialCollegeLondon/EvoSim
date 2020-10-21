@@ -75,31 +75,28 @@ def random_allocator(
 
     rng.shuffle(vacancies)
 
-    assignment = -np.ones(len(fleet), dtype=int)
-
+    allocation = pd.Series(np.full(len(fleet), pd.NA), dtype="Int64", index=fleet.index)
     unassigned = fleet.copy(deep=False)
     for _ in range(maxiter):
         is_match = matcher(
             unassigned.reset_index(drop=True),
             charging_posts.loc[vacancies[: len(unassigned)]].reset_index(drop=True),
         ).to_numpy()
-        assignment[assignment < 0] = np.where(
-            is_match, vacancies[: len(unassigned)], -1
-        )
-        unassigned = unassigned[~is_match]
-        vacancies = vacancies[
-            np.concatenate(
-                (~is_match, np.ones(len(vacancies) - len(is_match), dtype=bool))
+        if is_match.any():
+            allocation.loc[allocation.isna()] = np.where(
+                is_match, vacancies[: len(unassigned)], pd.NA
             )
-        ]
-        if len(unassigned) == 0:
-            break
-        vacancies = np.roll(vacancies, shift=1)
+            unassigned = unassigned[~is_match]
+            vacancies = vacancies[
+                np.concatenate(
+                    (~is_match, np.ones(len(vacancies) - len(is_match), dtype=bool))
+                )
+            ]
+            if len(unassigned) == 0:
+                break
+        vacancies = np.roll(vacancies, shift=-1)
     result = fleet.copy(deep=False)
-    result["allocation"] = assignment
-    result["allocation"] = result.allocation.where(result.allocation >= 0).astype(
-        "Int64"
-    )
+    result["allocation"] = allocation
     return result
 
 
@@ -164,7 +161,9 @@ def random_overbooking(
     if len(spare_cps) == 0:
         return result
     # service leftover fleet
-    leftover = random_overbooking(fleet.loc[~subfleet_filter], spare_cps, method)
+    leftover = random_overbooking(
+        fleet.loc[~subfleet_filter], spare_cps, method, seed=rng
+    )
     result.loc[~subfleet_filter, "allocation"] = leftover.allocation
 
     return result

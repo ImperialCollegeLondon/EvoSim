@@ -4,65 +4,27 @@ Allocators
 Allocators are algorithms that allocate electric vehicles to charging posts. They will
 generally take as input arguments a dataframe of electric vehicles and a dataframe of
 charging posts. They may also accept a matcher function from :py:mod:`evosim.matchers`,
-as well as an objective function from :py:mod:`evosim.objectives`. For the purpose of
-exposition, we can generate a random problem as done below:
+as well as an objective function from :py:mod:`evosim.objectives`.
 
-.. doctest:: random_allocator
+Random Allocator
+----------------
 
-    >>> rng = np.random.default_rng(1)
-    >>> socket_types = list(evosim.charging_posts.Sockets)[:2]
-    >>> charger_types = list(evosim.charging_posts.Chargers)[:2]
-    >>> infrastructure = evosim.charging_posts.random_charging_posts(
-    ...     10,
-    ...     capacity = 3,
-    ...     socket_types=socket_types,
-    ...     charger_types=charger_types,
-    ...     seed=rng,
-    ... )
-    >>> infrastructure
-       latitude  longitude socket charger  capacity  occupancy
-    0     51.48       0.82  TYPE1    SLOW         2          0
-    1     51.68       0.44  TYPE2    FAST         2          0
-    2     51.31       0.08  TYPE1    SLOW         1          0
-    3     51.68       0.88  TYPE1    FAST         1          0
-    4     51.39       0.03  TYPE1    FAST         2          0
-    5     51.44       0.29  TYPE1    SLOW         2          0
-    6     51.62      -0.27  TYPE1    FAST         2          0
-    7     51.43       0.21  TYPE2    SLOW         3          0
-    8     51.50      -0.14  TYPE2    SLOW         2          0
-    9     51.26      -0.04  TYPE2    FAST         2          0
+The random allocator simply allocates each electriv vehicle to a charging post, as long
+as the vehicle and post are compatible according to a matcher function. For the purpose
+of exposition, we can generate a random problem as done below:
 
-    >>> fleet = evosim.fleet.random_fleet(
-    ...     rng.integers(
-    ...         low=len(infrastructure.capacity),
-    ...         high=infrastructure.capacity.sum()
-    ...     ),
-    ...     socket_types=socket_types,
-    ...     charger_types=charger_types,
-    ...     seed=rng,
-    ... )
-    >>> fleet
-        latitude  longitude socket charger  dest_lat  dest_long                      model
-    0      51.27  -1.65e-01  TYPE2    SLOW     51.62       0.64             CITROEN_C_ZERO
-    1      51.49   9.04e-01  TYPE2    SLOW     51.28       0.25                   BMW_330E
-    2      51.46  -1.65e-01  TYPE2    FAST     51.62       1.02        MERCEDES_BENZ_C350E
-    3      51.28  -3.57e-01  TYPE2    SLOW     51.32       0.61                  BMW_225XE
-    4      51.54   9.97e-01  TYPE2    FAST     51.42       0.92        MERCEDES_BENZ_E350E
-    5      51.63   1.01e+00  TYPE2    FAST     51.39       0.10  MITSUBISHI_OUTLANDER_PHEV
-    6      51.52   1.03e+00  TYPE1    FAST     51.56       0.45           SMART_EQ_FORFOUR
-    7      51.37   3.26e-01  TYPE1    SLOW     51.33      -0.16   PORSCHE_PANAMERA_EHYBRID
-    8      51.63  -2.04e-02  TYPE1    FAST     51.43       1.24  MINI_COUNTRYMAN_COOPER_SE
-    9      51.48  -4.88e-01  TYPE1    SLOW     51.25      -0.07             CITROEN_C_ZERO
-    10     51.48   6.30e-01  TYPE2    FAST     51.37      -0.05   PORSCHE_PANAMERA_EHYBRID
-    11     51.59   7.60e-01  TYPE2    SLOW     51.44      -0.37  MINI_COUNTRYMAN_COOPER_SE
-    12     51.32   9.62e-01  TYPE1    SLOW     51.30      -0.05      VOLKSWAGEN_PASSAT_GTE
-    13     51.62  -6.71e-03  TYPE2    FAST     51.53       0.84            SMART_EQ_FORTWO
-    14     51.56  -1.23e-01  TYPE2    FAST     51.42       0.72              TESLA_MODEL_X
-    15     51.60   6.19e-01  TYPE2    FAST     51.58      -0.27   PORSCHE_PANAMERA_EHYBRID
+.. testcode:: random_allocator,greedy_allocator
 
-    >>> matcher = evosim.matchers.factory(
-    ...     ["socket_compatibility", "charger_compatibility"]
-    ... )
+    rng = np.random.default_rng(1)
+    sockets = list(evosim.charging_posts.Sockets)[:2]
+    chargers = list(evosim.charging_posts.Chargers)[:2]
+    charging_posts = evosim.charging_posts.random_charging_posts(
+        100, capacity=3, socket_types=sockets, charger_types=chargers, seed=rng,
+    ).sample(10, random_state=2).sort_index()
+    fleet = evosim.fleet.random_fleet(
+        400, socket_types=sockets, charger_types=chargers, seed=rng
+    ).sample(40, random_state=3).sort_index()
+    matcher = evosim.matchers.factory(["socket_compatibility", "charger_compatibility"])
 
 
 Random Allocation
@@ -76,44 +38,30 @@ follows:
     :options: +NORMALIZE_WHITESPACE
 
     >>> result = evosim.allocators.random_allocator(
-    ...     fleet, infrastructure, matcher, seed=rng
+    ...     fleet, charging_posts, matcher, seed=rng
     ... )
-    >>> result
-        latitude  longitude socket charger  dest_lat  dest_long  \
-    0      51.27  -1.65e-01  TYPE2    SLOW     51.62       0.64
-    1      51.49   9.04e-01  TYPE2    SLOW     51.28       0.25
-    2      51.46  -1.65e-01  TYPE2    FAST     51.62       1.02
-    3      51.28  -3.57e-01  TYPE2    SLOW     51.32       0.61
-    4      51.54   9.97e-01  TYPE2    FAST     51.42       0.92
-    5      51.63   1.01e+00  TYPE2    FAST     51.39       0.10
-    6      51.52   1.03e+00  TYPE1    FAST     51.56       0.45
-    7      51.37   3.26e-01  TYPE1    SLOW     51.33      -0.16
-    8      51.63  -2.04e-02  TYPE1    FAST     51.43       1.24
-    9      51.48  -4.88e-01  TYPE1    SLOW     51.25      -0.07
-    10     51.48   6.30e-01  TYPE2    FAST     51.37      -0.05
-    11     51.59   7.60e-01  TYPE2    SLOW     51.44      -0.37
-    12     51.32   9.62e-01  TYPE1    SLOW     51.30      -0.05
-    13     51.62  -6.71e-03  TYPE2    FAST     51.53       0.84
-    14     51.56  -1.23e-01  TYPE2    FAST     51.42       0.72
-    15     51.60   6.19e-01  TYPE2    FAST     51.58      -0.27
-    <BLANKLINE>
-                            model  allocation
-    0              CITROEN_C_ZERO           8
-    1                    BMW_330E           7
-    2         MERCEDES_BENZ_C350E        <NA>
-    3                   BMW_225XE           7
-    4         MERCEDES_BENZ_E350E        <NA>
-    5   MITSUBISHI_OUTLANDER_PHEV           9
-    6            SMART_EQ_FORFOUR           3
-    7    PORSCHE_PANAMERA_EHYBRID           0
-    8   MINI_COUNTRYMAN_COOPER_SE           4
-    9              CITROEN_C_ZERO           0
-    10   PORSCHE_PANAMERA_EHYBRID           1
-    11  MINI_COUNTRYMAN_COOPER_SE           8
-    12      VOLKSWAGEN_PASSAT_GTE           5
-    13            SMART_EQ_FORTWO           1
-    14              TESLA_MODEL_X           9
-    15   PORSCHE_PANAMERA_EHYBRID        <NA>
+    >>> (result.loc[:, fleet.columns] == fleet).all()
+    latitude     True
+    longitude    True
+    socket       True
+    charger      True
+    dest_lat     True
+    dest_long    True
+    model        True
+    dtype: bool
+
+    >>> result.allocation.iloc[:10]
+    15    <NA>
+    16      23
+    24       2
+    37      30
+    40    <NA>
+    56      30
+    66    <NA>
+    73      24
+    82    <NA>
+    83      30
+    Name: allocation, dtype: object
 
 The allocator returns a (:py:meth:`shallow <pandas.DataFrame.copy>`) shallow copy of the
 electric vehicles table with an extra column, ``allocation``. Each element of the
@@ -138,38 +86,36 @@ We can also check that each that the allocation targeted available space only:
 
 .. doctest:: random_allocator
 
-    >>> allocation = (
-    ...     result.allocation.value_counts(dropna=True).reindex_like(infrastructure)
-    ... )
-    >>> occupancy = allocation + infrastructure.occupancy
+    >>> allocation = result.allocation.value_counts().reindex_like(charging_posts)
+    >>> occupancy = allocation + charging_posts.occupancy
     >>> occupancy
-    0       2
-    1       2
-    2    <NA>
-    3       1
-    4       1
-    5       1
-    6    <NA>
-    7       2
-    8       2
-    9       2
-    dtype: Int64
+    2     2
+    13    3
+    16    2
+    23    2
+    24    1
+    27    1
+    28    2
+    30    3
+    56    2
+    83    2
+    dtype: int64
 
-    >>> (occupancy <= infrastructure.capacity).all()
+    >>> (occupancy <= charging_posts.capacity).all()
     True
 
 The first line above counts the number of occurances of each allocation. The second line
-computes the occupancy including new allocations. However, not all charging posts are
-targeted. These posts are not found in ``allocation``, and hence their occupancy is
-``np.NaN``. This treatment of missing data is a feature of :py:mod:`pandas`. The last
-line shows that allocations targeted available spaces (note that :py:mod:`pandas`
-automatically dropped the missing value from the aggregation operation).
+computes the occupancy including new allocations. If no vehicle where allocated to a
+given post, then it would show an occupancy of ``pd.NA``, i.e. a missing data entry as
+modeled by :py:mod:`pandas`. The last line shows that allocations targeted available
+spaces (note that :py:mod:`pandas` automatically dropped the missing value from the
+aggregation operation).
 
 
 .. testcode:: random_allocator
 
     spare_fleet = result.loc[result.allocation.isna()]
-    spare_infra = infrastructure.loc[occupancy.fillna(0) < infrastructure.capacity]
+    spare_infra = charging_posts.loc[occupancy.fillna(0) < charging_posts.capacity]
     for _, unallocated in spare_fleet.iterrows():
         assert not matcher(unallocated, spare_infra).any()
 
