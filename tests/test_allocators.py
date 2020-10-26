@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 
@@ -178,7 +179,7 @@ def test_greedy_allocator(rng):
     ).sample(100, random_state=3)
     matcher = matchers.factory(["socket_compatibility", "charger_compatibility"])
 
-    result = greedy_allocator(fleet, charging_posts, matcher)
+    result = greedy_allocator(fleet, charging_posts, matcher, nearest_neighbors=-1)
 
     alloc_fleet = result.dropna()
     alloc_infra = charging_posts.loc[alloc_fleet.allocation]
@@ -192,3 +193,29 @@ def test_greedy_allocator(rng):
     spare_infra = charging_posts.loc[occupancy.fillna(0) < charging_posts.capacity]
     for _, unallocated in spare_fleet.iterrows():
         assert not matcher(unallocated, spare_infra).any()
+
+
+def test_greedy_allocator_nearest_neighbor():
+    from evosim.charging_posts import Sockets, Chargers, random_charging_posts
+    from evosim.fleet import random_fleet
+    from evosim import matchers
+    from evosim.allocators import greedy_allocator
+
+    rng = np.random.default_rng(1462321313)
+
+    sockets = list(Sockets)[:2]
+    chargers = list(Chargers)[:2]
+    charging_posts = random_charging_posts(
+        100, capacity=3, socket_types=sockets, charger_types=chargers, seed=rng,
+    ).sample(50, random_state=2)
+    fleet = random_fleet(
+        200, socket_types=sockets, charger_types=chargers, seed=rng
+    ).sample(100, random_state=3)
+    matcher = matchers.factory(["socket_compatibility", "charger_compatibility"])
+
+    toosmall = greedy_allocator(fleet, charging_posts, matcher)
+    larger = greedy_allocator(fleet, charging_posts, matcher, nearest_neighbors=-1)
+    # going to more neighbors happens to be stable
+    assert (toosmall.allocation == larger.allocation).all()
+    # but some vehicles are newly allocated
+    assert toosmall.allocation.notna().sum() != larger.allocation.notna().sum()
