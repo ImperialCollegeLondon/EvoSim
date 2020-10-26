@@ -193,7 +193,7 @@ distances and indices of the ``k`` nearest neighbors:
            [6, 0, 9, 4, 3, 1, 8, 5, 7, 2],
            [3, 5, 1, 2, 4, 8, 7, 9, 6, 0],
            [9, 3, 5, 6, 1, 0, 4, 8, 2, 7],
-           [2, 1, 7, 8, 5, 4, 3, 9, 6, 0]])
+           [2, 1, 7, 8, 5, 4, 3, 9, 6, 0]]...)
 
 The first row of the matrix above corresponds to the first electric vehicle. It gives
 the indices (as in :py:meth:`pandas.DataFrame.iloc`, not the labels of
