@@ -10,10 +10,17 @@ def rng(request):
 
 
 @fixture(autouse=True)
-def warnings_as_errors():
+def warnings_as_errors(request):
     from warnings import simplefilter
+    from platform import system
 
     pd.set_option("mode.chained_assignment", "raise")
     simplefilter("error", FutureWarning)
-    simplefilter("error", DeprecationWarning)
     simplefilter("error", PendingDeprecationWarning)
+    # sklearn uses deprecated module on windows
+    if (
+        request.module.__name__ != "test_allocators"
+        or not request.node.name.startswith("test_greedy_allocator")
+        or system() != "Windows"
+    ):
+        simplefilter("error", DeprecationWarning)
