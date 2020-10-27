@@ -23,6 +23,20 @@ Functions
 
 .. autofunction:: evosim.charging_posts.random_charging_posts
 
+.. autofunction:: evosim.charging_posts.to_sockets
+
+.. autofunction:: evosim.charging_posts.to_chargers
+
+.. autofunction:: evosim.charging_posts.to_charging_posts
+
+.. autofunction:: evosim.charging_posts.is_charging_posts
+
+Data
+----
+
+.. autodata:: evosim.charging_posts.CHARGING_POSTS_SCHEMA
+
+
 Electric Vehicles
 =================
 

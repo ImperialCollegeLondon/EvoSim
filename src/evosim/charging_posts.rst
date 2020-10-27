@@ -3,6 +3,13 @@
 Charging Posts
 ==============
 
+.. contents::
+    :depth: 2
+
+
+Usage
+-----
+
 Charging posts are represented by a table with columns for the latitude, longitude,
 socket type, charger type, current occupancy and maximum capacity. Potentially it can
 accept other columns as well. The simplest way to generate one is to use
@@ -104,3 +111,33 @@ queried accordingly:
     ...     np.array([Sockets.TYPE2, Sockets.TYPE2])
     ... ).astype(bool)
     array([ True, False])
+
+
+Reading and writing charging posts
+----------------------------------
+
+The charging posts can be written and read quite easily using :py:mod:`pandas`
+capabilities in that domain. For instance, here we write to a (temporary) csv file, read
+the information back and check that it is still the same.
+
+.. testcode:: charging_posts_io
+
+    from tempfile import NamedTemporaryFile
+    charging_posts = evosim.charging_posts.random_charging_posts(5, seed=1)
+    with NamedTemporaryFile() as file:
+        charging_posts.to_csv(file.name)
+        reread = evosim.charging_posts.to_charging_posts(pd.read_csv(file.name))
+    assert (charging_posts.round(4) == reread.round(4)).all().all()
+
+Writing to a csv file, or to any format supported by :py:mod:`pandas` is
+straightforward. Reading from a file is also fairly straightforward, but it requires one
+extra step: the dataframe read from file is transformed to a charging post via
+:py:func:`evosim.charging_posts.to_charging_posts`. This ensures that the required
+columns are there and have the correct type.
+
+.. topic:: Floating point comparisons
+
+    In the snippet above, we compare the two tables with a finite number of decimal
+    points. This is only to ensure the comparison is not influenced by how floating
+    points are represented in the csv file written out by pandas. See the option
+    `float_format` in :py:meth:`pandas.DataFrame.to_csv` for more details.

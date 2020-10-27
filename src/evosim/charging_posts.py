@@ -1,6 +1,6 @@
 from enum import Flag, auto
 from pathlib import Path
-from typing import Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Mapping, Optional, Sequence, Text, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -33,6 +33,251 @@ class Chargers(Flag):
 
     def __str__(self):
         return super().__str__()[9:]
+
+
+def _to_enum(
+    data: Union[Sequence[Text], Text, Any], enumeration, name: Text
+) -> Sequence:
+    """Transforms text strings to sockets or chargers."""
+    if isinstance(data, Text):
+        return _to_enum([data], enumeration, name)[0]
+    if isinstance(data, enumeration):
+        return data
+
+    mapper = {str(k).upper(): k for k in enumeration}
+    try:
+        result = [mapper[str(k).upper()] for k in data]
+    except KeyError as e:
+        raise ValueError(f"Incorrect {name} name {e}")
+    if isinstance(data, np.ndarray):
+        return np.array(result)
+    elif isinstance(data, pd.Series):
+        return pd.Series(result, index=data.index)
+    return result
+
+
+def to_sockets(data: Union[Sequence[Text], Text, Sockets]) -> Sequence[Sockets]:
+    """Transforms text strings to sockets.
+
+    Example:
+
+        String to sockets:
+
+        >>> from evosim.charging_posts import to_sockets
+        >>> to_sockets("Type1")
+        <Sockets.TYPE1: 1>
+
+        Lists of strings to lists sockets:
+
+        >>> to_sockets(["Type1", "type2"])
+        [<Sockets.TYPE1: 1>, <Sockets.TYPE2: 2>]
+
+        Numpy arrays of strings to numpy arrays of sockets:
+
+        >>> to_sockets(np.array(["Type1", "type2"]))
+        array([<Sockets.TYPE1: 1>, <Sockets.TYPE2: 2>], dtype=object)
+
+        Pandas series to pandas series:
+
+        >>> to_sockets(pd.Series(["Type1", "type2"], index=['a', 'b']))
+        a    TYPE1
+        b    TYPE2
+        dtype: object
+
+        Or sockets to sockets...
+
+        >>> to_sockets(evosim.charging_posts.Sockets.TYPE1)
+        <Sockets.TYPE1: 1>
+    """
+    return _to_enum(data, Sockets, "socket")
+
+
+def to_chargers(data: Union[Sequence[Text], Text]) -> Sequence[Chargers]:
+    """Transforms text strings to chargers.
+    Example:
+
+        String to chargers:
+
+        >>> from evosim.charging_posts import to_chargers
+        >>> to_chargers("slow")
+        <Chargers.SLOW: 1>
+
+        Lists of strings to lists chargers:
+
+        >>> to_chargers(["slow", "fast"])
+        [<Chargers.SLOW: 1>, <Chargers.FAST: 2>]
+
+        Numpy arrays of strings to numpy arrays of chargers:
+
+        >>> to_chargers(np.array(["slow", "fast"]))
+        array([<Chargers.SLOW: 1>, <Chargers.FAST: 2>], dtype=object)
+
+        Pandas series to pandas series:
+
+        >>> to_chargers(pd.Series(["slow", "fast"], index=['a', 'b']))
+        a    SLOW
+        b    FAST
+        dtype: object
+
+        Or chargers to chargers...
+
+        >>> to_chargers(evosim.charging_posts.Chargers.SLOW)
+        <Chargers.SLOW: 1>
+    """
+    return _to_enum(data, Chargers, "charger")
+
+
+CHARGING_POSTS_SCHEMA: Mapping[
+    Text, Union[np.dtype, Callable[[Sequence], Sequence], Sequence[np.dtype]]
+] = dict(
+    latitude=np.dtype(float),
+    longitude=np.dtype(float),
+    capacity=np.dtype(int),
+    occupancy=np.dtype(int),
+    socket=to_sockets,
+    charger=to_chargers,
+)
+"""Schema defining a charging posts
+
+Maps the column to the dtype, a sequence of dtypes, or to an idem-potent callable that
+can be used to transform the column. All the columns named here are **required**. A
+charging posts table can any number of extra columns.
+"""
+
+
+def _dataframe_follows_schema(
+    dataframe: pd.DataFrame, schema: Mapping[Text, Any], raise_exception: bool = False
+) -> bool:
+    missing_cols = set(schema) - set(dataframe.columns)
+    if missing_cols and raise_exception:
+        raise ValueError(f"Missing column(s) {', '.join(missing_cols)}")
+    elif missing_cols:
+        return False
+    for column, dtypes in CHARGING_POSTS_SCHEMA.items():
+        if callable(dtypes):
+            transformed = dtypes(dataframe[column])
+            incorrect = (transformed != dataframe[column]).any()
+            if incorrect and raise_exception:
+                raise ValueError(f"Incorrect values in column {column}")
+            elif incorrect:
+                return False
+        else:
+            dtype = dataframe[column].dtype
+            is_sequence = isinstance(dtypes, Sequence)
+            correct = (dtype in dtypes) if is_sequence else (dtype == dtypes)
+            if raise_exception and not correct:
+                raise ValueError(f"Incorrect dtypes for {column}: {dtype} vs {dtypes}")
+            elif not correct:
+                return False
+    return True
+
+
+def is_charging_posts(dataframe: pd.DataFrame, raise_exception: bool = False) -> bool:
+    """True if dataframe follows the charging post schema.
+
+    Args:
+        dataframe (pandas.DataFrame): putative charging posts
+        raise_exception: if ``False`` returns a boolean. If ``True``, will raise an
+            exception with some information identifying the difference with
+            :py:data:`CHARGING_POSTS_SCHEMA`.
+
+    Usage:
+
+        >>> from pytest import raises
+        >>> from evosim.charging_posts import random_charging_posts, is_charging_posts
+        >>> posts = random_charging_posts(5)
+        >>> is_charging_posts(posts)
+        True
+
+        >>> is_charging_posts(posts.drop(columns="latitude"))
+        False
+
+        >>> with raises(ValueError):
+        ...     is_charging_posts(posts.drop(columns="latitude"), raise_exception=True)
+
+        >>> wrong_dtype = posts.copy(deep=False)
+        >>> wrong_dtype["latitude"] = wrong_dtype.latitude.astype(str)
+        >>> is_charging_posts(wrong_dtype)
+        False
+
+        >>> wrong_dtype = posts.copy(deep=False)
+        >>> wrong_dtype["socket"] = [str(u).lower() for u in wrong_dtype.socket]
+        >>> is_charging_posts(wrong_dtype)
+        False
+    """
+    result = _dataframe_follows_schema(
+        dataframe, raise_exception=raise_exception, schema=CHARGING_POSTS_SCHEMA
+    )
+    if dataframe.index.name != "post" and raise_exception:
+        raise ValueError(f"Index name is {dataframe.index.name} rather than 'post'")
+    elif dataframe.index.name != "post":
+        result = False
+    return result
+
+
+def _transform_to_schema(
+    schema: Mapping[Text, Any], data: Optional[Union[pd.DataFrame, Any]],
+) -> pd.DataFrame:
+    dataframe = data.copy(deep=False)
+    for column, dtypes in schema.items():
+        if column not in dataframe.columns:
+            raise ValueError(f"Missing column {column}")
+        if callable(dtypes):
+            dataframe[column] = dtypes(dataframe[column])
+            continue
+        if not isinstance(dtypes, Sequence):
+            dtypes = [dtypes]
+        if dataframe[column].dtype not in dtypes:
+            dataframe[column] = dataframe[column].astype(dtypes[0])
+    return dataframe
+
+
+def to_charging_posts(data: pd.DataFrame) -> pd.DataFrame:
+    """Tries and transform input data to a charging posts dataframe.
+
+    This function will try and transform the columns of the input dataframe to fit the
+    schema defined in :py:data:`evosim.charging_posts.CHARGING_POSTS_SCHEMA`. It also
+    sets the "post" column as the index, if it exists. In any-case, it names the
+    indices "post". It returns a shallow copy of the input data frame with transformed
+    columns as required.
+
+    Args:
+        data (pandas.DataFrame): dataframe to transform following the schema.
+
+    Returns:
+        pandas.DataFrame: A dataframe conforming to the charging post schema.
+
+    Example:
+
+        >>> from evosim.charging_posts import (
+        ...     random_charging_posts,
+        ...     to_charging_posts,
+        ...     is_charging_posts,
+        ...     Sockets,
+        ...     Chargers,
+        ... )
+        >>> dataframe = random_charging_posts(5)
+        >>> dataframe["socket"] = [str(u).lower() for u in dataframe.socket]
+        >>> dataframe["charger"] = [str(u).lower() for u in dataframe.charger]
+        >>> dataframe["capacity"] = dataframe.capacity.astype(float)
+        >>> is_charging_posts(dataframe)
+        False
+        >>> infrastructure = to_charging_posts(dataframe)
+        >>> is_charging_posts(infrastructure)
+        True
+        >>> isinstance(infrastructure.at[0, "socket"], Sockets)
+        True
+        >>> isinstance(infrastructure.at[0, "charger"], Chargers)
+        True
+        >>> infrastructure["capacity"].dtype == int
+        True
+    """
+    result = _transform_to_schema(CHARGING_POSTS_SCHEMA, data)
+    if "post" in result.columns:
+        result = result.set_index("post")
+    else:
+        result.index.name = "post"
+    return result
 
 
 def random_charging_posts(
