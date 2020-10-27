@@ -48,7 +48,6 @@ def random_charging_posts(
     capacity: Optional[Union[Tuple[int, int], int]] = 1,
     occupancy: Optional[Union[Tuple[int, int], int]] = 0,
     seed: Optional[Union[int, np.random.Generator]] = None,
-    **kwargs,
 ) -> pd.DataFrame:
     """Generates a random table representing the charging posts infrastructure.
 
