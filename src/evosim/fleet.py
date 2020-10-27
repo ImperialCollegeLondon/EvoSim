@@ -118,5 +118,6 @@ def random_fleet(
     )
     result["model"] = rng.choice(list(model_types), size=n, replace=True)
     result["model"] = result.model.astype("category")
+    result.index.name = "vehicle"
 
     return result

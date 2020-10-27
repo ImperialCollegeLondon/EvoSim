@@ -161,7 +161,7 @@ def random_charging_posts(
             rng.integers(low=occupancy[0], high=occupancy[1], size=n) % capacities
         )
 
-    return pd.DataFrame(
+    result = pd.DataFrame(
         dict(
             latitude=lat,
             longitude=lon,
@@ -171,3 +171,5 @@ def random_charging_posts(
             occupancy=occupancies,
         )
     )
+    result.index.name = "post"
+    return result
