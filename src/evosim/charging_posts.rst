@@ -113,8 +113,8 @@ queried accordingly:
     array([ True, False])
 
 
-Reading and writing charging posts
-----------------------------------
+Reading and writing
+-------------------
 
 The charging posts can be written and read quite easily using :py:mod:`pandas`
 capabilities in that domain. For instance, here we write to a (temporary) csv file, read
@@ -127,13 +127,17 @@ the information back and check that it is still the same.
     with NamedTemporaryFile() as file:
         charging_posts.to_csv(file.name)
         reread = evosim.charging_posts.to_charging_posts(pd.read_csv(file.name))
+    assert evosim.charging_posts.is_charging_posts(reread)
     assert (charging_posts.round(4) == reread.round(4)).all().all()
 
 Writing to a csv file, or to any format supported by :py:mod:`pandas` is
 straightforward. Reading from a file is also fairly straightforward, but it requires one
 extra step: the dataframe read from file is transformed to a charging post via
 :py:func:`evosim.charging_posts.to_charging_posts`. This ensures that the required
-columns are there and have the correct type.
+columns are there and have the correct types. In the penultimate line, we verify with
+:py:func:`evosim.charging_posts.is_charging_posts` that the transformed dataframe is
+indeed a table of charging posts.
+
 
 .. topic:: Floating point comparisons
 

@@ -52,6 +52,17 @@ Functions
 
 .. autofunction:: evosim.fleet.random_fleet
 
+.. autofunction:: evosim.fleet.to_models
+
+.. autofunction:: evosim.fleet.is_fleet
+
+.. autofunction:: evosim.fleet.to_fleet
+
+Data
+----
+
+.. autodata:: evosim.fleet.FLEET_SCHEMA
+
 
 Matchers
 ========

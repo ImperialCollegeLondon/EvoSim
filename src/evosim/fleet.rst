@@ -1,6 +1,12 @@
 Electric Vehicles
 =================
 
+.. contents::
+    :depth: 2
+
+Usage
+-----
+
 A fleet of electric vehicles are defined in a similar fashion to :ref:`charging-posts`.
 Indeed, the fleet contains the same attributes, e.g. current latitude and longitude,
 socket and charger type, as well as extra attributes, such as the car model.  The
@@ -65,3 +71,35 @@ instance, we can create electric vehicles accepting multiple types of sockets:
     2              TOYOTA_PRIUS_PLUGIN
     3             HYUNDAI_IONIQ_PLUGIN
     4                      RENAULT_ZOE
+
+
+Reading and writing fleets
+--------------------------
+
+The fleets can be written and read quite easily using :py:mod:`pandas` capabilities in
+that domain. For instance, here we write to a (temporary) csv file, read the information
+back and check that it is still the same.
+
+.. testcode:: charging_posts_io
+
+    from tempfile import NamedTemporaryFile
+    fleet = evosim.fleet.random_fleet(5, seed=1)
+    with NamedTemporaryFile() as file:
+        fleet.to_csv(file.name)
+        reread = evosim.fleet.to_fleet(pd.read_csv(file.name))
+    assert evosim.fleet.is_fleet(reread)
+    assert (fleet.round(4) == reread.round(4)).all().all()
+
+Writing to a csv file, or to any format supported by :py:mod:`pandas` is
+straightforward. Reading from a file is also fairly straightforward, but it requires one
+extra step: the dataframe read from file is transformed to a charging post via
+:py:func:`evosim.fleet.to_fleet`. This ensures that the required columns are there and
+have the correct types. In the penultimate line, we verify with
+:py:func:`evosim.fleet.is_fleet` that the transformed dataframe is indeed a fleet.
+
+.. topic:: Floating point comparisons
+
+    In the snippet above, we compare the two tables with a finite number of decimal
+    points. This is only to ensure the comparison is not influenced by how floating
+    points are represented in the csv file written out by pandas. See the option
+    `float_format` in :py:meth:`pandas.DataFrame.to_csv` for more details.

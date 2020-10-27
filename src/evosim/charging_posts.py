@@ -146,14 +146,17 @@ charging posts table can any number of extra columns.
 
 
 def _dataframe_follows_schema(
-    dataframe: pd.DataFrame, schema: Mapping[Text, Any], raise_exception: bool = False
+    dataframe: pd.DataFrame,
+    schema: Mapping[Text, Any],
+    index_name: Optional[Text] = None,
+    raise_exception: bool = False,
 ) -> bool:
     missing_cols = set(schema) - set(dataframe.columns)
     if missing_cols and raise_exception:
         raise ValueError(f"Missing column(s) {', '.join(missing_cols)}")
     elif missing_cols:
         return False
-    for column, dtypes in CHARGING_POSTS_SCHEMA.items():
+    for column, dtypes in schema.items():
         if callable(dtypes):
             transformed = dtypes(dataframe[column])
             incorrect = (transformed != dataframe[column]).any()
@@ -169,7 +172,14 @@ def _dataframe_follows_schema(
                 raise ValueError(f"Incorrect dtypes for {column}: {dtype} vs {dtypes}")
             elif not correct:
                 return False
-    return True
+    if (
+        index_name is not None
+        and dataframe.index.name != index_name
+        and raise_exception
+    ):
+        msg = f"Index name is {dataframe.index.name} rather than {index_name}'"
+        raise ValueError(msg)
+    return index_name is None or dataframe.index.name == index_name
 
 
 def is_charging_posts(dataframe: pd.DataFrame, raise_exception: bool = False) -> bool:
@@ -192,9 +202,6 @@ def is_charging_posts(dataframe: pd.DataFrame, raise_exception: bool = False) ->
         >>> is_charging_posts(posts.drop(columns="latitude"))
         False
 
-        >>> with raises(ValueError):
-        ...     is_charging_posts(posts.drop(columns="latitude"), raise_exception=True)
-
         >>> wrong_dtype = posts.copy(deep=False)
         >>> wrong_dtype["latitude"] = wrong_dtype.latitude.astype(str)
         >>> is_charging_posts(wrong_dtype)
@@ -204,19 +211,32 @@ def is_charging_posts(dataframe: pd.DataFrame, raise_exception: bool = False) ->
         >>> wrong_dtype["socket"] = [str(u).lower() for u in wrong_dtype.socket]
         >>> is_charging_posts(wrong_dtype)
         False
+
+        >>> wrong_index_name = posts.copy(deep=False)
+        >>> wrong_index_name.index.name = "notpost"
+        >>> is_charging_posts(wrong_index_name)
+        False
+        >>> wrong_index_name.index.name = "POST"
+        >>> is_charging_posts(wrong_index_name)
+        False
+
+        >>> with raises(ValueError):
+        ...     is_charging_posts(posts.drop(columns="latitude"), raise_exception=True)
     """
-    result = _dataframe_follows_schema(
-        dataframe, raise_exception=raise_exception, schema=CHARGING_POSTS_SCHEMA
+    from evosim.charging_posts import CHARGING_POSTS_SCHEMA
+
+    return _dataframe_follows_schema(
+        dataframe,
+        raise_exception=raise_exception,
+        schema=CHARGING_POSTS_SCHEMA,
+        index_name="post",
     )
-    if dataframe.index.name != "post" and raise_exception:
-        raise ValueError(f"Index name is {dataframe.index.name} rather than 'post'")
-    elif dataframe.index.name != "post":
-        result = False
-    return result
 
 
 def _transform_to_schema(
-    schema: Mapping[Text, Any], data: Optional[Union[pd.DataFrame, Any]],
+    schema: Mapping[Text, Any],
+    data: Optional[Union[pd.DataFrame, Any]],
+    index_name: Optional[Text] = None,
 ) -> pd.DataFrame:
     dataframe = data.copy(deep=False)
     for column, dtypes in schema.items():
@@ -229,6 +249,10 @@ def _transform_to_schema(
             dtypes = [dtypes]
         if dataframe[column].dtype not in dtypes:
             dataframe[column] = dataframe[column].astype(dtypes[0])
+    if index_name is not None and index_name in dataframe.columns:
+        dataframe = dataframe.set_index(index_name)
+    else:
+        dataframe.index.name = index_name
     return dataframe
 
 
@@ -272,12 +296,9 @@ def to_charging_posts(data: pd.DataFrame) -> pd.DataFrame:
         >>> infrastructure["capacity"].dtype == int
         True
     """
-    result = _transform_to_schema(CHARGING_POSTS_SCHEMA, data)
-    if "post" in result.columns:
-        result = result.set_index("post")
-    else:
-        result.index.name = "post"
-    return result
+    from evosim.charging_posts import CHARGING_POSTS_SCHEMA
+
+    return _transform_to_schema(CHARGING_POSTS_SCHEMA, data, index_name="post")
 
 
 def random_charging_posts(
