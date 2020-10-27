@@ -61,7 +61,6 @@ def random_fleet(
     charger_multiplicity: int = 1,
     model_types: Sequence[Models] = tuple(Models),
     seed: Optional[Union[int, np.random.Generator]] = None,
-    **kwargs,
 ) -> pd.DataFrame:
     """Generates a random table representing a fleet of electric vehicles.
 

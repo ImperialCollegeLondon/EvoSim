@@ -1,5 +1,4 @@
 import numpy as np
-from pytest import mark
 
 
 def test_charging_post_availability():
@@ -15,14 +14,13 @@ def test_charging_post_availability():
     assert not charging_post_availability(None, ChargingPost(1, 1))
 
 
-@mark.parametrize("npartitions", [None, 1, 2])
-def test_distance_from_destination(npartitions):
+def test_distance_from_destination():
     from evosim.matchers import distance_from_destination, distance
     from evosim.charging_posts import random_charging_posts
     from evosim.fleet import random_fleet
 
-    cps = random_charging_posts(1, seed=1, npartitions=npartitions)
-    evs = random_fleet(10, seed=2, npartitions=npartitions)
+    cps = random_charging_posts(1, seed=1)
+    evs = random_fleet(10, seed=2)
     dest = distance_from_destination(evs, cps.loc[0], max_distance=30)
     if hasattr(dest, "compute"):
         dest = dest.compute()
