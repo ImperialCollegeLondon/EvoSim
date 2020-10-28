@@ -224,8 +224,8 @@ def greedy_allocator(
         return (
             np.concatenate(
                 (
-                    data[names[0]].to_numpy()[:, None],
-                    data[names[1]].to_numpy()[:, None],
+                    data[names[0]].to_numpy()[:, np.newaxis],
+                    data[names[1]].to_numpy()[:, np.newaxis],
                 ),
                 axis=1,
             )
