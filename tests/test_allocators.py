@@ -1,3 +1,7 @@
+import numpy as np
+import pandas as pd
+
+
 def test_random_allocator_too_many_vehicles(rng):
     from evosim.charging_posts import random_charging_posts
     from evosim.fleet import random_fleet
@@ -21,8 +25,8 @@ def test_random_allocator_too_many_vehicles(rng):
 
     matcher = matchers.factory("socket_compatibility")
     result = random_allocator(evs, cps, matcher, seed=rng)
-    new_assignments = result.groupby("allocation").allocation.count()
-    assert (new_assignments + cps.occupancy == cps.capacity).all()
+    new_allocations = result.groupby("allocation").allocation.count()
+    assert (new_allocations + cps.occupancy == cps.capacity).all()
 
 
 def test_random_allocator_exact_match(rng):
@@ -54,9 +58,9 @@ def test_random_allocator_exact_match(rng):
 
     # all allocations target available spaces
     available = cps.loc[cps.occupancy < cps.capacity]
-    new_assignments = result.groupby("allocation").allocation.count()
-    assert (new_assignments.index == available.index).all()
-    assert (available.occupancy + new_assignments == available.capacity).all()
+    new_allocations = result.groupby("allocation").allocation.count()
+    assert (new_allocations.index == available.index).all()
+    assert (available.occupancy + new_allocations == available.capacity).all()
 
     # all allocation do match
     alloc_cps = cps.loc[result.allocation]
@@ -94,16 +98,124 @@ def test_random_allocator_unassigned_cars(rng):
 
     # all allocations target available spaces
     available = cps.loc[cps.occupancy < cps.capacity]
-    new_assignments = result.groupby("allocation").allocation.count()
-    occupancy = available.occupancy + new_assignments
-    assert set(occupancy.index[occupancy.isna()]).isdisjoint(new_assignments.index)
+    new_allocations = result.groupby("allocation").allocation.count()
+    occupancy = available.occupancy + new_allocations
+    assert set(occupancy.index[occupancy.isna()]).isdisjoint(new_allocations.index)
     assert (
-        occupancy.loc[~occupancy.isna()] <= available.capacity.loc[~occupancy.isna()]
+        occupancy.loc[occupancy.notna()] <= available.capacity.loc[occupancy.notna()]
     ).all()
 
     # all allocation do match
-    alloc_evs = result.loc[~result.allocation.isna()]
+    alloc_evs = result.loc[result.allocation.notna()]
     alloc_cps = cps.loc[alloc_evs.allocation]
     assert matcher(
         alloc_evs.reset_index(drop=True), alloc_cps.reset_index(drop=True)
     ).all()
+
+
+def test_void_overbooking(rng):
+    from evosim.charging_posts import random_charging_posts
+    from evosim.fleet import random_fleet
+    from evosim.allocators import _void_overbooking
+
+    infrastructure = random_charging_posts(20, seed=rng, capacity=5, occupancy=2)
+    fleet = random_fleet(100, seed=rng)
+    fleet["allocation"] = rng.choice(infrastructure.index, size=len(fleet))
+    fleet["allocation"] = fleet.allocation.astype("Int64")
+    fleet.loc[fleet.index.isin(rng.choice(fleet.index, size=50)), "allocation"] = pd.NaT
+
+    notoverbooked = _void_overbooking(infrastructure, fleet.allocation)
+    assert (notoverbooked == fleet.allocation).dropna().all()
+    assert (notoverbooked.dropna().index.isin(fleet.allocation.dropna().index)).all()
+
+    notoverbooking = notoverbooked.value_counts().reindex_like(infrastructure).fillna(0)
+    is_overbooked = (
+        notoverbooking + infrastructure.occupancy
+    ) > infrastructure.capacity
+    assert not is_overbooked.any()
+
+    booking = fleet.allocation.value_counts().reindex_like(infrastructure).fillna(0)
+    was_overbooked = (booking + infrastructure.occupancy) > infrastructure.capacity
+    assert (
+        ((notoverbooking + infrastructure.occupancy) == infrastructure.capacity)
+        .loc[was_overbooked]
+        .all()
+    )
+    assert (notoverbooking == booking).loc[~was_overbooked].all()
+    assert not (notoverbooking == booking).loc[was_overbooked].any()
+
+
+def test_void_overbooking_single_alloc(rng):
+    from evosim.charging_posts import random_charging_posts
+    from evosim.fleet import random_fleet
+    from evosim.allocators import _void_overbooking
+
+    infrastructure = random_charging_posts(20, seed=rng, capacity=5, occupancy=2)
+    fleet = random_fleet(100, seed=rng)
+    fleet["allocation"] = 1
+    fleet["allocation"] = fleet.allocation.astype("Int64")
+    fleet.loc[fleet.index.isin(rng.choice(fleet.index, size=50)), "allocation"] = pd.NaT
+
+    notoverbooked = _void_overbooking(infrastructure, fleet.allocation)
+    assert (notoverbooked == fleet.allocation).dropna().all()
+    assert (notoverbooked.dropna().index.isin(fleet.allocation.dropna().index)).all()
+    assert len(notoverbooked.dropna().unique()) == 1
+    assert notoverbooked.dropna().unique()[0] == 1
+
+
+def test_greedy_allocator(rng):
+    from evosim.charging_posts import Sockets, Chargers, random_charging_posts
+    from evosim.fleet import random_fleet
+    from evosim import matchers
+    from evosim.allocators import greedy_allocator
+
+    sockets = list(Sockets)[:2]
+    chargers = list(Chargers)[:2]
+    charging_posts = random_charging_posts(
+        100, capacity=3, socket_types=sockets, charger_types=chargers, seed=rng,
+    ).sample(50, random_state=2)
+    fleet = random_fleet(
+        200, socket_types=sockets, charger_types=chargers, seed=rng
+    ).sample(100, random_state=3)
+    matcher = matchers.factory(["socket_compatibility", "charger_compatibility"])
+
+    result = greedy_allocator(fleet, charging_posts, matcher, nearest_neighbors=-1)
+
+    alloc_fleet = result.dropna()
+    alloc_infra = charging_posts.loc[alloc_fleet.allocation]
+    assert matcher(alloc_fleet, alloc_infra.set_index(alloc_fleet.index)).all()
+
+    allocation = result.allocation.value_counts().reindex_like(charging_posts)
+    occupancy = allocation + charging_posts.occupancy
+    assert (occupancy <= charging_posts.capacity).all()
+
+    spare_fleet = result.loc[result.allocation.isna()]
+    spare_infra = charging_posts.loc[occupancy.fillna(0) < charging_posts.capacity]
+    for _, unallocated in spare_fleet.iterrows():
+        assert not matcher(unallocated, spare_infra).any()
+
+
+def test_greedy_allocator_nearest_neighbor():
+    from evosim.charging_posts import Sockets, Chargers, random_charging_posts
+    from evosim.fleet import random_fleet
+    from evosim import matchers
+    from evosim.allocators import greedy_allocator
+
+    rng = np.random.default_rng(1462321313)
+
+    sockets = list(Sockets)[:2]
+    chargers = list(Chargers)[:2]
+    charging_posts = random_charging_posts(
+        100, capacity=3, socket_types=sockets, charger_types=chargers, seed=rng,
+    ).sample(50, random_state=2)
+    fleet = random_fleet(
+        200, socket_types=sockets, charger_types=chargers, seed=rng
+    ).sample(100, random_state=3)
+    matcher = matchers.factory(["socket_compatibility", "charger_compatibility"])
+
+    toosmall = greedy_allocator(fleet, charging_posts, matcher)
+    larger = greedy_allocator(fleet, charging_posts, matcher, nearest_neighbors=-1)
+    # going to more neighbors happens to be stable
+    assert (toosmall.allocation == larger.allocation).all()
+    # but some vehicles are newly allocated
+    assert toosmall.allocation.notna().sum() != larger.allocation.notna().sum()

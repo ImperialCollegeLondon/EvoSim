@@ -15,3 +15,4 @@ jupyter notebook docs/source/howto
    :caption: How-To:
 
    simple-random-allocation.ipynb
+   static-allocator-comparison.ipynb

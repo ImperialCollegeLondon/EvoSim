@@ -2,6 +2,8 @@
 Developer API catalogue
 =======================
 
+.. contents:: :depth: 3
+
 Charging Posts
 ==============
 
@@ -40,9 +42,6 @@ Functions
 Matchers
 ========
 
-Functions
----------
-
 .. autofunction:: evosim.matchers.factory
 
 .. autofunction:: evosim.matchers.charging_post_availability
@@ -53,11 +52,17 @@ Functions
 
 .. autofunction:: evosim.matchers.distance
 
+.. autofunction:: evosim.matchers.match_all_to_all
+
+.. autofunction:: evosim.matchers.classify
+
+.. autofunction:: evosim.matchers.classify_with_fleet
+
+.. autofunction:: evosim.matchers.to_namedtuple
+
+
 Objectives
 ==========
-
-Functions
----------
 
 .. autofunction:: evosim.objectives.distance
 
@@ -66,10 +71,9 @@ Functions
 Allocators
 ==========
 
-Functions
----------
-
 .. autofunction:: evosim.allocators.random_allocator
+
+.. autofunction:: evosim.allocators.greedy_allocator
 
 Constants
 =========
@@ -79,4 +83,3 @@ Constants
 .. autodata:: evosim.constants.LONDON_LONGITUDE
 
 .. autodata:: evosim.constants.EARTH_RADIUS_KM
-
