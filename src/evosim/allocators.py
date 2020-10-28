@@ -202,7 +202,7 @@ def greedy_allocator(
 
             .. note::
 
-                Earch turn of the loop, the iteration counter is increased by the number
+                Each turn of the loop, the iteration counter is increased by the number
                 of filled vacancies, rather than by 1 as in more standard algorithms.
 
     Returns:
