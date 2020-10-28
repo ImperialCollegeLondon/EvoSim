@@ -196,6 +196,10 @@ def greedy_allocator(
             post
         distance: the distance metric used to compute the nearest neighbors. See
             :py:class:`sklearn.neighbors.BallTree`.
+        nearest_neighbors: number of nearest neighbors to consider for a match. Higher
+            values will yield fewer unallocated vehicles but is more computationally
+            intensive. If ``None`` or negative, defaults to the number of charging
+            posts.
         leaf_size: parameter of :py:class:`sklearn.neighbors.BallTree`
         maxiter: maximum number of iterations before bailing out. Defaults to the number
             of vacancies.
@@ -272,7 +276,7 @@ def greedy_allocator(
             index=available_fleet.index[nearest_matches.any(axis=1)],
             dtype="Int64",
         )
-        newly_assigned = _void_overbooking(sfleet, available_posts, nearest_matching)
+        newly_assigned = _void_overbooking(available_posts, nearest_matching)
         allocation.where(
             allocation.notna(), newly_assigned, inplace=True,
         )
@@ -297,18 +301,8 @@ def greedy_allocator(
     return result
 
 
-def _pick_first(group):
-    """Pick only as many as there are vacancies."""
-    nvacancies = group.vacancies.iloc[0]
-    if len(group) < nvacancies:
-        return group.allocation
-    return group.allocation.where(np.arange(len(group), dtype=int) < nvacancies, pd.NaT)
-
-
-def _void_overbooking(
-    fleet: pd.DataFrame, charging_posts: pd.DataFrame, allocation: pd.Series
-) -> pd.Series:
-    """Set overbooked allocations to NaT."""
+def _void_overbooking(charging_posts: pd.DataFrame, allocation: pd.Series) -> pd.Series:
+    """Removes overbooked allocations."""
     nonan_alloc = allocation.dropna()
     if len(nonan_alloc) == 0:
         return allocation

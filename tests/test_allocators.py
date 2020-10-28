@@ -124,7 +124,7 @@ def test_void_overbooking(rng):
     fleet["allocation"] = fleet.allocation.astype("Int64")
     fleet.loc[fleet.index.isin(rng.choice(fleet.index, size=50)), "allocation"] = pd.NaT
 
-    notoverbooked = _void_overbooking(fleet, infrastructure, fleet.allocation)
+    notoverbooked = _void_overbooking(infrastructure, fleet.allocation)
     assert (notoverbooked == fleet.allocation).dropna().all()
     assert (notoverbooked.dropna().index.isin(fleet.allocation.dropna().index)).all()
 
@@ -156,7 +156,7 @@ def test_void_overbooking_single_alloc(rng):
     fleet["allocation"] = fleet.allocation.astype("Int64")
     fleet.loc[fleet.index.isin(rng.choice(fleet.index, size=50)), "allocation"] = pd.NaT
 
-    notoverbooked = _void_overbooking(fleet, infrastructure, fleet.allocation)
+    notoverbooked = _void_overbooking(infrastructure, fleet.allocation)
     assert (notoverbooked == fleet.allocation).dropna().all()
     assert (notoverbooked.dropna().index.isin(fleet.allocation.dropna().index)).all()
     assert len(notoverbooked.dropna().unique()) == 1
