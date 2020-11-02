@@ -80,15 +80,29 @@ The fleets can be written and read quite easily using :py:mod:`pandas` capabilit
 that domain. For instance, here we write to a (temporary) csv file, read the information
 back and check that it is still the same.
 
-.. testcode:: charging_posts_io
+.. testcode:: fleet_io
 
-    from tempfile import NamedTemporaryFile
+    from io import StringIO
     fleet = evosim.fleet.random_fleet(5, seed=1)
-    with NamedTemporaryFile() as file:
-        fleet.to_csv(file.name)
-        reread = evosim.fleet.to_fleet(pd.read_csv(file.name))
+
+    # write to file ... or to a string buffer
+    stream = StringIO()
+    fleet.to_csv(stream)
+
+    # read from file ... or from a string buffer
+    stream.seek(0)
+    reread = evosim.fleet.to_fleet(pd.read_csv(stream))
+
     assert evosim.fleet.is_fleet(reread)
     assert (fleet.round(4) == reread.round(4)).all().all()
+
+.. note::
+
+    We could just as easily write to a file with ``fleet.to_csv("fleet.csv")`` and then
+    read from it with ``evosim.fleet.to_fleet(pd.read_csv("fleet.csv"))``.  Instead, we
+    read and write to an object in memory that behaves like a file. This is mainly
+    because it is not allowed to write to temporary file on the windows machines where
+    the code in this manual is tested.
 
 Writing to a csv file, or to any format supported by :py:mod:`pandas` is
 straightforward. Reading from a file is also fairly straightforward, but it requires one

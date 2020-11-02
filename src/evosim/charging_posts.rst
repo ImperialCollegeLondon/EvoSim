@@ -122,13 +122,28 @@ the information back and check that it is still the same.
 
 .. testcode:: charging_posts_io
 
-    from tempfile import NamedTemporaryFile
+    from io import StringIO
     charging_posts = evosim.charging_posts.random_charging_posts(5, seed=1)
-    with NamedTemporaryFile() as file:
-        charging_posts.to_csv(file.name)
-        reread = evosim.charging_posts.to_charging_posts(pd.read_csv(file.name))
+
+    # write to file ... or to a string buffer
+    stream = StringIO()
+    charging_posts.to_csv(stream)
+
+    # read from file ... or from a string buffer
+    stream.seek(0)
+    reread = evosim.charging_posts.to_charging_posts(pd.read_csv(stream))
+
     assert evosim.charging_posts.is_charging_posts(reread)
     assert (charging_posts.round(4) == reread.round(4)).all().all()
+
+.. note::
+
+    We could just as easily write to a file with ``charging_posts.to_csv("posts.csv")``
+    and then read from it with
+    ``evosim.charging_posts.to_charging_posts(pd.read_csv("posts.csv"))``.  Instead, we
+    read and write to an object in memory that behaves like a file. This is mainly
+    because it is not allowed to write to temporary file on the windows machines where
+    the code in this manual is tested.
 
 Writing to a csv file, or to any format supported by :py:mod:`pandas` is
 straightforward. Reading from a file is also fairly straightforward, but it requires one
