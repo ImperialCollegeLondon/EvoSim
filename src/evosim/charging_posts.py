@@ -35,6 +35,14 @@ class Chargers(Flag):
         return super().__str__()[9:]
 
 
+MAXIMUM_CHARGER_POWER: Mapping[Chargers, float] = {
+    Chargers.SLOW: 4,
+    Chargers.FAST: 10,
+    Chargers.RAPID: np.inf,
+}
+""" Maximum power each charger can provide. """
+
+
 def _to_enum(
     data: Union[Sequence[Text], Text, Any], enumeration, name: Text
 ) -> Sequence:
