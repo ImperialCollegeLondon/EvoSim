@@ -130,18 +130,19 @@ def to_chargers(data: Union[Sequence[Text], Text]) -> Sequence[Chargers]:
 CHARGING_POSTS_SCHEMA: Mapping[
     Text, Union[np.dtype, Callable[[Sequence], Sequence], Sequence[np.dtype]]
 ] = dict(
-    latitude=np.dtype(float),
-    longitude=np.dtype(float),
-    capacity=np.dtype(int),
-    occupancy=np.dtype(int),
+    latitude=(np.dtype(float), np.float16, np.float32, np.float64),
+    longitude=(np.dtype(float), np.float16, np.float32, np.float64),
+    capacity=(np.dtype(int), np.int8, np.int16, np.int32, np.int64),
+    occupancy=(np.dtype(int), np.int8, np.int16, np.int32, np.int64),
     socket=to_sockets,
     charger=to_chargers,
 )
 """Schema defining a charging posts
 
 Maps the column to the dtype, a sequence of dtypes, or to an idem-potent callable that
-can be used to transform the column. All the columns named here are **required**. A
-charging posts table can any number of extra columns.
+can be used to transform the column. If  a sequence of dtypes is given, then the first
+one is the default. All the columns named here are **required**. A charging posts table
+can any number of extra columns.
 """
 
 

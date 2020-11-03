@@ -164,10 +164,10 @@ def to_models(data: Union[Sequence[Text], Text, Models]) -> Sequence[Models]:
 FLEET_SCHEMA: Mapping[
     Text, Union[np.dtype, Callable[[Sequence], Sequence], Sequence[np.dtype]]
 ] = dict(
-    latitude=np.dtype(float),
-    longitude=np.dtype(float),
-    dest_lat=np.dtype(float),
-    dest_long=np.dtype(float),
+    latitude=(np.dtype(float), np.float16, np.float32, np.float64),
+    longitude=(np.dtype(float), np.float16, np.float32, np.float64),
+    dest_lat=(np.dtype(float), np.float16, np.float32, np.float64),
+    dest_long=(np.dtype(float), np.float16, np.float32, np.float64),
     socket=to_sockets,
     charger=to_chargers,
     model=to_models,
@@ -175,8 +175,9 @@ FLEET_SCHEMA: Mapping[
 """Schema defining a fleet of electric vehicles
 
 Maps the column to the dtype, a sequence of dtypes, or to an idem-potent callable that
-can be used to transform the column. All the columns named here are **required**. A
-charging posts table can any number of extra columns.
+can be used to transform the column. If  a sequence of dtypes is given, then the first
+one is the default.All the columns named here are **required**. A charging posts table
+can any number of extra columns.
 """
 
 
