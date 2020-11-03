@@ -44,9 +44,13 @@ def _to_enum(
     if isinstance(data, enumeration):
         return data
 
-    mapper = {str(k).upper(): k for k in enumeration}
+    _locals = {u.name: u for u in enumeration}
+
+    def mapper(item):
+        return eval(str(item).upper(), {}, _locals)
+
     try:
-        result = [mapper[str(k).upper()] for k in data]
+        result = [mapper(k) for k in data]
     except KeyError as e:
         raise ValueError(f"Incorrect {name} name {e}")
     if isinstance(data, np.ndarray):
