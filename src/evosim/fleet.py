@@ -120,7 +120,7 @@ def random_fleet(
     result["model"] = result.model.astype("category")
     result.index.name = "vehicle"
 
-    return result
+    return to_fleet(result)
 
 
 def to_models(data: Union[Sequence[Text], Text, Models]) -> Sequence[Models]:

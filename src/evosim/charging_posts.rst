@@ -18,15 +18,15 @@ accept other columns as well. The simplest way to generate one is to use
 .. doctest:: charging_posts_usage
     :options: +NORMALIZE_WHITESPACE
 
-    >>> result = evosim.charging_posts.random_charging_posts(5, seed=1)
-    >>> result
-          latitude  longitude          socket charger  capacity  occupancy
+    >>> posts = evosim.charging_posts.random_charging_posts(5, seed=1)
+    >>> posts
+          latitude  longitude  capacity  occupancy          socket charger
     post
-    0        51.48       0.24             CCS    SLOW         1          0
-    1        51.68       0.95         CHADEMO    FAST         1          0
-    2        51.31       0.22             CCS   RAPID         1          0
-    3        51.68       0.46  DC_COMBO_TYPE2    SLOW         1          0
-    4        51.39      -0.45         CHADEMO    SLOW         1          0
+    0        51.48       0.24         1          0             CCS    SLOW
+    1        51.68       0.95         1          0         CHADEMO    FAST
+    2        51.31       0.22         1          0             CCS   RAPID
+    3        51.68       0.46         1          0  DC_COMBO_TYPE2    SLOW
+    4        51.39      -0.45         1          0         CHADEMO    SLOW
 
 The random ``seed`` is optional. It is provided here so that the code and output above
 can be tested reproducibly. By default, the function returns a
@@ -36,7 +36,7 @@ from :py:class:`evosim.charging_posts.Sockets` and :py:class:`evosim.charging_po
 .. doctest:: charging_posts_usage
     :options: +NORMALIZE_WHITESPACE
 
-    >>> result.socket
+    >>> posts.socket
     post
     0               CCS
     1           CHADEMO
@@ -45,10 +45,10 @@ from :py:class:`evosim.charging_posts.Sockets` and :py:class:`evosim.charging_po
     4           CHADEMO
     Name: socket, dtype: object
 
-    >>> result.socket[0]
+    >>> posts.socket[0]
     <Sockets.CCS: 32>
 
-    >>> result.charger
+    >>> posts.charger
     post
     0     SLOW
     1     FAST
@@ -57,7 +57,7 @@ from :py:class:`evosim.charging_posts.Sockets` and :py:class:`evosim.charging_po
     4     SLOW
     Name: charger, dtype: object
 
-    >>> result.charger[0]
+    >>> posts.charger[0]
     <Chargers.SLOW: 1>
 
 The range of latitude and longitude, the number of socket and charger types and their
@@ -75,18 +75,18 @@ sockets to two type and heavily favors one rather than the other:
     ...     capacity=(1, 5),
     ...     seed=1,
     ... )
-          latitude  longitude socket charger  capacity  occupancy
+          latitude  longitude  capacity  occupancy socket charger
     post
-    0        51.48       0.82  TYPE2    FAST         4          0
-    1        51.68       0.44  TYPE2    FAST         4          0
-    2        51.31       0.08  TYPE2    SLOW         2          0
-    3        51.68       0.88  TYPE2    SLOW         1          0
-    4        51.39       0.03  TYPE2    FAST         3          0
-    5        51.44       0.29  TYPE2    FAST         3          0
-    6        51.62      -0.27  TYPE2    FAST         4          0
-    7        51.43       0.21  TYPE2   RAPID         2          0
-    8        51.50      -0.14  TYPE1    FAST         2          0
-    9        51.26      -0.04  TYPE2    FAST         1          0
+    0        51.48       0.82         4          0  TYPE2    FAST
+    1        51.68       0.44         4          0  TYPE2    FAST
+    2        51.31       0.08         2          0  TYPE2    SLOW
+    3        51.68       0.88         1          0  TYPE2    SLOW
+    4        51.39       0.03         3          0  TYPE2    FAST
+    5        51.44       0.29         3          0  TYPE2    FAST
+    6        51.62      -0.27         4          0  TYPE2    FAST
+    7        51.43       0.21         2          0  TYPE2   RAPID
+    8        51.50      -0.14         2          0  TYPE1    FAST
+    9        51.26      -0.04         1          0  TYPE2    FAST
 
 Both chargers and sockets can accept multiple types simultaneously, and they can be
 queried accordingly:

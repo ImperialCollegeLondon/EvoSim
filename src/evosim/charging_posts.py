@@ -242,6 +242,7 @@ def _transform_to_schema(
     schema: Mapping[Text, Any],
     data: Optional[Union[pd.DataFrame, Any]],
     index_name: Optional[Text] = None,
+    reorder: bool = True,
 ) -> pd.DataFrame:
     dataframe = data.copy(deep=False)
     for column, dtypes in schema.items():
@@ -258,6 +259,11 @@ def _transform_to_schema(
         dataframe = dataframe.set_index(index_name)
     else:
         dataframe.index.name = index_name
+    if reorder:
+        columns = list(schema.keys()) + [
+            u for u in dataframe.columns if u not in schema.keys()
+        ]
+        dataframe = dataframe[columns]
     return dataframe
 
 
@@ -443,4 +449,4 @@ def random_charging_posts(
         )
     )
     result.index.name = "post"
-    return result
+    return to_charging_posts(result)
