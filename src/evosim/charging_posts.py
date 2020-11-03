@@ -196,7 +196,7 @@ def is_charging_posts(dataframe: pd.DataFrame, raise_exception: bool = False) ->
         >>> from pytest import raises
         >>> from evosim.charging_posts import random_charging_posts, is_charging_posts
         >>> posts = random_charging_posts(5)
-        >>> is_charging_posts(posts)
+        >>> is_charging_posts(posts, raise_exception=True)
         True
 
         >>> is_charging_posts(posts.drop(columns="latitude"))
