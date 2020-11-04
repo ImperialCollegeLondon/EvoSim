@@ -130,5 +130,15 @@ def generate_installation():
     )
 
 
+def copy_notebooks():
+    from shutil import copytree
+    from pathlib import Path
+
+    src = Path(__file__).parent.parent / "notebooks"
+    dst = Path(__file__).parent / "source" / "generated" / "howto"
+    copytree(src, dst, dirs_exist_ok=True)
+
+
 generate_docstring_files()
 generate_installation()
+copy_notebooks()
