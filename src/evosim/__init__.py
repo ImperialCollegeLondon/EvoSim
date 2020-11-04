@@ -7,6 +7,7 @@ __all__ = [
     "objectives",
     "allocators",
     "io",
+    "autoconf",
 ]
 
-from evosim import allocators, charging_posts, fleet, io, matchers, objectives
+from evosim import allocators, autoconf, charging_posts, fleet, io, matchers, objectives

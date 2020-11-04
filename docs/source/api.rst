@@ -69,6 +69,8 @@ Data
 Matchers
 ========
 
+.. autofunction:: evosim.matchers.register_matcher
+
 .. autofunction:: evosim.matchers.factory
 
 .. autofunction:: evosim.matchers.charging_post_availability
@@ -122,6 +124,12 @@ Data
 .. autodata:: evosim.io.EXEMPLARS
 
 
+AutoConf
+========
+
+.. autoclass:: evosim.autoconf.AutoConf
+    :members:
+    :special-members: __call__
 
 Constants
 =========

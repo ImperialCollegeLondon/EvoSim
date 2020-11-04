@@ -14,11 +14,18 @@ from typing import (
 import numpy as np
 import pandas as pd
 
+from evosim.autoconf import AutoConf
+
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
 Matcher = Callable[[Any, Any], Any]
+"""Signature of all matchers."""
+
+register_matcher = AutoConf("matcher")
+"""Registration decorator for matchers."""
 
 
+@register_matcher
 def charging_post_availability(_, charging_post) -> bool:
     """True if the charging post has some spare capacity.
 
@@ -49,6 +56,7 @@ def charging_post_availability(_, charging_post) -> bool:
     return charging_post.occupancy < charging_post.capacity
 
 
+@register_matcher
 def socket_compatibility(vehicle, charging_post) -> bool:
     """True if vehicle and charging post are compatible."""
     result = np.bitwise_and(vehicle.socket, charging_post.socket)
@@ -57,6 +65,7 @@ def socket_compatibility(vehicle, charging_post) -> bool:
     return result
 
 
+@register_matcher
 def distance(vehicle, charging_post, max_distance: float = 1) -> bool:
     """Maximum distance between current vehicle location and charging post."""
     from evosim.objectives import distance
@@ -64,6 +73,7 @@ def distance(vehicle, charging_post, max_distance: float = 1) -> bool:
     return distance(vehicle, charging_post) < max_distance
 
 
+@register_matcher
 def distance_from_destination(vehicle, charging_post, max_distance: float = 1) -> bool:
     """Maximum distance between vehicle destination and charging post."""
     from evosim.objectives import distance
@@ -79,6 +89,7 @@ def distance_from_destination(vehicle, charging_post, max_distance: float = 1) -
     )
 
 
+@register_matcher
 def charger_compatibility(vehicle, charging_post) -> bool:
     """True if vehicle and charging post are compatible."""
     result = np.bitwise_and(vehicle.charger, charging_post.charger)
@@ -87,31 +98,14 @@ def charger_compatibility(vehicle, charging_post) -> bool:
     return result
 
 
-def single_factory(settings: Union[Text, Mapping]) -> Callable[[Any, Any], bool]:
-    """Transforms a string into a single matcher."""
-    from evosim import matchers
-    from functools import partial
-
-    if isinstance(settings, Text):
-        return getattr(matchers, settings)
-    if "name" not in settings:
-        raise ValueError("If a mapping, settings should have a `name` key-value pair.")
-
-    parameters = dict(**settings)
-    function = getattr(matchers, parameters.pop("name"))
-    if len(parameters) == 0:
-        return function
-    return partial(function, **parameters)
-
-
 def factory(
     settings: Union[Sequence[Union[Text, Mapping]], Union[Text, Mapping]]
 ) -> Callable[[Any, Any], bool]:
     """Transforms a sequence of strings into a sequence of matchers."""
     if isinstance(settings, (Text, Mapping)):
-        return single_factory(settings)
+        return register_matcher.factory(settings)
 
-    functions = [single_factory(setting) for setting in settings]
+    functions = [register_matcher.factory(setting) for setting in settings]
 
     def match(vehicle, charging_post) -> bool:
         result = functions[0](vehicle, charging_post)
