@@ -35,6 +35,7 @@ def charging_post_availability(_, charging_post) -> bool:
         >>> evosim.matchers.charging_post_availability(None, cps.loc[0])
         True
         >>> evosim.matchers.charging_post_availability(None, cps)
+        post
         0    True
         1    True
         2    True

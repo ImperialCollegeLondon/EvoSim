@@ -1,12 +1,12 @@
 from enum import Enum, auto
 from pathlib import Path
-from typing import Optional, Sequence, Tuple, Union
+from typing import Callable, Mapping, Optional, Sequence, Text, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
 from evosim import constants
-from evosim.charging_posts import Chargers, Sockets
+from evosim.charging_posts import Chargers, Sockets, to_chargers, to_sockets
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
@@ -118,5 +118,153 @@ def random_fleet(
     )
     result["model"] = rng.choice(list(model_types), size=n, replace=True)
     result["model"] = result.model.astype("category")
+    result.index.name = "vehicle"
 
     return result
+
+
+def to_models(data: Union[Sequence[Text], Text, Models]) -> Sequence[Models]:
+    """Transforms text strings to sockets.
+
+    Example:
+
+        String to models:
+
+        >>> from evosim.fleet import to_models
+        >>> to_models("BMW_i3")
+        <Models.BMW_I3: 2>
+
+        Lists of strings to lists models:
+
+        >>> to_models(["BMW_i3", "tesla_model_s"])
+        [<Models.BMW_I3: 2>, <Models.TESLA_MODEL_S: 23>]
+
+        Numpy arrays of strings to numpy arrays of models:
+
+        >>> to_models(np.array(["BMW_i3", "TESLA_MODEL_S"]))
+        array([<Models.BMW_I3: 2>, <Models.TESLA_MODEL_S: 23>], dtype=object)
+
+        Pandas series to pandas series:
+
+        >>> to_models(pd.Series(["bmw_i3", "tesla_model_s"], index=['a', 'b']))
+        a           BMW_I3
+        b    TESLA_MODEL_S
+        dtype: object
+
+        Or models to models...
+
+        >>> to_models(evosim.fleet.Models.BMW_I3)
+        <Models.BMW_I3: 2>
+    """
+    from evosim.charging_posts import _to_enum
+
+    return _to_enum(data, Models, "model")
+
+
+FLEET_SCHEMA: Mapping[
+    Text, Union[np.dtype, Callable[[Sequence], Sequence], Sequence[np.dtype]]
+] = dict(
+    latitude=(np.dtype(float), np.float16, np.float32, np.float64),
+    longitude=(np.dtype(float), np.float16, np.float32, np.float64),
+    dest_lat=(np.dtype(float), np.float16, np.float32, np.float64),
+    dest_long=(np.dtype(float), np.float16, np.float32, np.float64),
+    socket=to_sockets,
+    charger=to_chargers,
+    model=to_models,
+)
+"""Schema defining a fleet of electric vehicles
+
+Maps the column to the dtype, a sequence of dtypes, or to an idem-potent callable that
+can be used to transform the column. If  a sequence of dtypes is given, then the first
+one is the default.All the columns named here are **required**. A charging posts table
+can any number of extra columns.
+"""
+
+
+def is_fleet(dataframe: pd.DataFrame, raise_exception: bool = False) -> bool:
+    """True if dataframe follows the fleet schema.
+
+    Args:
+        dataframe (pandas.DataFrame): putative fleet of electric vehicles
+        raise_exception: if ``False`` returns a boolean. If ``True``, will raise an
+            exception with some information identifying the difference with
+            :py:data:`FLEET_SCHEMA`.
+
+    Usage:
+
+        >>> from pytest import raises
+        >>> from evosim.fleet import random_fleet, is_fleet
+        >>> fleet = random_fleet(5)
+        >>> is_fleet(fleet)
+        True
+
+        >>> is_fleet(fleet.drop(columns="latitude"))
+        False
+
+        >>> wrong_dtype = fleet.copy(deep=False)
+        >>> wrong_dtype["latitude"] = wrong_dtype.latitude.astype(str)
+        >>> is_fleet(wrong_dtype)
+        False
+
+        >>> wrong_dtype = fleet.copy(deep=False)
+        >>> wrong_dtype["socket"] = [str(u).lower() for u in wrong_dtype.socket]
+        >>> is_fleet(wrong_dtype)
+        False
+
+        >>> wrong_index_name = fleet.copy(deep=False)
+        >>> wrong_index_name.index.name = "notvehicle"
+        >>> is_fleet(wrong_index_name)
+        False
+        >>> wrong_index_name.index.name = "VEHICLE"
+        >>> is_fleet(wrong_index_name)
+        False
+
+        >>> with raises(ValueError):
+        ...     is_fleet(fleet.drop(columns="latitude"), raise_exception=True)
+    """
+    from evosim.charging_posts import _dataframe_follows_schema
+    from evosim.fleet import FLEET_SCHEMA
+
+    return _dataframe_follows_schema(
+        dataframe,
+        raise_exception=raise_exception,
+        schema=FLEET_SCHEMA,
+        index_name="vehicle",
+    )
+
+
+def to_fleet(data: pd.DataFrame) -> pd.DataFrame:
+    """Tries and transform input data to a fleet dataframe.
+
+    This function will try and transform the columns of the input dataframe to fit the
+    schema defined in :py:data:`evosim.fleet.FLEET_SCHEMA`. It also sets the "vehicle"
+    column as the index, if it exists. In any-case, it names the indices "vehicle". It
+    returns a shallow copy of the input data frame with transformed columns as required.
+
+    Args:
+        data (pandas.DataFrame): dataframe to transform following the schema.
+
+    Returns:
+        pandas.DataFrame: A dataframe conforming to the fleet schema.
+
+    Example:
+
+        >>> from evosim.fleet import random_fleet, to_fleet, is_fleet
+        >>> from evosim.charging_posts import Sockets, Chargers
+        >>> dataframe = random_fleet(5)
+        >>> dataframe["socket"] = [str(u).lower() for u in dataframe.socket]
+        >>> dataframe["charger"] = [str(u).lower() for u in dataframe.charger]
+        >>> is_fleet(dataframe)
+        False
+        >>> fleet = to_fleet(dataframe)
+        >>> is_fleet(fleet)
+        True
+        >>> isinstance(fleet.at[0, "socket"], Sockets)
+        True
+        >>> isinstance(fleet.at[0, "charger"], Chargers)
+        True
+    """
+    from evosim.charging_posts import _transform_to_schema
+    from evosim.fleet import FLEET_SCHEMA
+
+    return _transform_to_schema(FLEET_SCHEMA, data, index_name="vehicle")

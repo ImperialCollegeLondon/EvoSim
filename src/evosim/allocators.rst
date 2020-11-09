@@ -56,6 +56,7 @@ follows:
     dtype: bool
 
     >>> result.allocation.iloc[:10]
+    vehicle
     376    <NA>
     16       30
     365      13
@@ -94,6 +95,7 @@ We can also check that each that the allocation targeted available space only:
     >>> allocation = result.allocation.value_counts().reindex_like(charging_posts)
     >>> occupancy = allocation + charging_posts.occupancy
     >>> occupancy
+    post
     83    2
     30    3
     56    2
@@ -140,19 +142,21 @@ vehicle to the nearest compatible post.
 
     >>> result = evosim.allocators.greedy_allocator(fleet, charging_posts, matcher)
     >>> result.iloc[:5]
-         latitude  longitude socket charger  dest_lat  dest_long                   model  \
-    376     51.29       1.05  TYPE2    SLOW     51.37       0.91  HYUNDAI_IONIQ_ELECTRIC
-    16      51.32       1.20  TYPE2    FAST     51.38       0.83     MERCEDES_BENZ_E350E
-    365     51.42       0.84  TYPE2    SLOW     51.59       0.22                  BMW_I3
-    82      51.46       0.73  TYPE2    FAST     51.53       0.60              BMW_X5_40E
-    107     51.67      -0.47  TYPE2    SLOW     51.53      -0.16           JAGUAR_I_PACE
+             latitude  longitude socket charger  dest_lat  dest_long  \
+    vehicle
+    376         51.29       1.05  TYPE2    SLOW     51.37       0.91
+    16          51.32       1.20  TYPE2    FAST     51.38       0.83
+    365         51.42       0.84  TYPE2    SLOW     51.59       0.22
+    82          51.46       0.73  TYPE2    FAST     51.53       0.60
+    107         51.67      -0.47  TYPE2    SLOW     51.53      -0.16
     <BLANKLINE>
-         allocation
-    376          13
-    16           30
-    365          27
-    82           23
-    107        <NA>
+                              model  allocation
+    vehicle
+    376      HYUNDAI_IONIQ_ELECTRIC          13
+    16          MERCEDES_BENZ_E350E          30
+    365                      BMW_I3          27
+    82                   BMW_X5_40E          23
+    107               JAGUAR_I_PACE        <NA>
 
 In the same vein as for :py:func:`~evosim.allocators.random_allocator`, the function
 returns a shallow copy of the ``fleet`` with an ``allocation`` column holding the label

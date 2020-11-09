@@ -19,6 +19,7 @@ accessed directly or created via :py:mod:`evosim.matchers.factory`:
     >>> infrastructure = evosim.charging_posts.random_charging_posts(5, seed=1)
     >>> fleet = evosim.fleet.random_fleet(10, seed=1)
     >>> matcher(fleet, infrastructure.loc[0])
+    vehicle
     0    False
     1    False
     2    False
@@ -44,6 +45,7 @@ Using the factory becomes interesting when we want to apply a combination of mat
     ...     ["socket_compatibility", "charger_compatibility"]
     ... )
     >>> matcher(fleet, infrastructure.loc[0])
+    vehicle
     0    False
     1    False
     2    False
@@ -65,6 +67,7 @@ form of keyword arguments. These parameters can be set from the outset by feedin
     
     >>> dmatcher = evosim.matchers.factory({"name": "distance", "max_distance": 10})
     >>> dmatcher(fleet, infrastructure.loc[1])
+    vehicle
     0    False
     1    False
     2    False
@@ -79,6 +82,7 @@ form of keyword arguments. These parameters can be set from the outset by feedin
 
     >>> dmatcher = evosim.matchers.factory({"name": "distance", "max_distance": 30})
     >>> dmatcher(fleet, infrastructure.loc[1])
+    vehicle
     0     True
     1    False
     2    False
@@ -124,6 +128,7 @@ However, a subset with the same indices can be compared:
     >>> with raises(TypeError):
     ...     matcher(fleet.loc[:10], infrastructure.loc[10:20])
     >>> matcher(fleet.loc[10:20], infrastructure.loc[10:20])
+    vehicle
     10    False
     11    False
     12    False
@@ -146,6 +151,7 @@ from the fleet to the charging posts:
     >>> random_assignation = rng.choice(infrastructure.index, size=len(fleet))
     >>> assigned_posts = infrastructure.loc[random_assignation].set_index(fleet.index)
     >>> matcher(fleet, assigned_posts).sample(5, random_state=29)
+    vehicle
     73    False
     8     False
     10    False

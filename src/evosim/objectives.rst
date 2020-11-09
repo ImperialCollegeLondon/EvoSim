@@ -22,6 +22,7 @@ They can be used as follows:
     >>> a = evosim.charging_posts.random_charging_posts(5, seed=1)
     >>> b = evosim.charging_posts.random_charging_posts(5, seed=2)
     >>> evosim.objectives.distance(a, b)
+    post
     0    41.30
     1    88.79
     2    57.54
