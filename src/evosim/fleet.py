@@ -6,9 +6,13 @@ import numpy as np
 import pandas as pd
 
 from evosim import constants
+from evosim.autoconf import AutoConf
 from evosim.charging_posts import Chargers, Sockets, to_chargers, to_sockets
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
+
+register_fleet_generator = AutoConf("fleet creator")
+"""Registry for fleet creation functions. """
 
 
 class Models(Enum):
@@ -49,6 +53,38 @@ class Models(Enum):
         return self.name
 
 
+@register_fleet_generator(
+    name="random",
+    is_factory=True,
+    docs="""Generates a random fleet of electric vehicles.
+
+    Args:
+        n (int): The number of charging posts
+        latitude (Tuple[float, float]): The range over which to create random current
+            locations and destinations. Defaults to the :py:data:`London latitudinal
+            range <evosim.constants.LONDON_LATITUDE>`.
+        longitude (Tuple[float, float]): The range over which to create random current
+            locations and destinations. Defaults to the :py:data:`London longitudinal
+            range <evosim.constants.LONDON_LONGITUDE>`.
+        socket_types (List[Text]): A list of sockets from which to choose randomly.
+            Defaults to :py:class:`all available socket types
+            <evosim.charging_posts.Sockets>`.
+        socket_distribution (Optional[List[float]]): weights when choosing the socket
+            types.
+        socket_multiplicity (int): number of different types of socket each post can
+            accomodate.
+        charger_types (List[Text]): A list of chargers from which to choose randomly.
+            Defaults to :py:class:`all available charger types
+            <evosim.charging_posts.Chargers>` .
+        charger_distribution (Optional[List[float]]): weights when choosing the charger
+            types.
+        charger_multiplicity (int): number of different types of chargers each post can
+            accomodate.
+        model_types (List[Text]): A list of models from which to choose randomly.
+            Defaults to :py:class:`all known models <evosim.fleet.Models>`.
+        seed (Optional[int]): optional seed for the random number generators.
+    """,
+)
 def random_fleet(
     n: int,
     latitude: Tuple[float, float] = constants.LONDON_LATITUDE,

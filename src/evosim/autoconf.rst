@@ -64,9 +64,8 @@ to the name of the function. But it can also be set by hand:
 
 
 
-A more complicated function
-with keywords comes with additional goodies: the keyword arguments can be read and set
-from the input:
+A more complicated function with keywords comes with additional goodies: the keyword
+arguments can be read and set from the input:
 
 .. testcode:: autoconf
 
@@ -107,7 +106,26 @@ The type is automatically gathered from the type annotation of the keyword argum
 it is present. Only those types understood by ``omegaconf`` are supported. Functions
 with keywords arguments expecting more complicated types can be wrapped for the registry
 into a function with simpler types. Eventually, this limitation is due to `omegaconf`'s
-ability to transform text loaded from a yaml file into a python object.
+ability to transform text loaded from a yaml file into a python object. For simple
+cases, it is also possible to provide a docstring to the ``registry``. The types of the
+arguments will be gathered from there, if provided:
+
+.. testcode:: autoconf
+
+    @registry(
+        docs="""A registered funtion with modified types.
+
+        Args:
+            args0 (Text): a description.
+        """
+    )
+    def modified_types(args0: int = 5) :
+        """Docstring could also go here. But docs argument takes priority."""
+        return args0
+
+    function = registry.factory("modified_types")
+    assert function() == "5"
+    assert not (function() == 5)
 
 
 Sometimes we require instantiating more complex functions. This is where factory

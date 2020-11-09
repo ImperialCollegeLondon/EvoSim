@@ -15,15 +15,23 @@ __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
 
 def _create_config(
-    function: Callable, name: Optional[Text] = None, drop: Sequence[Text] = ()
+    function: Callable,
+    name: Optional[Text] = None,
+    drop: Sequence[Text] = (),
+    docs: Optional[Text] = None,
 ):
     from inspect import signature, Signature
+    from docstring_parser import parse
     from omegaconf import MISSING
     from attr import make_class, ib
     from re import split
+    import typing
 
     if name is None:
         name = function.__name__
+
+    if docs is None and function.__doc__:
+        docs = function.__doc__
 
     def not_empty(arg, empty=MISSING):
         return arg if arg is not Signature.empty else empty
@@ -35,7 +43,20 @@ def _create_config(
         for k, v in parameters.items()
         if drop is None or k not in drop
     }
-    return make_class(normalized_name, attrs)
+    if docs:
+        docstr = parse(docs)
+        docargs = {u.arg_name: u for u in docstr.params if u.type_name}
+        for attribute in set(attrs).intersection(docargs):
+            attrs[attribute].type = eval(
+                docargs[attribute].type_name,
+                globals(),
+                {k: getattr(typing, k) for k in dir(typing) if k[0] != "_"},
+            )
+
+    result = make_class(normalized_name, attrs)
+    if docs:
+        result.__doc__ = docs
+    return result
 
 
 @dataclass
@@ -58,6 +79,7 @@ class AutoConf:
         function: Optional[Any] = None,
         name: Optional[Text] = None,
         is_factory: Optional[bool] = None,
+        docs: Optional[Text] = None,
     ) -> Callable:
         """Registers a function, a factory function, or a class.
 
@@ -73,6 +95,8 @@ class AutoConf:
             is_factory: Whether the function is a factory function or not. If
                 ``function`` is a class, defaults to ``True``. Otherwise, defaults to
                 ``False``.
+            docs: Overrides the function's docstring with a docstring specialized for
+                the autoconf framework.
         Returns:
             If ``function is None``, returns a decorator. Otherwise, returns
             ``function`` as is.
@@ -82,7 +106,7 @@ class AutoConf:
         from inspect import signature, Signature, isclass
 
         if function is None:
-            return partial(self.__call__, name=name, is_factory=is_factory)
+            return partial(self.__call__, name=name, is_factory=is_factory, docs=docs)
         if name is None:
             name = function.__name__
         if name in self.factories:
@@ -105,7 +129,7 @@ class AutoConf:
         if not is_factory:
             params = signature(function).parameters
             drop = [k for k, v in params.items() if v.default is Signature.empty]
-        self.configs[name] = _create_config(function, name=name, drop=drop)
+        self.configs[name] = _create_config(function, name=name, drop=drop, docs=docs)
         return function
 
     def factory(self, settings: Union[Text, Mapping]) -> Any:

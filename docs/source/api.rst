@@ -52,6 +52,8 @@ Enumerations
 Functions
 ---------
 
+.. autofunction:: evosim.fleet.register_fleet_generator
+
 .. autofunction:: evosim.fleet.random_fleet
 
 .. autofunction:: evosim.fleet.to_models
