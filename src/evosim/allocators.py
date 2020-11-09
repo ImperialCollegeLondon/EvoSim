@@ -4,15 +4,31 @@ from typing import Callable, Optional, Text, Union
 import numpy as np
 import pandas as pd
 
+from evosim.autoconf import AutoConf
 from evosim.matchers import Matcher
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
+
+register_allocator = AutoConf("allocator")
 
 
 class AllocationWarning(UserWarning):
     """Warning raised in allocation algorithms."""
 
 
+@register_allocator(
+    name="random",
+    docs="""Randomly assigns EVs to charging posts.
+
+    Vehicles are allocated randomly to available charging posts, subject to the
+    condition that the post and the vehicle match.
+
+    Args:
+        maxiter: maximum number of iterations before giving up. If negative, zero, or
+            absent, then defaults to the number of charging post vacancies.
+        seed (Optional[int]): seed for the random number generators.
+    """,
+)
 def random_allocator(
     fleet: pd.DataFrame,
     charging_posts: pd.DataFrame,
@@ -173,6 +189,31 @@ def random_overbooking(
     return result
 
 
+@register_allocator(
+    name="greedy",
+    docs="""Greedy allocation algorithm.
+
+    The greedy allocation tries and match the nearest compatible post to each vehicle.
+    If a given post is the nearest neighbor to more vehicles than it can accomodate,
+    then the vehicles higher in the ``fleet`` table will receive preferential treatment.
+
+    Args:
+        distance: the distance metric used to compute the nearest neighbors. See
+            :py:class:`sklearn.neighbors.BallTree`.
+        nearest_neighbors: number of nearest neighbors to consider for a match. Higher
+            values will yield fewer unallocated vehicles but is more computationally
+            intensive. If ``None`` or negative, defaults to the number of charging
+            posts.
+        leaf_size: parameter of :py:class:`sklearn.neighbors.BallTree`
+        maxiter: maximum number of iterations before bailing out. Defaults to the number
+            of vacancies.
+
+            .. note::
+
+                Each turn of the loop, the iteration counter is increased by the number
+                of filled vacancies, rather than by 1 as in more standard algorithms.
+    """,
+)
 def greedy_allocator(
     fleet: pd.DataFrame,
     charging_posts: pd.DataFrame,
