@@ -62,6 +62,8 @@ Functions
 
 .. autofunction:: evosim.fleet.to_fleet
 
+.. autofunction:: evosim.fleet.fleet_from_file
+
 Data
 ----
 

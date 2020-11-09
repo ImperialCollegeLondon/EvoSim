@@ -116,3 +116,7 @@ have the correct types. In the penultimate line, we verify with
     points. This is only to ensure the comparison is not influenced by how floating
     points are represented in the csv file written out by pandas. See the option
     `float_format` in :py:meth:`pandas.DataFrame.to_csv` for more details.
+
+
+The function `evosim.fleet.fleet_from_file` provides a shortcut for reading a fleet from
+excell, csv, feather, hdf5, and json.

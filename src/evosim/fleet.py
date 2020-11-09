@@ -307,13 +307,20 @@ def to_fleet(data: pd.DataFrame) -> pd.DataFrame:
 
 
 @register_fleet_generator(
+    name="from_file",
     is_factory=True,
     docs="""Reads a fleet from a variety of files.
     Args:
-        path (Text): path to a file.
+        path (Text): path to a file, either excel, csv, json, feather, or hdf5.
+        kwargs: Additional arguments are passed on to the underlying :py:mod:pandas`
+            function, e.g. :py:func:`pandas.read_csv`.
     """,
 )
-def from_file(path: Union[Text, Path], **kwargs):
+def fleet_from_file(path: Union[Text, Path], **kwargs):
+    """Reads a fleet from file, guessing the format from the filename.
+
+    Defaults to the csv file format.
+    """
     from omegaconf import ValidationError
 
     path = Path(path)
@@ -331,6 +338,6 @@ def from_file(path: Union[Text, Path], **kwargs):
         reader = pd.read_hdf
     elif path.suffix == ".json":
         reader = pd.read_json
-    elif path.suffix == ".csv":
+    else:
         reader = pd.read_csv
     return to_fleet(reader(path, **kwargs))
