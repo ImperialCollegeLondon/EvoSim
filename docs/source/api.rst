@@ -21,6 +21,10 @@ Enumerations
 Functions
 ---------
 
+.. autofunction:: evosim.charging_posts.register_charging_posts_generator
+
+.. autofunction:: evosim.charging_posts.charging_posts_from_file
+
 .. autofunction:: evosim.charging_posts.random_charging_posts
 
 .. autofunction:: evosim.charging_posts.to_sockets
@@ -54,6 +58,8 @@ Functions
 
 .. autofunction:: evosim.fleet.register_fleet_generator
 
+.. autofunction:: evosim.fleet.fleet_from_file
+
 .. autofunction:: evosim.fleet.random_fleet
 
 .. autofunction:: evosim.fleet.to_models
@@ -61,8 +67,6 @@ Functions
 .. autofunction:: evosim.fleet.is_fleet
 
 .. autofunction:: evosim.fleet.to_fleet
-
-.. autofunction:: evosim.fleet.fleet_from_file
 
 Data
 ----

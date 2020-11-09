@@ -6,8 +6,12 @@ import numpy as np
 import pandas as pd
 
 from evosim import constants
+from evosim.autoconf import AutoConf
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
+
+register_charging_posts_generator = AutoConf("infrastructure generator")
+"""Registry for functions to read or generate charging posts."""
 
 
 class Sockets(Flag):
@@ -320,6 +324,61 @@ def to_charging_posts(data: pd.DataFrame) -> pd.DataFrame:
     return _transform_to_schema(CHARGING_POSTS_SCHEMA, data, index_name="post")
 
 
+@register_charging_posts_generator(
+    name="random",
+    is_factory=True,
+    docs="""Generates a random table of charging posts.
+
+    Args:
+        n (int): The number of charging posts
+        latitude (Tuple[float, float]): The range over which to create random current
+            locations and destinations. Defaults to the :py:data:`London latitudinal
+            range <evosim.constants.LONDON_LATITUDE>`.
+        longitude (Tuple[float, float]): The range over which to create random current
+            locations and destinations. Defaults to the :py:data:`London longitudinal
+            range <evosim.constants.LONDON_LONGITUDE>`.
+        socket_types (List[Text]): A list of sockets from which to choose randomly.
+            Defaults to :py:class:`all available socket types
+            <evosim.charging_posts.Sockets>`.
+        socket_distribution (Optional[List[float]]): weights when choosing the socket
+            types.
+        socket_multiplicity (int): number of different types of socket each post can
+            accomodate.
+        charger_types (List[Text]): A list of chargers from which to choose randomly.
+            Defaults to :py:class:`all available charger types
+            <evosim.charging_posts.Chargers>` .
+        charger_distribution (Optional[List[float]]): weights when choosing the charger
+            types.
+        charger_multiplicity (int): number of different types of chargers each post can
+            accomodate.
+        capacity (Tuple[int, int]): A range from which to choose the maximum capacity
+            for each charging post. The range can be given as ``(start, end)``, or as a
+            single number, in which case it defaults to ``1, capacity + 1``. Defaults to
+            a capacity of 1 for each charging post.
+
+            .. note::
+
+                The range given as ``(min, max)`` will allow capacities between ``min``
+                included and ``max`` excluded, as per python conventions.
+
+        occupancy (Tuple[int, int]): A range from which to choose the current occupancy
+            for each charging post. The range can be given as ``(start, end)``, or as a
+            single number, in which case it defaults to ``0, occupancy + 1``. Defaults
+            to an occupancy of 0. The occupancy is always smaller than the capacity.
+
+            .. warning::
+
+                Owing to the simplicity of the implementation, the distribution of
+                occupancies is not quite uniform and may skew towards lower values.
+
+            .. note::
+
+                The range given as ``(min, max)`` will allow capacities between ``min``
+                included and ``max`` excluded, as per python conventions.
+
+        seed (Optional[int]): optional seed for the random number generators.
+    """,
+)
 def random_charging_posts(
     n: int,
     latitude: Tuple[float, float] = constants.LONDON_LATITUDE,
@@ -330,8 +389,8 @@ def random_charging_posts(
     charger_types: Sequence[Chargers] = tuple(Chargers),
     charger_distribution: Optional[Sequence[float]] = None,
     charger_multiplicity: int = 1,
-    capacity: Optional[Union[Tuple[int, int], int]] = 1,
-    occupancy: Optional[Union[Tuple[int, int], int]] = 0,
+    capacity: Optional[Union[Tuple[int, int], int]] = (1, 2),
+    occupancy: Optional[Union[Tuple[int, int], int]] = (0, 1),
     seed: Optional[Union[int, np.random.Generator]] = None,
 ) -> pd.DataFrame:
     """Generates a random table representing the charging posts infrastructure.
@@ -458,3 +517,48 @@ def random_charging_posts(
     )
     result.index.name = "post"
     return to_charging_posts(result)
+
+
+def _from_file(path: Union[Text, Path], validator: Callable, **kwargs):
+    """Reads a atble from file, guessing the format from the filename.
+
+    Defaults to the csv file format.
+    """
+    from omegaconf import ValidationError
+
+    path = Path(path)
+    if path.is_dir():
+        path = path / "fleet.csv"
+
+    if not path.exists():
+        raise ValidationError(f"Path {path} does not point to a file.")
+
+    if path.suffix == ".xlsx":
+        reader = pd.read_excel
+    elif path.suffix == ".feather":
+        reader = pd.read_feather
+    elif path.suffix == ".h5":
+        reader = pd.read_hdf
+    elif path.suffix == ".json":
+        reader = pd.read_json
+    else:
+        reader = pd.read_csv
+    return validator(reader(path, **kwargs))
+
+
+@register_charging_posts_generator(
+    name="from_file",
+    is_factory=True,
+    docs="""Reads charging posts from a variety of files.
+    Args:
+        path (Text): path to a file, either excel, csv, json, feather, or hdf5.
+        kwargs: Additional arguments are passed on to the underlying :py:mod:pandas`
+            function, e.g. :py:func:`pandas.read_csv`.
+    """,
+)
+def charging_posts_from_file(path: Union[Text, Path], **kwargs):
+    """Reads charging posts from file, guessing the format from the filename.
+
+    Defaults to the csv file format.
+    """
+    return _from_file(path, to_charging_posts, **kwargs)

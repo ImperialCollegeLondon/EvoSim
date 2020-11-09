@@ -11,8 +11,8 @@ from evosim.charging_posts import Chargers, Sockets, to_chargers, to_sockets
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
-register_fleet_generator = AutoConf("fleet creator")
-"""Registry for fleet creation functions. """
+register_fleet_generator = AutoConf("fleet generation")
+"""Registry for functions to read or generate fleets. """
 
 
 class Models(Enum):
@@ -321,23 +321,6 @@ def fleet_from_file(path: Union[Text, Path], **kwargs):
 
     Defaults to the csv file format.
     """
-    from omegaconf import ValidationError
+    from evosim.charging_posts import _from_file
 
-    path = Path(path)
-    if path.is_dir():
-        path = path / "fleet.csv"
-
-    if not path.exists():
-        raise ValidationError(f"Path {path} does not point to a file.")
-
-    if path.suffix == ".xlsx":
-        reader = pd.read_excel
-    elif path.suffix == ".feather":
-        reader = pd.read_feather
-    elif path.suffix == ".h5":
-        reader = pd.read_hdf
-    elif path.suffix == ".json":
-        reader = pd.read_json
-    else:
-        reader = pd.read_csv
-    return to_fleet(reader(path, **kwargs))
+    return _from_file(path, to_fleet, **kwargs)

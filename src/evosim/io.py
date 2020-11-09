@@ -42,7 +42,7 @@ from typing import IO, Mapping, Optional, Text, Union
 import numpy as np
 import pandas as pd
 
-from evosim.charging_posts import Chargers
+from evosim.charging_posts import Chargers, register_charging_posts_generator
 
 FileInput = Union[Text, Path, IO[Text]]
 
@@ -143,6 +143,23 @@ def read_sockets(
     return result
 
 
+@register_charging_posts_generator(
+    name="from_sockets_and_stations",
+    is_factory=True,
+    docs="""Reads charging points from sockets and stations.
+
+    Puts together the data from sockets and stations csv files to create a table of
+    charging posts.  See :py:func:`~evosim.io.read_stations` and
+    :py:func:`~evosim.io.read_sockets` for example files.
+
+    Args:
+        stations (str): station input table
+        sockets (str): socket input table
+        max_charger_power (Optional[Dict[Text, float]]): Maximum charging power for each
+            item in charger. Defaults to
+            :py:data:`evosim.charging_posts.MAXIMUM_CHARGER_POWER`.
+    """,
+)
 def read_charging_points(
     stations: Union[FileInput, pd.DataFrame] = "stations.csv",
     sockets: Union[FileInput, pd.DataFrame] = "sockets.csv",
