@@ -12,6 +12,9 @@ function) in the code and inputs (in a *yaml* file). There three aspects to thes
    with `OmegConf <https://omegaconf.readthedocs.io/>`__
 #. a means to call the factory function given an input to OmegaConf
 
+Usage
+-----
+
 We can create a registry with:
 
 .. testcode:: autoconf
@@ -106,27 +109,8 @@ The type is automatically gathered from the type annotation of the keyword argum
 it is present. Only those types understood by ``omegaconf`` are supported. Functions
 with keywords arguments expecting more complicated types can be wrapped for the registry
 into a function with simpler types. Eventually, this limitation is due to `omegaconf`'s
-ability to transform text loaded from a yaml file into a python object. For simple
-cases, it is also possible to provide a docstring to the ``registry``. The types of the
-arguments will be gathered from there, if provided:
-
-.. testcode:: autoconf
-
-    @registry(
-        docs="""A registered funtion with modified types.
-
-        Args:
-            args0 (Text): a description.
-        """
-    )
-    def modified_types(args0: int = 5) :
-        """Docstring could also go here. But docs argument takes priority."""
-        return args0
-
-    function = registry.factory("modified_types")
-    assert function() == "5"
-    assert not (function() == 5)
-
+ability to transform text loaded from a yaml file into a python object. Also, see
+:ref:`Overriding docstrings and argument types`.
 
 Sometimes we require instantiating more complex functions. This is where factory
 functions come in. Factory functions are not returned directly, instead they are called
@@ -207,3 +191,64 @@ non-keyword arguments are required:
     Traceback (most recent call last):
         ...
     ValidationError: Incorrect value 'c' for key 'otherthing' in my_registry, MyClass
+
+
+Overriding docstrings and argument types
+----------------------------------------
+
+``registry`` accepts a docstring argument. If not given, then the docstring is read from
+function itself. The types of the arguments will be gathered from there, if provided,
+rather than from the function signature. This is useful both to document input arguments
+from a user perspective, and to simplify the input types where necessary.
+
+.. testcode:: autoconf_docs
+
+    registry = evosim.autoconf.AutoConf("my_registry")
+
+    @registry(
+        docs="""A registered funtion with modified types.
+
+        Generally, this docstring is specialized for users working from input files.
+
+        Args:
+            args0 (Text): a description.
+        """
+    )
+    def modified_types(args0: int = 5) :
+        """Docstring could also go here. But docs argument takes priority.
+
+        Generally, this docstring is written for developers.
+        """
+        return args0
+
+    function = registry.factory("modified_types")
+    assert function() == "5"
+    assert not (function() == 5)
+
+
+Variational keyword arguments
+-----------------------------
+
+The registered functions can be defined with keyword arguments. In that case, it creates
+a factory wich takes any number of arguments.
+
+.. testcode:: autoconf_kwargs
+
+    registry = evosim.autoconf.AutoConf("my_registry")
+
+
+    @registry(
+        docs="""A registered funtion with modified types.
+
+        Args:
+            args0: a description.
+            kwargs: additional keys specified in the input will be passed here.
+        """
+    )
+    def with_kwargs(args0: int = 5, **kwargs):
+        return dict(args0=args0, **kwargs)
+
+    function = registry.factory(dict(name="with_kwargs", additional="hello"))
+    assert set(function().keys()) == {"args0", "additional"}
+    assert function()["args0"] == 5
+    assert function()["additional"] == "hello"

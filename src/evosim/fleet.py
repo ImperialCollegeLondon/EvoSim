@@ -304,3 +304,33 @@ def to_fleet(data: pd.DataFrame) -> pd.DataFrame:
     from evosim.fleet import FLEET_SCHEMA
 
     return _transform_to_schema(FLEET_SCHEMA, data, index_name="vehicle")
+
+
+@register_fleet_generator(
+    is_factory=True,
+    docs="""Reads a fleet from a variety of files.
+    Args:
+        path (Text): path to a file.
+    """,
+)
+def from_file(path: Union[Text, Path], **kwargs):
+    from omegaconf import ValidationError
+
+    path = Path(path)
+    if path.is_dir():
+        path = path / "fleet.csv"
+
+    if not path.exists():
+        raise ValidationError(f"Path {path} does not point to a file.")
+
+    if path.suffix == ".xlsx":
+        reader = pd.read_excel
+    elif path.suffix == ".feather":
+        reader = pd.read_feather
+    elif path.suffix == ".h5":
+        reader = pd.read_hdf
+    elif path.suffix == ".json":
+        reader = pd.read_json
+    elif path.suffix == ".csv":
+        reader = pd.read_csv
+    return to_fleet(reader(path, **kwargs))

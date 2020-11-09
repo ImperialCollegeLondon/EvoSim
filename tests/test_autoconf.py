@@ -82,3 +82,22 @@ def test_create_config_types_from_docs():
     structured.n = 2
     assert structured.n == "2"
     assert not (structured.n == 2)
+
+
+def test_create_config_kwargs():
+    from evosim.autoconf import _create_config
+    from omegaconf import OmegaConf
+    from omegaconf.errors import ConfigAttributeError
+
+    def no_kw(n: int):
+        pass
+
+    def with_kw(n: int, **kwargs):
+        pass
+
+    NoKW = _create_config(no_kw)
+    with raises(ConfigAttributeError):
+        OmegaConf.structured(NoKW).b = 5
+
+    WithKW = _create_config(with_kw)
+    OmegaConf.structured(WithKW).b = 5

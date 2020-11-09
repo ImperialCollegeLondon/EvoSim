@@ -8,6 +8,7 @@ from typing import (
     Optional,
     Sequence,
     Text,
+    Tuple,
     Union,
 )
 
@@ -41,7 +42,7 @@ def _create_config(
     attrs = {
         k: ib(not_empty(v.default), type=not_empty(v.annotation, None))
         for k, v in parameters.items()
-        if drop is None or k not in drop
+        if (drop is None or k not in drop) and v.kind == v.POSITIONAL_OR_KEYWORD
     }
     if docs:
         docstr = parse(docs)
@@ -52,8 +53,12 @@ def _create_config(
                 globals(),
                 {k: getattr(typing, k) for k in dir(typing) if k[0] != "_"},
             )
+    if any(v.kind == v.VAR_KEYWORD for v in parameters.values()):
+        bases: Tuple = (dict,)
+    else:
+        bases = (object,)
 
-    result = make_class(normalized_name, attrs)
+    result = make_class(normalized_name, attrs, bases=bases)
     if docs:
         result.__doc__ = docs
     return result
