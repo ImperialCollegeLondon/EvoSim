@@ -1,7 +1,7 @@
 Automatic Configuration
 =======================
 
-The automatic configuration package provides tools easily link an object (e.g. a
+The automatic configuration package provides tools to easily link an object (e.g. a
 function) in the code and inputs (in a *yaml* file). There three aspects to these links:
 
 #. a means to register a `factory function
@@ -110,7 +110,7 @@ it is present. Only those types understood by ``omegaconf`` are supported. Funct
 with keywords arguments expecting more complicated types can be wrapped for the registry
 into a function with simpler types. Eventually, this limitation is due to `omegaconf`'s
 ability to transform text loaded from a yaml file into a python object. Also, see
-:ref:`Overriding docstrings and argument types`.
+:ref:`autoconf-doc-overrides`.
 
 Sometimes we require instantiating more complex functions. This is where factory
 functions come in. Factory functions are not returned directly, instead they are called
@@ -192,6 +192,8 @@ non-keyword arguments are required:
         ...
     ValidationError: Incorrect value 'c' for key 'otherthing' in my_registry, MyClass
 
+
+.. _autoconf-doc-overrides:
 
 Overriding docstrings and argument types
 ----------------------------------------
