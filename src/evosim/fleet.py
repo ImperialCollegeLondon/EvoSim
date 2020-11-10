@@ -89,13 +89,13 @@ def random_fleet(
     n: int,
     latitude: Tuple[float, float] = constants.LONDON_LATITUDE,
     longitude: Tuple[float, float] = constants.LONDON_LONGITUDE,
-    socket_types: Sequence[Sockets] = tuple(Sockets),
+    socket_types: Sequence[Union[Sockets, Text]] = tuple((str(u) for u in Sockets)),
     socket_distribution: Optional[Sequence[float]] = None,
     socket_multiplicity: int = 1,
-    charger_types: Sequence[Chargers] = tuple(Chargers),
+    charger_types: Sequence[Union[Chargers, Text]] = tuple((str(u) for u in Chargers)),
     charger_distribution: Optional[Sequence[float]] = None,
     charger_multiplicity: int = 1,
-    model_types: Sequence[Models] = tuple(Models),
+    model_types: Sequence[Union[Text, Models]] = tuple((str(u) for u in Models)),
     seed: Optional[Union[int, np.random.Generator]] = None,
 ) -> pd.DataFrame:
     """Generates a random table representing a fleet of electric vehicles.
