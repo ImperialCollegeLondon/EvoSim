@@ -48,10 +48,10 @@ follows:
     >>> (result.loc[:, fleet.columns] == fleet).all()
     latitude     True
     longitude    True
-    socket       True
-    charger      True
     dest_lat     True
     dest_long    True
+    socket       True
+    charger      True
     model        True
     dtype: bool
 
@@ -142,13 +142,13 @@ vehicle to the nearest compatible post.
 
     >>> result = evosim.allocators.greedy_allocator(fleet, charging_posts, matcher)
     >>> result.iloc[:5]
-             latitude  longitude socket charger  dest_lat  dest_long  \
+             latitude  longitude  dest_lat  dest_long socket charger  \
     vehicle
-    376         51.29       1.05  TYPE2    SLOW     51.37       0.91
-    16          51.32       1.20  TYPE2    FAST     51.38       0.83
-    365         51.42       0.84  TYPE2    SLOW     51.59       0.22
-    82          51.46       0.73  TYPE2    FAST     51.53       0.60
-    107         51.67      -0.47  TYPE2    SLOW     51.53      -0.16
+    376         51.29       1.05     51.37       0.91  TYPE2    SLOW
+    16          51.32       1.20     51.38       0.83  TYPE2    FAST
+    365         51.42       0.84     51.59       0.22  TYPE2    SLOW
+    82          51.46       0.73     51.53       0.60  TYPE2    FAST
+    107         51.67      -0.47     51.53      -0.16  TYPE2    SLOW
     <BLANKLINE>
                               model  allocation
     vehicle

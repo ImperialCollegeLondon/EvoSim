@@ -35,6 +35,14 @@ class Chargers(Flag):
         return super().__str__()[9:]
 
 
+MAXIMUM_CHARGER_POWER: Mapping[Chargers, float] = {
+    Chargers.SLOW: 4,
+    Chargers.FAST: 10,
+    Chargers.RAPID: np.inf,
+}
+""" Maximum power each charger can provide. """
+
+
 def _to_enum(
     data: Union[Sequence[Text], Text, Any], enumeration, name: Text
 ) -> Sequence:
@@ -44,9 +52,13 @@ def _to_enum(
     if isinstance(data, enumeration):
         return data
 
-    mapper = {str(k).upper(): k for k in enumeration}
+    _locals = {u.name: u for u in enumeration}
+
+    def mapper(item):
+        return eval(str(item).upper(), {}, _locals)
+
     try:
-        result = [mapper[str(k).upper()] for k in data]
+        result = [mapper(k) for k in data]
     except KeyError as e:
         raise ValueError(f"Incorrect {name} name {e}")
     if isinstance(data, np.ndarray):
@@ -238,6 +250,7 @@ def _transform_to_schema(
     schema: Mapping[Text, Any],
     data: Optional[Union[pd.DataFrame, Any]],
     index_name: Optional[Text] = None,
+    reorder: bool = True,
 ) -> pd.DataFrame:
     dataframe = data.copy(deep=False)
     for column, dtypes in schema.items():
@@ -254,6 +267,11 @@ def _transform_to_schema(
         dataframe = dataframe.set_index(index_name)
     else:
         dataframe.index.name = index_name
+    if reorder:
+        columns = list(schema.keys()) + [
+            u for u in dataframe.columns if u not in schema.keys()
+        ]
+        dataframe = dataframe[columns]
     return dataframe
 
 
@@ -439,4 +457,4 @@ def random_charging_posts(
         )
     )
     result.index.name = "post"
-    return result
+    return to_charging_posts(result)

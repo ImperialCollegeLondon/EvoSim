@@ -184,10 +184,10 @@ def classify(
         >>> (pd.concat((data[u] for u in classes)).sort_index() == data).all()
         latitude     True
         longitude    True
-        socket       True
-        charger      True
         capacity     True
         occupancy    True
+        socket       True
+        charger      True
         dtype: bool
 
         By default, the classification will only include each row once. However, it is

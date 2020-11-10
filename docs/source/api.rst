@@ -36,6 +36,8 @@ Data
 
 .. autodata:: evosim.charging_posts.CHARGING_POSTS_SCHEMA
 
+.. autodata:: evosim.charging_posts.MAXIMUM_CHARGER_POWER
+
 
 Electric Vehicles
 =================
@@ -99,6 +101,27 @@ Allocators
 .. autofunction:: evosim.allocators.random_allocator
 
 .. autofunction:: evosim.allocators.greedy_allocator
+
+
+IO
+==
+
+Functions
+---------
+
+.. autofunction:: evosim.io.read_stations
+
+.. autofunction:: evosim.io.read_sockets
+
+.. autofunction:: evosim.io.read_charging_points
+
+
+Data
+----
+
+.. autodata:: evosim.io.EXEMPLARS
+
+
 
 Constants
 =========

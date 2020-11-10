@@ -15,15 +15,15 @@ simplest way to generate a fleet is to use :py:func:`evosim.fleet.random_fleet`:
 .. doctest:: EVs
     :options: +NORMALIZE_WHITESPACE
 
-    >>> result = evosim.fleet.random_fleet(5, seed=1)
-    >>> result
-             latitude  longitude          socket charger  dest_lat  dest_long  \
+    >>> fleet = evosim.fleet.random_fleet(5, seed=1)
+    >>> fleet
+             latitude  longitude  dest_lat  dest_long          socket charger  \
     vehicle
-    0           51.48       0.24             CCS    SLOW     51.45   8.13e-01
-    1           51.68       0.95         CHADEMO    FAST     51.31  -9.28e-03
-    2           51.31       0.22             CCS   RAPID     51.43   3.49e-01
-    3           51.68       0.46  DC_COMBO_TYPE2    SLOW     51.34   1.22e+00
-    4           51.39      -0.45         CHADEMO    SLOW     51.37   1.18e+00
+    0           51.48       0.24     51.45   8.13e-01             CCS    SLOW
+    1           51.68       0.95     51.31  -9.28e-03         CHADEMO    FAST
+    2           51.31       0.22     51.43   3.49e-01             CCS   RAPID
+    3           51.68       0.46     51.34   1.22e+00  DC_COMBO_TYPE2    SLOW
+    4           51.39      -0.45     51.37   1.18e+00         CHADEMO    SLOW
     <BLANKLINE>
                               model
     vehicle
@@ -33,20 +33,19 @@ simplest way to generate a fleet is to use :py:func:`evosim.fleet.random_fleet`:
     3                   NISSAN_LEAF
     4        VOLVO_XC90_TWIN_ENGINE
 
-Much as the chargers and sockets, the models are a categorical array taking their values
-from :py:class:`evosim.fleet.Models`:
+Much as the chargers and sockets, the models are arrays taking their values from
+:py:class:`evosim.fleet.Models`:
 
 .. doctest:: EVs
 
-    >>> result.model
+    >>> fleet.model
     vehicle
     0                 BMW_225XE
     1             TESLA_MODEL_X
     2             KIA_NIRO_PHEV
     3               NISSAN_LEAF
     4    VOLVO_XC90_TWIN_ENGINE
-    Name: model, dtype: category
-    Categories (5, object): [BMW_225XE, TESLA_MODEL_X, KIA_NIRO_PHEV, NISSAN_LEAF, VOLVO_XC90_TWIN_ENGINE]
+    Name: model, dtype: object
 
 Much as for generating random charging posts, :py:func:`evosim.fleet.random_fleet` takes
 additional parameters to tailor the geographical location, model distribution, etc. For
@@ -56,13 +55,13 @@ instance, we can create electric vehicles accepting multiple types of sockets:
     :options: +NORMALIZE_WHITESPACE
 
     >>> evosim.fleet.random_fleet(5, socket_multiplicity=3, seed=1)
-             latitude  longitude                  socket charger  dest_lat  dest_long  \
+             latitude  longitude  dest_lat  dest_long                  socket charger  \
     vehicle
-    0           51.48       0.24                     CCS    SLOW     51.69      -0.22
-    1           51.68       0.95  CHADEMO|DC_COMBO_TYPE2   RAPID     51.68       1.20
-    2           51.31       0.22        THREE_PIN_SQUARE    SLOW     51.58       0.40
-    3           51.68       0.46             TYPE2|TYPE1    SLOW     51.49      -0.30
-    4           51.39      -0.45                     CCS    FAST     51.37       0.59
+    0           51.48       0.24     51.69      -0.22                     CCS    SLOW
+    1           51.68       0.95     51.68       1.20  CHADEMO|DC_COMBO_TYPE2   RAPID
+    2           51.31       0.22     51.58       0.40        THREE_PIN_SQUARE    SLOW
+    3           51.68       0.46     51.49      -0.30             TYPE2|TYPE1    SLOW
+    4           51.39      -0.45     51.37       0.59                     CCS    FAST
     <BLANKLINE>
                                  model
     vehicle
