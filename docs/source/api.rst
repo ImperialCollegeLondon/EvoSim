@@ -101,6 +101,8 @@ Matchers
 Objectives
 ==========
 
+.. autofunction:: evosim.objectives.register_objective
+
 .. autofunction:: evosim.objectives.distance
 
 .. autofunction:: evosim.objectives.haversine_distance
@@ -108,10 +110,32 @@ Objectives
 Allocators
 ==========
 
+.. autofunction:: evosim.allocators.register_allocator
+
 .. autofunction:: evosim.allocators.random_allocator
 
 .. autofunction:: evosim.allocators.greedy_allocator
 
+Simulation
+==========
+
+Classes
+-------
+
+.. autoclass:: evosim.simulation.SimulationConfig
+    :members:
+    :undoc-members:
+
+.. autoclass:: evosim.simulation.Simulation
+    :members:
+    :undoc-members:
+
+Functions
+---------
+
+.. autofunction:: evosim.simulation.simulation_output_factory
+
+.. autofunction:: evosim.simulation.register_simulation_output
 
 IO
 ==

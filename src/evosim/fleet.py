@@ -152,14 +152,16 @@ def random_fleet(
     result["dest_long"] = rng.uniform(
         high=np.max(longitude), low=np.min(longitude), size=n
     )
-    result["model"] = rng.choice(list(model_types), size=n, replace=True)
+    result["model"] = rng.choice(list(to_models(model_types)), size=n, replace=True)
     result["model"] = result.model.astype("category")
     result.index.name = "vehicle"
 
     return to_fleet(result)
 
 
-def to_models(data: Union[Sequence[Text], Text, Models]) -> Sequence[Models]:
+def to_models(
+    data: Union[Sequence[Union[Models, Text]], Text, Models]
+) -> Sequence[Models]:
     """Transforms text strings to sockets.
 
     Example:

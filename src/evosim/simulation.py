@@ -12,11 +12,14 @@ from omegaconf.listconfig import ListConfig
 from evosim.autoconf import AutoConf
 from evosim.matchers import Matcher
 
+__doc__ = Path(__file__).with_suffix(".rst").read_text()
 register_simulation_output = AutoConf("output")
 
 
 @dataclass
 class SimulationConfig:
+    """Configuration of a simulation for reading with OmegaConf."""
+
     fleet: Dict = field(default_factory=lambda: DictConfig(MISSING))
     charging_posts: Dict = field(default_factory=lambda: DictConfig(MISSING))
     matcher: List = field(default_factory=lambda: ListConfig(["socket_compatibility"]))
@@ -27,14 +30,19 @@ class SimulationConfig:
 
 @dataclass
 class Simulation:
-    fleet: pd.DataFrame
-    charging_posts: pd.DataFrame
+    """Simulation input data and runner."""
+
+    fleet: Any
+    """pandas.DataFrame: the fleet to allocate"""
+    charging_posts: Any
+    """pandas.DataFrame: the charging posts to allocate"""
     matcher: Matcher
     allocator: Callable
     output: Callable
     objective: Optional[Callable] = None
 
     def run(self):
+        """Runs the simulation."""
         from inspect import signature
 
         arguments = dict(fleet=self.fleet, charging_posts=self.charging_posts)
@@ -50,6 +58,13 @@ class Simulation:
 
     @classmethod
     def load(cls, settings: Union[Text, Path, IO, Mapping[Text, Any]]) -> Simulation:
+        """Loads simulation from an input file.
+
+        Args:
+            settings (Union[Text, pathlib.Path, dict]): path to a yaml file, or an io
+                buffer with yaml content, or a dictionary with the settings already
+                prepared.
+        """
         from omegaconf import OmegaConf
         from io import StringIO
         from evosim.fleet import register_fleet_generator
@@ -206,3 +221,48 @@ def allocated_fleet_to_file(
         )
 
     return output
+
+
+def distances(fleet: pd.pandas, charging_posts: pd.pandas) -> pd.Series:
+    from evosim.objectives import haversine_distance
+
+    vehicles = fleet.loc[
+        fleet.allocation.notna(), ["dest_lat", "dest_long", "allocation"]
+    ].rename(columns=dict(dest_lat="latitude", dest_long="longitude"))
+    posts = charging_posts.loc[
+        vehicles.allocation, ["latitude", "longitude"]
+    ].set_index(vehicles.index)
+    return haversine_distance(vehicles, posts.set_index(vehicles.index))
+
+
+@register_simulation_output(name="stats")
+def allocation_stats(simulation: Simulation, result: pd.DataFrame):
+    from textwrap import dedent
+    from evosim.objectives import haversine_distance
+
+    vehicles = result.loc[result.allocation.notna()]
+    posts = simulation.charging_posts.loc[vehicles.allocation].set_index(vehicles.index)
+    final_distances = haversine_distance(
+        vehicles[["dest_lat", "dest_long"]].rename(
+            columns=dict(dest_lat="latitude", dest_long="longitude")
+        ),
+        posts,
+    )
+
+    print(f"Unallocated vehicles: {result.allocation.isna().sum()}/{len(result)}")
+    print(f"Allocated vehicles: {result.allocation.notna().sum()}/{len(result)}")
+    print(
+        dedent(
+            f"""
+            Final distances (in kilometers):
+                * mean: {final_distances.mean():.2f}
+                * stdev: {final_distances.std():.2f}
+                * skew: {final_distances.skew():.2f}
+                * quantile(25%): {final_distances.quantile(0.25):.2f}
+                * quantile(50%): {final_distances.quantile(0.50):.2f}
+                * quantile(75%): {final_distances.quantile(0.75):.2f}
+                * min: {final_distances.min():.2f}
+                * max: {final_distances.max():.2f}
+            """
+        ).lstrip()
+    )

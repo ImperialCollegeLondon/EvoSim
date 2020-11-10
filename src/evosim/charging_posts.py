@@ -72,7 +72,9 @@ def _to_enum(
     return result
 
 
-def to_sockets(data: Union[Sequence[Text], Text, Sockets]) -> Sequence[Sockets]:
+def to_sockets(
+    data: Union[Sequence[Union[Sockets, Text]], Text, Sockets]
+) -> Sequence[Sockets]:
     """Transforms text strings to sockets.
 
     Example:
@@ -108,7 +110,9 @@ def to_sockets(data: Union[Sequence[Text], Text, Sockets]) -> Sequence[Sockets]:
     return _to_enum(data, Sockets, "socket")
 
 
-def to_chargers(data: Union[Sequence[Text], Text]) -> Sequence[Chargers]:
+def to_chargers(
+    data: Union[Sequence[Union[Text, Chargers]], Text, Chargers]
+) -> Sequence[Chargers]:
     """Transforms text strings to chargers.
     Example:
 
@@ -467,7 +471,7 @@ def random_charging_posts(
     lat = rng.uniform(high=np.max(latitude), low=np.min(latitude), size=n)
     lon = rng.uniform(high=np.max(longitude), low=np.min(longitude), size=n)
     socket = rng.choice(
-        list(socket_types),
+        list(to_sockets(socket_types)),
         size=(n, socket_multiplicity),
         replace=True,
         p=socket_distribution,
@@ -477,7 +481,7 @@ def random_charging_posts(
     else:
         socket = [np.bitwise_or.reduce(u[: rng.integers(1, len(u))]) for u in socket]
     charger = rng.choice(
-        list(charger_types),
+        list(to_chargers(charger_types)),
         size=(n, charger_multiplicity),
         replace=True,
         p=charger_distribution,
