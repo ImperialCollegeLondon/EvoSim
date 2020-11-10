@@ -125,6 +125,7 @@ Functions
 
 .. autofunction:: evosim.io.read_charging_points
 
+.. autofunction:: evosim.io.output_via_pandas
 
 Data
 ----

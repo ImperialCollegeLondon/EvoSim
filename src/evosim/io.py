@@ -217,3 +217,34 @@ def read_charging_points(
         .drop(columns="current_state")
     )
     return to_charging_posts(aggregated)
+
+
+def output_via_pandas(
+    table,
+    path: Union[Text, Path],
+    overwrite: bool = True,
+    fileformat: Optional[Text] = None,
+    **kwargs,
+):
+    """Writes a table to file, guessing the format from the filename."""
+    path = Path(path)
+    if path.exists() and path.is_dir():
+        raise RuntimeError(f"Path {path} is a directory, not a file.")
+
+    if (not overwrite) and path.exists():
+        raise RuntimeError(f"Path {path} already exists and overwrite is False")
+
+    if fileformat is None:
+        fileformat = path.suffix
+    if fileformat.startswith("."):
+        fileformat = fileformat[1:]
+    if fileformat == "xlsx":
+        table.to_excel(path, **kwargs)
+    elif fileformat == "feather":
+        table.to_feather(path, **kwargs)
+    elif fileformat == "h5":
+        table.to_hdf(path, **kwargs)
+    elif fileformat == "json":
+        table.to_json(path, **kwargs)
+    else:
+        table.to_csv(path, **kwargs)
