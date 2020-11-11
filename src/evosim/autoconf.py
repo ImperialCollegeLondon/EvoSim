@@ -8,10 +8,33 @@ from typing import (
     Optional,
     Sequence,
     Text,
+    Type,
     Union,
 )
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
+
+
+def _get_underlying_type(x: Union[Type, Text]) -> Union[Type, Text]:
+    from typing import get_args, get_origin, Union, List, Sequence, Tuple, Dict
+
+    if (
+        get_origin(x) is Union
+        and len(get_args(x)) == 2
+        and get_args(x)[-1] is type(None)  # noqa: E721
+    ):
+        x = _get_underlying_type(get_args(x)[0])
+    elif get_origin(x) is Tuple or get_origin(x) is tuple:
+        x = f"list of {len(get_args(x))} {_get_underlying_type(get_args(x)[0])}"
+    elif get_origin(x) is List or get_origin(x) is list or get_origin(x) is Sequence:
+        x = f"list of {_get_underlying_type(get_args(x)[0])}s"
+    elif get_origin(x) is Dict or get_origin(x) is dict:
+        x = "dictionary"
+    elif x is str:
+        x = "string"
+    elif x is int:
+        x = "integer"
+    return getattr(x, "__name__", x)
 
 
 def _strip_docs(docs: Text) -> Text:
@@ -58,7 +81,7 @@ def _attributes(
                 {k: getattr(typing, k) for k in dir(typing) if k[0] != "_"},
             )
         else:
-            type_ = not_empty(thints[name], None)
+            type_ = not_empty(thints.get(name, param.annotation), None)
 
         doc = None
         if name in docparams and docparams[name].description:
@@ -210,3 +233,39 @@ class AutoConf:
                 f"{settings['name']}"
             )
             raise MissingMandatoryValue(msg) from error
+
+    @property
+    def parameter_docs(self):
+        from textwrap import indent, wrap
+        from omegaconf import MISSING
+        from attr import fields
+
+        def capitalize(text: Text) -> Text:
+            return (text[0].capitalize() + text[1:]) if text else text
+
+        result = ""
+        for name, config in self.configs.items():
+
+            docstring = (
+                "``name: "
+                + name.strip()
+                + "``\n"
+                + indent(config.__doc__.strip(), "    ")
+                + "\n\n"
+            )
+            for param in fields(config):
+                type_ = f" ({_get_underlying_type(param.type)})" if param.type else ""
+                if param.default is MISSING:
+                    default_ = "Required argument."
+                elif param.default is None:
+                    default_ = "Optional argument."
+                else:
+                    default_ = f"Optional argument defaults to {param.default}."
+                description = indent(
+                    "\n".join(wrap(capitalize(param.metadata["doc"] or ""))),
+                    "            ",
+                )
+                single = f"        * **{param.name}**{type_}: {default_}\n{description}"
+                docstring += single.rstrip() + "\n\n"
+            result += docstring.rstrip() + "\n\n"
+        return result

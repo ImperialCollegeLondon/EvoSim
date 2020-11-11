@@ -23,8 +23,10 @@ class SimulationConfig:
     fleet: Dict = field(default_factory=lambda: DictConfig(MISSING))
     charging_posts: Dict = field(default_factory=lambda: DictConfig(MISSING))
     matcher: List = field(default_factory=lambda: ListConfig(["socket_compatibility"]))
-    objective: Dict = field(default_factory=lambda: DictConfig(dict()))
-    allocator: Dict = field(default_factory=lambda: DictConfig(MISSING))
+    objective: Dict = field(
+        default_factory=lambda: DictConfig(dict(name="haversine_distance"))
+    )
+    allocator: Dict = field(default_factory=lambda: DictConfig(dict(name="greedy")))
     outputs: List = field(default_factory=lambda: ListConfig([]))
 
 
@@ -57,13 +59,20 @@ class Simulation:
         self.output(self, result)
 
     @classmethod
-    def load(cls, settings: Union[Text, Path, IO, Mapping[Text, Any]]) -> Simulation:
+    def load(
+        cls,
+        settings: Union[Text, Path, IO, Mapping[Text, Any]],
+        root: Optional[Union[Text, Path]] = None,
+    ) -> Simulation:
         """Loads simulation from an input file.
 
         Args:
             settings (Union[Text, pathlib.Path, dict]): path to a yaml file, or an io
                 buffer with yaml content, or a dictionary with the settings already
                 prepared.
+            root: root custom interpolation when loading omegaconf files. Defaults to
+                the directory where the file is located, if the input is a file, or to
+                the current working directory.
         """
         from omegaconf import OmegaConf
         from io import StringIO
@@ -73,11 +82,27 @@ class Simulation:
         from evosim.allocators import register_allocator
         from evosim.objectives import register_objective
 
+        if isinstance(settings, (Text, Path)) and root is None:
+            root = Path(settings).parent.absolute()
+        elif hasattr(settings, "name") and root is None:
+            root = Path(getattr(settings, "name")).absolute()
+        elif root is None:
+            root = Path().absolute()
+
         if isinstance(settings, (Text, Path, StringIO, IO)):
             inputs = OmegaConf.load(settings)
         else:
             inputs = OmegaConf.create(settings)
         inputs = OmegaConf.merge(OmegaConf.structured(SimulationConfig), inputs)
+        inputs = OmegaConf.merge(
+            dict(**inputs), dict(root=str(root), cwd=str(Path().absolute()))
+        )
+        if OmegaConf.is_missing(inputs, "fleet"):
+            inputs.fleet = dict(name="from_file", path="${root}/fleet.csv")
+        if OmegaConf.is_missing(inputs, "charging_posts"):
+            inputs.charging_posts = dict(
+                name="from_file", path="${root}/charging_posts.csv"
+            )
 
         fleet = register_fleet_generator.factory(inputs.fleet)
         charging_posts = register_charging_posts_generator.factory(
@@ -85,9 +110,7 @@ class Simulation:
         )
         matcher = matcher_factory(inputs.matcher)
         allocator = register_allocator.factory(inputs.allocator)
-        objective = None
-        if inputs.objective:
-            objective = register_objective.factory(inputs.objective)
+        objective = register_objective.factory(inputs.objective)
         output = simulation_output_factory(inputs.outputs)
 
         return cls(

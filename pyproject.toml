@@ -10,7 +10,7 @@ authors = [
 readme = "README.md"
 homepage = "https://github.com/ImperialCollegeLondon/EvoSim"
 packages = [{include = "evosim", from = "src"}]
-include = ["*.rst", "*.csv"]
+include = ["*.rst", "*.csv", "*.yml"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
