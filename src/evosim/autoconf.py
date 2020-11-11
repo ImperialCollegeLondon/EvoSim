@@ -8,11 +8,64 @@ from typing import (
     Optional,
     Sequence,
     Text,
-    Tuple,
     Union,
 )
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
+
+
+def _strip_docs(docs: Text) -> Text:
+    from docstring_parser import parse
+
+    docstring = parse(docs)
+    result = docstring.short_description.strip() + "\n"
+    if docstring.long_description:
+        result += "\n" + docstring.long_description.strip() + "\n\n"
+    return result.rstrip()
+
+
+def _attributes(
+    function: Callable, drop: Sequence[Text] = (), docs: Optional[Text] = None
+):
+    from inspect import signature, Signature
+    from docstring_parser import parse
+    from omegaconf import MISSING
+    from typing import get_type_hints
+    import attr
+    import typing
+
+    def not_empty(arg, empty=MISSING):
+        return arg if arg is not Signature.empty else empty
+
+    if docs is None and function.__doc__:
+        docs = function.__doc__
+
+    docparams = {k.arg_name: k for k in parse(docs).params}
+    sigs = signature(function).parameters
+    thints = get_type_hints(function)
+
+    result = dict()
+    for name, param in sigs.items():
+        if drop is not None and name in drop:
+            continue
+        if param.kind != param.POSITIONAL_OR_KEYWORD:
+            continue
+        default_ = not_empty(param.default)
+        if name in docparams and docparams[name].type_name is not None:
+            type_ = eval(
+                docparams[name].type_name,
+                globals(),
+                {k: getattr(typing, k) for k in dir(typing) if k[0] != "_"},
+            )
+        else:
+            type_ = not_empty(thints[name], None)
+
+        doc = None
+        if name in docparams and docparams[name].description:
+            doc = docparams[name].description
+
+        result[name] = attr.ib(default=default_, type=type_, metadata=dict(doc=doc))
+    return result
 
 
 def _create_config(
@@ -22,11 +75,9 @@ def _create_config(
     docs: Optional[Text] = None,
 ):
     from inspect import signature, Signature
-    from docstring_parser import parse
     from omegaconf import MISSING
-    from attr import make_class, ib
+    from attr import make_class
     from re import split
-    import typing
 
     if name is None:
         name = function.__name__
@@ -39,28 +90,11 @@ def _create_config(
 
     parameters = signature(function).parameters
     normalized_name = "".join([u.title() for u in split(r"\s|_|-", name)])
-    attrs = {
-        k: ib(not_empty(v.default), type=not_empty(v.annotation, None))
-        for k, v in parameters.items()
-        if (drop is None or k not in drop) and v.kind == v.POSITIONAL_OR_KEYWORD
-    }
+    attrs = _attributes(function, drop, docs)
+    haskwargs = any(v.kind == v.VAR_KEYWORD for v in parameters.values())
+    result = make_class(normalized_name, attrs, bases=(dict if haskwargs else object,))
     if docs:
-        docstr = parse(docs)
-        docargs = {u.arg_name: u for u in docstr.params if u.type_name}
-        for attribute in set(attrs).intersection(docargs):
-            attrs[attribute].type = eval(
-                docargs[attribute].type_name,
-                globals(),
-                {k: getattr(typing, k) for k in dir(typing) if k[0] != "_"},
-            )
-    if any(v.kind == v.VAR_KEYWORD for v in parameters.values()):
-        bases: Tuple = (dict,)
-    else:
-        bases = (object,)
-
-    result = make_class(normalized_name, attrs, bases=bases)
-    if docs:
-        result.__doc__ = docs
+        result.__doc__ = _strip_docs(docs)
     return result
 
 

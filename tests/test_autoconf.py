@@ -6,6 +6,7 @@ from pytest import raises
 def test_create_config_has_defaults():
     from evosim.autoconf import _create_config
     from omegaconf import MISSING
+    import attr
 
     def function(n: int, kw: Text = "1"):
         """This is a function."""
@@ -17,6 +18,10 @@ def test_create_config_has_defaults():
     assert NoDrop().n is MISSING
     assert NoDrop().kw == "1"
     assert set([u for u in dir(NoDrop()) if u[0] != "_"]) == {"kw", "n"}
+
+    fields = {k.name: k for k in attr.fields(NoDrop)}
+    assert fields["n"].metadata["doc"] is None
+    assert fields["kw"].metadata["doc"] is None
 
 
 def test_create_config_has_types():
@@ -62,9 +67,12 @@ def test_create_config_drop_behaviour():
 def test_create_config_types_from_docs():
     from evosim.autoconf import _create_config
     from omegaconf import ValidationError, OmegaConf
+    import attr
 
     def function(n: int, kw: Text = "1"):
         """This is a function.
+
+        With a long description.
 
         Args:
             n (Text): this is a floating point in text format
@@ -73,6 +81,7 @@ def test_create_config_types_from_docs():
         pass
 
     Result = _create_config(function)
+    assert Result.__doc__ == "This is a function.\n\nWith a long description."
     structured = OmegaConf.structured(Result)
     with raises(ValidationError):
         structured.kw = "a"
@@ -82,6 +91,10 @@ def test_create_config_types_from_docs():
     structured.n = 2
     assert structured.n == "2"
     assert not (structured.n == 2)
+
+    fields = {k.name: k for k in attr.fields(Result)}
+    assert fields["n"].metadata["doc"] == "this is a floating point in text format"
+    assert fields["kw"].metadata["doc"] == "this is an integer"
 
 
 def test_create_config_kwargs():
