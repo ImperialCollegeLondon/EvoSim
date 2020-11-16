@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from pathlib import Path
-from typing import Text, Union
+from typing import List, Text, Union, Optional
 
 import click
 
@@ -43,28 +43,55 @@ def get_options():
     "-i",
     "input_file",
     type=click.Path(exists=False, file_okay=True, dir_okay=True, readable=True),
-    help=f"Path to the input file. Defaults to {DEFAULT_FILENAME}",
-    default=DEFAULT_FILENAME,
+    help=f"Path to the input file. Defaults to {DEFAULT_FILENAME} if it exists.",
+    default=None,
 )
-def main(input_file: Union[Text, Path], describe_options: bool):
+@click.option(
+    "--print-yaml",
+    "-p",
+    is_flag=True,
+    help="""Prints input settings to the standard out.
+
+    This option is mainly useful to ensure that the settings are correctly specified,
+    inluding defaults and command-line arguments.
+    """,
+)
+@click.argument("inputs", nargs=-1)
+def main(
+    input_file: Optional[Union[Text, Path]],
+    describe_options: bool,
+    print_yaml: bool,
+    inputs: List[Text],
+):
     """EvoSim simulation."""
+    from io import StringIO
+    from omegaconf import OmegaConf
     from evosim.simulation import Simulation, construct_input, load_initial_imports
 
-    input_file = Path(input_file)
-    if input_file.is_dir():
-        input_file /= DEFAULT_FILENAME
+    if input_file is not None:
+        input_file = Path(input_file)
+        if input_file.is_dir():
+            input_file /= DEFAULT_FILENAME
+    elif Path(DEFAULT_FILENAME).is_file():
+        input_file = Path(DEFAULT_FILENAME)
+
+    settings = construct_input(
+        input_file if input_file else {}, overrides=OmegaConf.from_cli(inputs)
+    )
+    load_initial_imports(settings.imports)
 
     if describe_options:
-        settings = construct_input(input_file if input_file.exists() else {})
-        load_initial_imports(settings.imports)
         click.echo(get_options())
         return
 
-    if not input_file.is_file():
-        click.echo(f"Could not read or find input file {input_file}", err=True)
+    if print_yaml:
+        stream = StringIO()
+        OmegaConf.save(settings, stream)
+        stream.seek(0)
+        click.echo(stream.read())
         return
 
-    simulation = Simulation.load(input_file)
+    simulation = Simulation.load(settings)
     simulation()
 
 

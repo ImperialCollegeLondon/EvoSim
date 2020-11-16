@@ -69,6 +69,7 @@ def load_initial_imports(imports: List[Union[Text, Path]]):
 def construct_input(
     settings: Union[Text, Path, IO, Mapping[Text, Any]],
     root: Optional[Union[Text, Path]] = None,
+    overrides: Optional[DictConfig] = None,
 ) -> DictConfig:
     """Construct and partially validate an input.
 
@@ -79,6 +80,7 @@ def construct_input(
         root: root custom interpolation when loading omegaconf files. Defaults to
             the directory where the file is located, if the input is a file, or to
             the current working directory.
+        overrides: addtional dictionary with which to override the underlying inputs.
     """
     from omegaconf import OmegaConf
     from io import StringIO
@@ -95,6 +97,8 @@ def construct_input(
     else:
         inputs = OmegaConf.create(settings)
     inputs = OmegaConf.merge(dict(root=str(root), cwd=str(Path().absolute())), inputs)
+    if overrides:
+        inputs = OmegaConf.merge(settings, overrides)
     inputs = OmegaConf.merge(OmegaConf.structured(SimulationConfig), inputs)
     for subsection, defaults in INPUT_DEFAULTS.items():
         if OmegaConf.is_missing(inputs, subsection):
