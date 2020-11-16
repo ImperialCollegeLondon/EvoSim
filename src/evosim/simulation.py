@@ -38,6 +38,45 @@ class SimulationConfig:
     outputs: List = field(default_factory=lambda: ListConfig(MISSING))
 
 
+def construct_input(
+    settings: Union[Text, Path, IO, Mapping[Text, Any]],
+    root: Optional[Union[Text, Path]] = None,
+) -> DictConfig:
+    """Construct and partially validate an input.
+
+        Args:
+            settings (Union[Text, pathlib.Path, dict]): path to a yaml file, or an io
+                buffer with yaml content, or a dictionary with the settings already
+                prepared.
+            root: root custom interpolation when loading omegaconf files. Defaults to
+                the directory where the file is located, if the input is a file, or to
+                the current working directory.
+        """
+    from omegaconf import OmegaConf
+    from io import StringIO
+
+    if isinstance(settings, (Text, Path)) and root is None:
+        root = Path(settings).parent.absolute()
+    elif hasattr(settings, "name") and root is None:
+        root = Path(getattr(settings, "name")).absolute()
+    elif root is None:
+        root = Path().absolute()
+
+    if isinstance(settings, (Text, Path, StringIO, IO)):
+        inputs = OmegaConf.load(settings)
+    else:
+        inputs = OmegaConf.create(settings)
+    inputs = OmegaConf.merge(OmegaConf.structured(SimulationConfig), inputs)
+    inputs = OmegaConf.merge(
+        dict(**inputs), dict(root=str(root), cwd=str(Path().absolute()))
+    )
+    for subsection, defaults in INPUT_DEFAULTS.items():
+        if OmegaConf.is_missing(inputs, subsection):
+            OmegaConf.create(defaults, getattr(inputs, subsection))
+
+    return defaults
+
+
 @dataclass
 class Simulation:
     """Simulation input data and runner."""
@@ -82,32 +121,13 @@ class Simulation:
                 the directory where the file is located, if the input is a file, or to
                 the current working directory.
         """
-        from omegaconf import OmegaConf
-        from io import StringIO
         from evosim.fleet import register_fleet_generator
         from evosim.matchers import factory as matcher_factory
         from evosim.charging_posts import register_charging_posts_generator
         from evosim.allocators import register_allocator
         from evosim.objectives import register_objective
 
-        if isinstance(settings, (Text, Path)) and root is None:
-            root = Path(settings).parent.absolute()
-        elif hasattr(settings, "name") and root is None:
-            root = Path(getattr(settings, "name")).absolute()
-        elif root is None:
-            root = Path().absolute()
-
-        if isinstance(settings, (Text, Path, StringIO, IO)):
-            inputs = OmegaConf.load(settings)
-        else:
-            inputs = OmegaConf.create(settings)
-        inputs = OmegaConf.merge(OmegaConf.structured(SimulationConfig), inputs)
-        inputs = OmegaConf.merge(
-            dict(**inputs), dict(root=str(root), cwd=str(Path().absolute()))
-        )
-        for subsection, defaults in INPUT_DEFAULTS.items():
-            if OmegaConf.is_missing(inputs, subsection):
-                OmegaConf.create(defaults, getattr(inputs, subsection))
+        inputs = construct_input(settings, root=root)
 
         fleet = register_fleet_generator.factory(inputs.fleet)
         charging_posts = register_charging_posts_generator.factory(
