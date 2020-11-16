@@ -142,24 +142,18 @@ def copy_notebooks():
 def generate_yaml_inputs():
     from shutil import copytree
     from pathlib import Path
-    import evosim
+    from evosim.autoconf import evosim_registries
+    from evosim.io import EXEMPLARS
     from evosim.script import get_default_yaml
     from textwrap import indent
 
     dst = Path(__file__).parent / "source" / "generated" / "examples"
-    copytree(evosim.io.EXEMPLARS["examples"], dst, dirs_exist_ok=True)
+    copytree(EXEMPLARS["examples"], dst, dirs_exist_ok=True)
 
     prefix = Path(__file__).parent / "source" / "generated" / "yaml"
     prefix.mkdir(parents=True, exist_ok=True)
 
-    registries = dict(
-        fleet=evosim.fleet.register_fleet_generator,
-        charging_posts=evosim.charging_posts.register_charging_posts_generator,
-        matcher=evosim.matchers.register_matcher,
-        objective=evosim.objectives.register_objective,
-        allocator=evosim.allocators.register_allocator,
-        outputs=evosim.simulation.register_simulation_output,
-    )
+    registries = evosim_registries()
     for yaml_name, registry in registries.items():
         name = registry.name.replace(" ", "-")
         text = (
@@ -173,4 +167,4 @@ def generate_yaml_inputs():
 generate_docstring_files()
 generate_installation()
 generate_yaml_inputs()
-copy_notebooks()
+# copy_notebooks()

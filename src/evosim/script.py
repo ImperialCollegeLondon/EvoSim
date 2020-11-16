@@ -21,18 +21,10 @@ def get_default_yaml(name):
 
 
 def get_options():
-    import evosim
+    from evosim.autoconf import evosim_registries
 
-    registries = dict(
-        fleet=evosim.fleet.register_fleet_generator,
-        charging_posts=evosim.charging_posts.register_charging_posts_generator,
-        matcher=evosim.matchers.register_matcher,
-        objective=evosim.objectives.register_objective,
-        allocator=evosim.allocators.register_allocator,
-        outputs=evosim.simulation.register_simulation_output,
-    )
     result = ""
-    for yaml_name, registry in registries.items():
+    for yaml_name, registry in evosim_registries().items():
         name = registry.name.title()
         result += name + "\n" + "-" * len(name) + "\n\n"
         result += "Defaults to:\n\n~~~yaml\n"
@@ -56,21 +48,24 @@ def get_options():
 )
 def main(input_file: Union[Text, Path], describe_options: bool):
     """EvoSim simulation."""
-    from evosim.simulation import Simulation
-
-    if describe_options:
-        click.echo(get_options())
-        return
+    from evosim.simulation import Simulation, construct_input, load_initial_imports
 
     input_file = Path(input_file)
     if input_file.is_dir():
         input_file /= DEFAULT_FILENAME
+
+    if describe_options:
+        settings = construct_input(input_file if input_file.exists() else {})
+        load_initial_imports(settings.imports)
+        click.echo(get_options())
+        return
+
     if not input_file.is_file():
         click.echo(f"Could not read or find input file {input_file}", err=True)
         return
 
     simulation = Simulation.load(input_file)
-    simulation.run()
+    simulation()
 
 
 if __name__ == "__main__":

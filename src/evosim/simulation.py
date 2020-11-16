@@ -1,8 +1,18 @@
-from __future__ import annotations
-
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import IO, Any, Callable, Dict, List, Mapping, Optional, Text, Union
+from typing import (
+    IO,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Text,
+    Type,
+    TypeVar,
+    Union,
+)
 
 import pandas as pd
 from omegaconf import MISSING
@@ -22,8 +32,12 @@ INPUT_DEFAULTS: Mapping[Text, Any] = dict(
     matcher=["socket_compatibility"],
     allocator=dict(name="greedy"),
     outputs=[],
+    imports=[],
 )
 """Default input."""
+
+SimulationVar = TypeVar("SimulationVar", bound="Simulation")
+"""Annotation for classes derived from :py:class:`~evosim.simulation.Simulation`."""
 
 
 @dataclass
@@ -36,6 +50,20 @@ class SimulationConfig:
     objective: Dict = field(default_factory=lambda: DictConfig(MISSING))
     allocator: Dict = field(default_factory=lambda: DictConfig(MISSING))
     outputs: List = field(default_factory=lambda: ListConfig(MISSING))
+    imports: List = field(default_factory=lambda: ListConfig(MISSING))
+    root: Text = field(default_factory=lambda: str(Path.cwd()))
+    cwd: Text = field(default_factory=lambda: str(Path.cwd()))
+
+
+def load_initial_imports(imports: List[Union[Text, Path]]):
+    """Load user-declared module to register new functions."""
+    from importlib import util as implib
+
+    for path in imports:
+        path = Path(path)
+        spec = implib.spec_from_file_location(path.stem, path)
+        mod = implib.module_from_spec(spec)
+        spec.loader.exec_module(mod)  # type: ignore
 
 
 def construct_input(
@@ -44,14 +72,14 @@ def construct_input(
 ) -> DictConfig:
     """Construct and partially validate an input.
 
-        Args:
-            settings (Union[Text, pathlib.Path, dict]): path to a yaml file, or an io
-                buffer with yaml content, or a dictionary with the settings already
-                prepared.
-            root: root custom interpolation when loading omegaconf files. Defaults to
-                the directory where the file is located, if the input is a file, or to
-                the current working directory.
-        """
+    Args:
+        settings (Union[Text, pathlib.Path, dict]): path to a yaml file, or an io
+            buffer with yaml content, or a dictionary with the settings already
+            prepared.
+        root: root custom interpolation when loading omegaconf files. Defaults to
+            the directory where the file is located, if the input is a file, or to
+            the current working directory.
+    """
     from omegaconf import OmegaConf
     from io import StringIO
 
@@ -66,15 +94,13 @@ def construct_input(
         inputs = OmegaConf.load(settings)
     else:
         inputs = OmegaConf.create(settings)
+    inputs = OmegaConf.merge(dict(root=str(root), cwd=str(Path().absolute())), inputs)
     inputs = OmegaConf.merge(OmegaConf.structured(SimulationConfig), inputs)
-    inputs = OmegaConf.merge(
-        dict(**inputs), dict(root=str(root), cwd=str(Path().absolute()))
-    )
     for subsection, defaults in INPUT_DEFAULTS.items():
         if OmegaConf.is_missing(inputs, subsection):
-            OmegaConf.create(defaults, getattr(inputs, subsection))
+            setattr(inputs, subsection, OmegaConf.create(defaults))
 
-    return defaults
+    return inputs
 
 
 @dataclass
@@ -90,7 +116,7 @@ class Simulation:
     output: Callable
     objective: Optional[Callable] = None
 
-    def run(self):
+    def __call__(self) -> pd.DataFrame:
         """Runs the simulation."""
         from inspect import signature
 
@@ -105,12 +131,14 @@ class Simulation:
 
         self.output(self, result)
 
+        return result
+
     @classmethod
     def load(
-        cls,
+        cls: Type[SimulationVar],
         settings: Union[Text, Path, IO, Mapping[Text, Any]],
         root: Optional[Union[Text, Path]] = None,
-    ) -> Simulation:
+    ) -> SimulationVar:
         """Loads simulation from an input file.
 
         Args:
@@ -120,6 +148,10 @@ class Simulation:
             root: root custom interpolation when loading omegaconf files. Defaults to
                 the directory where the file is located, if the input is a file, or to
                 the current working directory.
+
+        Returns:
+            :py:data:`~evosim.simulation.SimulationVar`: an instance of a class derived
+            from :py:class:`~evosim.simulation.Simulation`.
         """
         from evosim.fleet import register_fleet_generator
         from evosim.matchers import factory as matcher_factory
@@ -128,6 +160,7 @@ class Simulation:
         from evosim.objectives import register_objective
 
         inputs = construct_input(settings, root=root)
+        load_initial_imports(inputs.imports)
 
         fleet = register_fleet_generator.factory(inputs.fleet)
         charging_posts = register_charging_posts_generator.factory(

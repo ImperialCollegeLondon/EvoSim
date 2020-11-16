@@ -128,6 +128,8 @@ Classes
     :members:
     :undoc-members:
 
+.. autodata:: evosim.simulation.SimulationVar
+
 Functions
 ---------
 
@@ -161,6 +163,8 @@ AutoConf
 .. autoclass:: evosim.autoconf.AutoConf
     :members:
     :special-members: __call__
+
+.. autofunction:: evosim.autoconf.evosim_registries
 
 Constants
 =========

@@ -20,7 +20,7 @@ example:
     from evosim.simulation import Simulation
     from evosim.io import EXEMPLARS
 
-    Simulation.load(EXEMPLARS["examples"] / "simple.yaml").run()
+    Simulation.load(EXEMPLARS["examples"] / "simple.yaml")()
 
 .. testoutput:: simple_yaml_smoketest
 

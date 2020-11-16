@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import (
     Any,
     Callable,
+    List,
     Mapping,
     MutableMapping,
     Optional,
@@ -16,7 +17,7 @@ __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
 
 def _get_underlying_type(x: Union[Type, Text]) -> Union[Type, Text]:
-    from typing import get_args, get_origin, Union, List, Sequence, Tuple, Dict
+    from typing import get_args, get_origin, Union, Sequence, Tuple, Dict
 
     if (
         get_origin(x) is Union
@@ -264,3 +265,21 @@ class AutoConf:
                 docstring += single.rstrip() + "\n\n"
             result += docstring.rstrip() + "\n\n"
         return result
+
+
+def evosim_registries() -> Mapping[Text, AutoConf]:
+    from evosim.fleet import register_fleet_generator
+    from evosim.charging_posts import register_charging_posts_generator
+    from evosim.matchers import register_matcher
+    from evosim.objectives import register_objective
+    from evosim.simulation import register_simulation_output
+    from evosim.allocators import register_allocator
+
+    return dict(
+        fleet=register_fleet_generator,
+        charging_posts=register_charging_posts_generator,
+        matcher=register_matcher,
+        objective=register_objective,
+        allocator=register_allocator,
+        outputs=register_simulation_output,
+    )

@@ -24,3 +24,19 @@ def warnings_as_errors(request):
         or system() != "Windows"
     ):
         simplefilter("error", DeprecationWarning)
+
+
+@fixture(autouse=True)
+def save_evosim_registries():
+    from copy import copy
+    from evosim.autoconf import evosim_registries
+
+    saves = {
+        k: (copy(v.configs), copy(v.factories)) for k, v in evosim_registries().items()
+    }
+
+    yield
+
+    for name, registry in evosim_registries().items():
+        registry.configs = saves[name][0]
+        registry.factories = saves[name][1]

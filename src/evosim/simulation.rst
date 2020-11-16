@@ -52,12 +52,12 @@ to run the simulation itself.
 
 .. testcode:: simple_simulation
 
-    simulation.run()
+    allocated_fleet = simulation();
 
-That's it! This simulation has no outputs (none were specified). So the allocation was
-computed and immediately lost... That's not so useful. So let's try and add an output
-function.  We will use ``stats`` which prints simple statistics to file, and create one
-that prints out the unallocated vehicles:
+That's it! This simulation has no outputs (none were specified) outside of the allocated
+fleet returned by the allocator algorithm. So let's try and print something to the
+standard out (the screen).  We will use ``stats`` which prints simple statistics and
+create function that prints out the unallocated vehicles:
 
 
 .. testcode:: simulation_with_output
@@ -119,7 +119,7 @@ the simulation:
 
 .. testcode:: simulation_with_output
 
-    simulation.run()
+    simulation()
 
 
 .. testoutput:: simulation_with_output
