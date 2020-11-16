@@ -78,12 +78,6 @@ Fleet Keywords
 Defining the fleet section is optional and defaults to reading a "fleet.csv" file in the
 directory where the simulation input file is located:
 
-.. code-block:: yaml
-
-    fleet:
-        name: from_file
-        path: ${root}/fleet.csv
-
 .. include:: generated/yaml/fleet-generation.rst
 
 Charging Posts Keywords
@@ -92,23 +86,12 @@ Charging Posts Keywords
 Defining the charging posts section is optional and defaults to reading a
 "charging_posts.csv" file in the directory where the simulation input file is located:
 
-.. code-block:: yaml
-
-    charging_posts:
-        name: from_file
-        path: ${root}/charging_posts.csv
-
 .. include:: generated/yaml/charging-posts-generation.rst
 
 Allocator Keywords
 ------------------
 
 The allocation section is optional and default to using the greedy allocation algorithm.
-
-.. code-block:: yaml
-
-    allocator:
-        name: greedy
 
 .. include:: generated/yaml/allocator.rst
 
@@ -117,12 +100,6 @@ Matcher Keywords
 
 Defining the matcher is optional and defaults to:
 
-.. code-block:: yaml
-
-    matcher:
-        - name: socket_compatibility
-    
-
 .. include:: generated/yaml/matcher.rst
 
 Objective Keywords
@@ -130,14 +107,11 @@ Objective Keywords
 
 The objective section is optional and defaults to using the haversine distance:
 
-.. code-block:: yaml
-
-    objective:
-        name: haversine_distance
-
 .. include:: generated/yaml/objective.rst
 
 Outputs Keywords
 ----------------
 
-.. include:: generated/yaml/objective.rst
+Defining a list of outputs is optional and defaults to no outputs:
+
+.. include:: generated/yaml/output.rst

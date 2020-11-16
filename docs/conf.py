@@ -143,6 +143,8 @@ def generate_yaml_inputs():
     from shutil import copytree
     from pathlib import Path
     import evosim
+    from evosim.script import get_default_yaml
+    from textwrap import indent
 
     dst = Path(__file__).parent / "source" / "generated" / "examples"
     copytree(evosim.io.EXEMPLARS["examples"], dst, dirs_exist_ok=True)
@@ -150,16 +152,22 @@ def generate_yaml_inputs():
     prefix = Path(__file__).parent / "source" / "generated" / "yaml"
     prefix.mkdir(parents=True, exist_ok=True)
 
-    registries = [
-        evosim.fleet.register_fleet_generator,
-        evosim.charging_posts.register_charging_posts_generator,
-        evosim.matchers.register_matcher,
-        evosim.objectives.register_objective,
-        evosim.allocators.register_allocator,
-    ]
-    for registry in registries:
+    registries = dict(
+        fleet=evosim.fleet.register_fleet_generator,
+        charging_posts=evosim.charging_posts.register_charging_posts_generator,
+        matcher=evosim.matchers.register_matcher,
+        objective=evosim.objectives.register_objective,
+        allocator=evosim.allocators.register_allocator,
+        outputs=evosim.simulation.register_simulation_output,
+    )
+    for yaml_name, registry in registries.items():
         name = registry.name.replace(" ", "-")
-        (prefix / f"{name}.rst").write_text(registry.parameter_docs)
+        text = (
+            ".. code-block:: YAML\n\n"
+            + indent(get_default_yaml(yaml_name), "    ")
+            + "\n\n"
+        )
+        (prefix / f"{name}.rst").write_text(text + "\n" + registry.parameter_docs)
 
 
 generate_docstring_files()

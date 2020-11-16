@@ -246,13 +246,8 @@ class AutoConf:
         result = ""
         for name, config in self.configs.items():
 
-            docstring = (
-                "``name: "
-                + name.strip()
-                + "``\n"
-                + indent(config.__doc__.strip(), "    ")
-                + "\n\n"
-            )
+            configdoc = indent((config.__doc__ or "").strip(), "    ")
+            docstring = "``name: " + name.strip() + "``\n" + configdoc + "\n\n"
             for param in fields(config):
                 type_ = f" ({_get_underlying_type(param.type)})" if param.type else ""
                 if param.default is MISSING:

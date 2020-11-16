@@ -15,6 +15,16 @@ from evosim.matchers import Matcher
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 register_simulation_output = AutoConf("output")
 
+INPUT_DEFAULTS: Mapping[Text, Any] = dict(
+    fleet=dict(name="from_file", path="${root}/fleet.csv"),
+    charging_posts=dict(name="from_file", path="${root}/charging_posts.csv"),
+    objective=dict(name="haversine_distance"),
+    matcher=["socket_compatibility"],
+    allocator=dict(name="greedy"),
+    outputs=[],
+)
+"""Default input."""
+
 
 @dataclass
 class SimulationConfig:
@@ -22,12 +32,10 @@ class SimulationConfig:
 
     fleet: Dict = field(default_factory=lambda: DictConfig(MISSING))
     charging_posts: Dict = field(default_factory=lambda: DictConfig(MISSING))
-    matcher: List = field(default_factory=lambda: ListConfig(["socket_compatibility"]))
-    objective: Dict = field(
-        default_factory=lambda: DictConfig(dict(name="haversine_distance"))
-    )
-    allocator: Dict = field(default_factory=lambda: DictConfig(dict(name="greedy")))
-    outputs: List = field(default_factory=lambda: ListConfig([]))
+    matcher: List = field(default_factory=lambda: ListConfig(MISSING))
+    objective: Dict = field(default_factory=lambda: DictConfig(MISSING))
+    allocator: Dict = field(default_factory=lambda: DictConfig(MISSING))
+    outputs: List = field(default_factory=lambda: ListConfig(MISSING))
 
 
 @dataclass
@@ -97,12 +105,9 @@ class Simulation:
         inputs = OmegaConf.merge(
             dict(**inputs), dict(root=str(root), cwd=str(Path().absolute()))
         )
-        if OmegaConf.is_missing(inputs, "fleet"):
-            inputs.fleet = dict(name="from_file", path="${root}/fleet.csv")
-        if OmegaConf.is_missing(inputs, "charging_posts"):
-            inputs.charging_posts = dict(
-                name="from_file", path="${root}/charging_posts.csv"
-            )
+        for subsection, defaults in INPUT_DEFAULTS.items():
+            if OmegaConf.is_missing(inputs, subsection):
+                OmegaConf.create(defaults, getattr(inputs, subsection))
 
         fleet = register_fleet_generator.factory(inputs.fleet)
         charging_posts = register_charging_posts_generator.factory(
@@ -260,6 +265,7 @@ def distances(fleet: pd.pandas, charging_posts: pd.pandas) -> pd.Series:
 
 @register_simulation_output(name="stats")
 def allocation_stats(simulation: Simulation, result: pd.DataFrame):
+    """Simple standard statistics about the allocation."""
     from textwrap import dedent
     from evosim.objectives import haversine_distance
 

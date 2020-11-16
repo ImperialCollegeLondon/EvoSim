@@ -78,3 +78,19 @@ def test_run():
 
     assert len(allocated_fleet) == 1
     assert "allocation" in allocated_fleet[0].columns
+
+
+def test_defaults_follow_structured_config():
+    from evosim.simulation import SimulationConfig, INPUT_DEFAULTS
+    from omegaconf import OmegaConf
+
+    schema = OmegaConf.structured(SimulationConfig)
+    defaults = OmegaConf.merge(schema, INPUT_DEFAULTS)
+
+    assert set(defaults) == {
+        "fleet",
+        "charging_posts",
+        "allocator",
+        "matcher",
+        "objective",
+    }
