@@ -7,7 +7,7 @@ fleet:
 charging_posts:
     name: from_file
     path: ${root}/charging_posts.csv
-matcher:
+matchers:
     - name: socket_compatibility
     - name: charger_compatibility
 allocator:

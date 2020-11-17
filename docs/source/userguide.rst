@@ -43,8 +43,9 @@ The file consists of six main sections with indented content each:
     - ``allocator`` defines the allocation algorithm to use
     - ``objective`` an optional objective function for allocation algorithms that
       require one (the greedy allocation algorithm does not)
-    - ``matcher`` defines a list of constraints that define whether an electric vehicle
-      can be assigned to a charging post
+    - ``matchers`` defines a list of constraints that define whether an electric vehicle
+      can be assigned to a charging post. The match is positive when all constraints are
+      met.
     - ``outputs`` defines a list of outputs to compute and print to screen or save to
       disk
 
@@ -114,4 +115,4 @@ Outputs Keywords
 
 Defining a list of outputs is optional and defaults to no outputs:
 
-.. include:: generated/yaml/output.rst
+.. include:: generated/yaml/outputs.rst

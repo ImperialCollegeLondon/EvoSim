@@ -18,7 +18,7 @@ instantiated quite simply from a yaml file:
         charging_posts:
             name: random
             n: 5
-        matcher: socket_compatibility
+        matchers: socket_compatibility
         allocator:
             name: random
     """
@@ -97,7 +97,7 @@ follows:
             name: random
             n: 100
             seed: 2
-        matcher: socket_compatibility
+        matchers: socket_compatibility
         allocator:
             name: random
             seed: 3

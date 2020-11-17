@@ -23,14 +23,14 @@ from evosim.autoconf import AutoConf
 from evosim.matchers import Matcher
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
-register_simulation_output = AutoConf("output")
+register_simulation_output = AutoConf("outputs")
 
 INPUT_DEFAULTS: Mapping[Text, Any] = dict(
     fleet=dict(name="from_file", path="${root}/fleet.csv"),
     charging_posts=dict(name="from_file", path="${root}/charging_posts.csv"),
     objective=dict(name="haversine_distance"),
-    matcher=["socket_compatibility"],
     allocator=dict(name="greedy"),
+    matchers=["socket_compatibility"],
     outputs=[],
     imports=[],
 )
@@ -46,7 +46,7 @@ class SimulationConfig:
 
     fleet: Dict = field(default_factory=lambda: DictConfig(MISSING))
     charging_posts: Dict = field(default_factory=lambda: DictConfig(MISSING))
-    matcher: List = field(default_factory=lambda: ListConfig(MISSING))
+    matchers: List = field(default_factory=lambda: ListConfig(MISSING))
     objective: Dict = field(default_factory=lambda: DictConfig(MISSING))
     allocator: Dict = field(default_factory=lambda: DictConfig(MISSING))
     outputs: List = field(default_factory=lambda: ListConfig(MISSING))
@@ -126,10 +126,10 @@ def construct_factories(
     result = {
         k: v.factory(inputs[k], materialize=materialize)
         for k, v in evosim_registries().items()
-        if k not in {"matcher", "output"}
+        if k not in {"matchers", "outputs"}
     }
-    result["matcher"] = matcher_factory(inputs.matcher)
-    result["output"] = simulation_output_factory(inputs.outputs)
+    result["matchers"] = matcher_factory(inputs.matchers)
+    result["outputs"] = simulation_output_factory(inputs.outputs)
     return result
 
 
@@ -141,9 +141,9 @@ class Simulation:
     """pandas.DataFrame: the fleet to allocate"""
     charging_posts: Any
     """pandas.DataFrame: the charging posts to allocate"""
-    matcher: Matcher
     allocator: Callable
-    output: Callable
+    matchers: Matcher
+    outputs: Callable
     objective: Optional[Callable] = None
 
     def __call__(self) -> pd.DataFrame:
@@ -153,13 +153,13 @@ class Simulation:
         arguments = dict(fleet=self.fleet, charging_posts=self.charging_posts)
         parameters = signature(self.allocator).parameters
         if "matcher" in parameters:
-            arguments["matcher"] = self.matcher
+            arguments["matcher"] = self.matchers
         if "objective" in parameters:
             arguments["objective"] = self.objective
 
         result = self.allocator(**arguments)
 
-        self.output(self, result)
+        self.outputs(self, result)
 
         return result
 

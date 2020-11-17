@@ -286,8 +286,8 @@ def evosim_registries() -> Mapping[Text, AutoConf]:
     return dict(
         fleet=register_fleet_generator,
         charging_posts=register_charging_posts_generator,
-        matcher=register_matcher,
         objective=register_objective,
         allocator=register_allocator,
-        output=register_simulation_output,
+        matchers=register_matcher,
+        outputs=register_simulation_output,
     )
