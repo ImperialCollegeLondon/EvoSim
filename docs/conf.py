@@ -60,6 +60,7 @@ intersphinx_mapping = {
     "numpy": ("http://docs.scipy.org/doc/numpy/", None),
     "pandas": ("http://pandas.pydata.org/pandas-docs/stable", None),
     "sklearn": ("https://scikit-learn.org/stable", None),
+    "omegaconf": ("https://omegaconf.readthedocs.io/en/latest/", None),
 }
 
 # -- Options for HTML output -------------------------------------------------
@@ -167,4 +168,4 @@ def generate_yaml_inputs():
 generate_docstring_files()
 generate_installation()
 generate_yaml_inputs()
-# copy_notebooks()
+copy_notebooks()

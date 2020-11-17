@@ -26,8 +26,8 @@ __doc__ = Path(__file__).with_suffix(".rst").read_text()
 register_simulation_output = AutoConf("outputs")
 
 INPUT_DEFAULTS: Mapping[Text, Any] = dict(
-    fleet=dict(name="from_file", path="${root}/fleet.csv"),
-    charging_posts=dict(name="from_file", path="${root}/charging_posts.csv"),
+    fleet=dict(name="from_file", path="${cwd}/fleet.csv"),
+    charging_posts=dict(name="from_file", path="${cwd}/charging_posts.csv"),
     objective=dict(name="haversine_distance"),
     allocator=dict(name="greedy"),
     matchers=["socket_compatibility"],
@@ -102,7 +102,7 @@ def construct_input(
         inputs = OmegaConf.create(settings)
     inputs = OmegaConf.merge(dict(root=str(root), cwd=str(Path().absolute())), inputs)
     if overrides:
-        inputs = OmegaConf.merge(settings, overrides)
+        inputs = OmegaConf.merge(inputs, overrides)
     inputs = OmegaConf.merge(OmegaConf.structured(SimulationConfig), inputs)
     for subsection, defaults in INPUT_DEFAULTS.items():
         if OmegaConf.is_missing(inputs, subsection):
@@ -128,8 +128,8 @@ def construct_factories(
         for k, v in evosim_registries().items()
         if k not in {"matchers", "outputs"}
     }
-    result["matchers"] = matcher_factory(inputs.matchers)
-    result["outputs"] = simulation_output_factory(inputs.outputs)
+    result["matchers"] = matcher_factory(inputs.matchers, materialize)
+    result["outputs"] = simulation_output_factory(inputs.outputs, materialize)
     return result
 
 
@@ -188,7 +188,7 @@ class Simulation:
         return cls(**construct_factories(inputs, materialize=True))
 
 
-def simulation_output_factory(settings) -> Callable:
+def simulation_output_factory(settings, materialize: bool = True) -> Callable:
     """Creates an output function to call all output functions."""
     from evosim.simulation import register_simulation_output
 
@@ -207,6 +207,13 @@ def simulation_output_factory(settings) -> Callable:
         def output(simulation: Simulation, result: pd.DataFrame):
             for output in output_functions:
                 output(simulation, result)
+
+    if not materialize:
+
+        def output_factory():
+            return output
+
+        return output_factory
 
     return output
 

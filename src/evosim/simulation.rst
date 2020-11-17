@@ -1,9 +1,11 @@
+.. _evosim-simulation:
+
 Simulation and simulation outputs
 =================================
 
-The :py:class:`~evosim.simulation.Simulation` is a small wrapper around Evosim's
+The :py:class:`~evosim.simulation.Simulation` is a small wrapper around EvoSim's
 algorithms to load a simulation from file, run it, and save some outputs. It can be
-instantiated quite simply from a yaml file:
+instantiated quite simply from a YAML file:
 
 .. testcode:: simple_simulation
 
@@ -29,15 +31,15 @@ instantiated quite simply from a yaml file:
     assert len(simulation.fleet) == 5
     assert len(simulation.charging_posts) == 5
 
-Above, simulation is instantiated from a yaml in memory. It would work just as well if
-provided with a path to a yaml file, or indeed with a dictionary or an OmegaConf object.
-The simulation object holds a number of objects, e.g. fleet, charging_posts, allocation
-algorithm. All are constructed from input using registered factory functions. The
-registries of interest include:
+Above, simulation is instantiated from a YAML in memory. It would work just as well if
+provided with a path to a YAML file, or indeed with a dictionary or an ``omegaconf``
+object.  The simulation object holds a number of objects, e.g. fleet, charging_posts,
+allocation algorithm. All are constructed from input using registered factory functions.
+The registries of interest include:
 
 * :py:func:`~evosim.fleet.register_fleet_generator`: reads a fleet from file or creates
   a random one.
-* :py:func:`~evosim.charging_posts.register_charging_posts_generator`: reades a charging
+* :py:func:`~evosim.charging_posts.register_charging_posts_generator`: reads a charging
   posts from file or creates a random one.
 * :py:func:`~evosim.objectives.register_objective`: objective to optimize
   during the allocation algorithm

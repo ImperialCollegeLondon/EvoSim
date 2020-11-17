@@ -93,8 +93,9 @@ def charger_compatibility(vehicle, charging_post) -> bool:
 
 
 def factory(
-    settings: Union[Sequence[Union[Text, Mapping]], Union[Text, Mapping]]
-) -> Callable[[Any, Any], bool]:
+    settings: Union[Sequence[Union[Text, Mapping]], Union[Text, Mapping]],
+    materialize: bool = True,
+) -> Callable:
     """Transforms a sequence of strings into a sequence of matchers."""
     if isinstance(settings, (Text, Mapping)):
         return register_matcher.factory(settings)
@@ -109,6 +110,13 @@ def factory(
                 intermediate = intermediate.astype(bool)
             result = np.logical_and(result, intermediate)
         return result
+
+    if not materialize:
+
+        def matcher_factory():
+            return match
+
+        return matcher_factory
 
     return match
 

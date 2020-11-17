@@ -103,7 +103,7 @@ def test_defaults_follow_structured_config():
         "fleet",
         "charging_posts",
         "allocator",
-        "matcher",
+        "matchers",
         "objective",
         "imports",
         "outputs",

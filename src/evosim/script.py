@@ -8,6 +8,38 @@ import click
 
 DEFAULT_FILENAME = "evosim.yml"
 
+EXAMPLES = """
+# Examples
+
+The following commands print the final merged inputs rather than run the simulation.
+Drop ``-p`` and the simulation should run.
+
+The defaults are given by
+
+> evosim -p
+
+We can override some or all of these inputs by specifying a yaml file to read from. The
+file can contain any or all the sections printed above (though we recommend not
+overrinding "root" and "cwd").
+
+> evosim -p -i evosim.yml
+
+We can also override some inputs directly on the command-line using omegaconf's dot
+syntax:
+
+> evosim -p fleet.name=random fleet.n=5
+
+or
+
+> evosim -p -i evosim.yml fleet.name=random fleet.n=5
+
+In the latter case, the dot-syntax takes priority over the contents of evosim.yml.
+
+The keyword "cwd" refers to the current working directory (from which the command evosim
+is started). The keyword "root" refers to the directory where the input file (`-i`)
+resides, or to the current working directory if no file is given.
+"""
+
 
 def get_default_yaml(name):
     from evosim.simulation import INPUT_DEFAULTS
@@ -36,9 +68,6 @@ def get_options():
 
 @click.command()
 @click.option(
-    "--describe-options", help="Print option description to screen.", is_flag=True
-)
-@click.option(
     "--input",
     "-i",
     "input_file",
@@ -59,52 +88,46 @@ def get_options():
     inluding defaults and command-line arguments.
     """,
 )
+@click.option(
+    "--print-interpolated",
+    is_flag=True,
+    help="Prints input settings to the standard out, including variable interpolation.",
+)
+@click.option(
+    "--help-usage", is_flag=True, help="A few examples showing how to call evosim."
+)
+@click.option(
+    "--help-parameters", help="Print parameter description to screen.", is_flag=True
+)
 @click.argument("inputs", nargs=-1)
-def main(
+def evosim(
     input_file: Optional[Union[Text, Path]],
-    describe_options: bool,
-    print_yaml: bool,
     inputs: List[Text],
+    print_yaml: bool,
+    print_interpolated: bool,
+    help_usage: bool,
+    help_parameters: bool,
 ):
     """EvoSim simulation.
 
-    Evosim accepts its inputs from three locations with increasing priorities: (i)
-    hard-coded defaults, (ii) an optional input file specified on the command-line,
-    (iii) any number of modifiers also on the command-line. The latter follow the dot
-    syntax implemented by omegaconf.
-
-    # Examples
-
-    The following commands print the final merged inputs rather than run the simulation.
-    Drop ``-p`` and the simulation should run.
-
-    The defaults are given by
-
-    > evosim -p
-
-    We can override some or all of these inputs by specifying a yaml file to read from:
-
-    > evosim -p -i evosim.yml
-
-    We can override some inputs directly on the command-line using omegaconf's dot
-    syntax:
-
-    > evosim -p fleet.name=random fleet.n=5
-
-    or
-
-    > evosim -p -i evosim.yml fleet.name=random fleet.n=5
-
-    In the latter case, the dot-syntax takes priority over the contents of evosim.yml.
+    Evosim accepts its inputs from three locations with increasing priorities: (i) hard-
+    coded defaults, (ii) an optional input file specified on the command-line, (iii) any
+    number of modifiers also on the command-line. The latter follow the dot syntax
+    implemented by omegaconf.
     """
     from io import StringIO
     from omegaconf import OmegaConf
+    from yaml import dump
     from evosim.simulation import (
         Simulation,
         construct_input,
         load_initial_imports,
         construct_factories,
     )
+
+    if help_usage:
+        click.echo(EXAMPLES)
+        return
 
     if input_file is not None:
         input_file = Path(input_file)
@@ -120,8 +143,15 @@ def main(
     load_initial_imports(settings.imports)
     factories = construct_factories(settings, materialize=False)
 
-    if describe_options:
+    if help_parameters:
         click.echo(get_options())
+        return
+
+    if print_interpolated:
+        result = OmegaConf.to_container(settings, resolve=True)
+        result.pop("cwd")
+        result.pop("root")
+        click.echo(dump(result))
         return
 
     if print_yaml:
@@ -133,7 +163,3 @@ def main(
 
     simulation = Simulation(**{k: v() for k, v in factories.items()})
     simulation()
-
-
-if __name__ == "__main__":
-    main()
