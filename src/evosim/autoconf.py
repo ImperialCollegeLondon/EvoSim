@@ -195,8 +195,16 @@ class AutoConf:
         self.configs[name] = _create_config(function, name=name, drop=drop, docs=docs)
         return function
 
-    def factory(self, settings: Union[Text, Mapping]) -> Any:
-        """Instantiates a registered object."""
+    def factory(self, settings: Union[Text, Mapping], materialize: bool = True) -> Any:
+        """Instantiates a registered object.
+
+        Args:
+            settings: dictionary of inputs. If given a string, transforms it to
+                ``dict(name=setttings)`` first.
+            materialize: whether to call the factory functions or return a no-arg
+                factory function.
+        """
+        from functools import partial
         from omegaconf import (
             OmegaConf,
             KeyValidationError,
@@ -218,7 +226,7 @@ class AutoConf:
         factory = self.factories[settings["name"]]
         try:
             config = OmegaConf.merge(schema, config)
-            return factory(**config)
+            return factory(**config) if materialize else partial(factory, **config)
         except KeyValidationError as error:
             msg = f"Incorrect key {error.key} in {self.name}, {settings['name']}"
             raise KeyValidationError(msg) from error
@@ -281,5 +289,5 @@ def evosim_registries() -> Mapping[Text, AutoConf]:
         matcher=register_matcher,
         objective=register_objective,
         allocator=register_allocator,
-        outputs=register_simulation_output,
+        output=register_simulation_output,
     )

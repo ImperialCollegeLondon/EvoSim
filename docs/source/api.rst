@@ -137,6 +137,17 @@ Functions
 
 .. autofunction:: evosim.simulation.register_simulation_output
 
+.. autofunction:: evosim.simulation.construct_input
+
+.. autofunction:: evosim.simulation.construct_factories
+
+.. autofunction:: evosim.simulation.load_initial_imports
+
+Data
+----
+
+.. autodata:: evosim.simulation.INPUT_DEFAULTS
+
 IO
 ==
 

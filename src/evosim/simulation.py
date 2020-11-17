@@ -80,7 +80,11 @@ def construct_input(
         root: root custom interpolation when loading omegaconf files. Defaults to
             the directory where the file is located, if the input is a file, or to
             the current working directory.
-        overrides: addtional dictionary with which to override the underlying inputs.
+        overrides(Optional[Mapping]): additional dictionary with which to override the
+            underlying inputs.
+
+    Returns:
+        Mapping: a fully merged omegaconf input.
     """
     from omegaconf import OmegaConf
     from io import StringIO
@@ -105,6 +109,28 @@ def construct_input(
             setattr(inputs, subsection, OmegaConf.create(defaults))
 
     return inputs
+
+
+def construct_factories(
+    inputs: DictConfig, materialize: bool = True
+) -> Mapping[Text, Callable]:
+    """Constructs factories from pre-constructed inputs.
+
+    Args:
+        inputs (Mapping): pre-constructed inputs
+        materialize: whether to call the factories (``True``) or return them uncalled.
+    """
+    from evosim.matchers import factory as matcher_factory
+    from evosim.autoconf import evosim_registries
+
+    result = {
+        k: v.factory(inputs[k], materialize=materialize)
+        for k, v in evosim_registries().items()
+        if k not in {"matcher", "output"}
+    }
+    result["matcher"] = matcher_factory(inputs.matcher)
+    result["output"] = simulation_output_factory(inputs.outputs)
+    return result
 
 
 @dataclass
@@ -157,32 +183,9 @@ class Simulation:
             :py:data:`~evosim.simulation.SimulationVar`: an instance of a class derived
             from :py:class:`~evosim.simulation.Simulation`.
         """
-        from evosim.fleet import register_fleet_generator
-        from evosim.matchers import factory as matcher_factory
-        from evosim.charging_posts import register_charging_posts_generator
-        from evosim.allocators import register_allocator
-        from evosim.objectives import register_objective
-
         inputs = construct_input(settings, root=root)
         load_initial_imports(inputs.imports)
-
-        fleet = register_fleet_generator.factory(inputs.fleet)
-        charging_posts = register_charging_posts_generator.factory(
-            inputs.charging_posts
-        )
-        matcher = matcher_factory(inputs.matcher)
-        allocator = register_allocator.factory(inputs.allocator)
-        objective = register_objective.factory(inputs.objective)
-        output = simulation_output_factory(inputs.outputs)
-
-        return cls(
-            matcher=matcher,
-            fleet=fleet,
-            charging_posts=charging_posts,
-            allocator=allocator,
-            objective=objective,
-            output=output,
-        )
+        return cls(**construct_factories(inputs, materialize=True))
 
 
 def simulation_output_factory(settings) -> Callable:

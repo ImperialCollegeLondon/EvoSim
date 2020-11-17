@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from pathlib import Path
-from typing import List, Text, Union, Optional
+from typing import List, Optional, Text, Union
 
 import click
 
@@ -36,14 +36,17 @@ def get_options():
 
 @click.command()
 @click.option(
-    "--describe-options", help="Print option description to screen", is_flag=True
+    "--describe-options", help="Print option description to screen.", is_flag=True
 )
 @click.option(
     "--input",
     "-i",
     "input_file",
     type=click.Path(exists=False, file_okay=True, dir_okay=True, readable=True),
-    help=f"Path to the input file. Defaults to {DEFAULT_FILENAME} if it exists.",
+    help=(
+        "Path to an input file or a directory. "
+        f"If the latter, a file {DEFAULT_FILENAME} must exiust."
+    ),
     default=None,
 )
 @click.option(
@@ -63,22 +66,59 @@ def main(
     print_yaml: bool,
     inputs: List[Text],
 ):
-    """EvoSim simulation."""
+    """EvoSim simulation.
+
+    Evosim accepts its inputs from three locations with increasing priorities: (i)
+    hard-coded defaults, (ii) an optional input file specified on the command-line,
+    (iii) any number of modifiers also on the command-line. The latter follow the dot
+    syntax implemented by omegaconf.
+
+    # Examples
+
+    The following commands print the final merged inputs rather than run the simulation.
+    Drop ``-p`` and the simulation should run.
+
+    The defaults are given by
+
+    > evosim -p
+
+    We can override some or all of these inputs by specifying a yaml file to read from:
+
+    > evosim -p -i evosim.yml
+
+    We can override some inputs directly on the command-line using omegaconf's dot
+    syntax:
+
+    > evosim -p fleet.name=random fleet.n=5
+
+    or
+
+    > evosim -p -i evosim.yml fleet.name=random fleet.n=5
+
+    In the latter case, the dot-syntax takes priority over the contents of evosim.yml.
+    """
     from io import StringIO
     from omegaconf import OmegaConf
-    from evosim.simulation import Simulation, construct_input, load_initial_imports
+    from evosim.simulation import (
+        Simulation,
+        construct_input,
+        load_initial_imports,
+        construct_factories,
+    )
 
     if input_file is not None:
         input_file = Path(input_file)
         if input_file.is_dir():
             input_file /= DEFAULT_FILENAME
-    elif Path(DEFAULT_FILENAME).is_file():
-        input_file = Path(DEFAULT_FILENAME)
+        if not input_file.exists():
+            click.echo(f"No file {input_file} found, aborting.", err=True)
+            return
 
     settings = construct_input(
         input_file if input_file else {}, overrides=OmegaConf.from_cli(inputs)
     )
     load_initial_imports(settings.imports)
+    factories = construct_factories(settings, materialize=False)
 
     if describe_options:
         click.echo(get_options())
@@ -91,7 +131,7 @@ def main(
         click.echo(stream.read())
         return
 
-    simulation = Simulation.load(settings)
+    simulation = Simulation(**{k: v() for k, v in factories.items()})
     simulation()
 
 
