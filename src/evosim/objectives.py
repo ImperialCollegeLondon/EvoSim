@@ -3,11 +3,16 @@ from pathlib import Path
 import numpy as np
 
 from evosim import constants
+from evosim.autoconf import AutoConf
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
+register_objective = AutoConf("objective")
+"""Registration decorator for objectives."""
 
-def distance(a, b, radius=constants.EARTH_RADIUS_KM):
+
+@register_objective
+def distance(a, b, radius: float = constants.EARTH_RADIUS_KM):
     """Great circle distance between two geographic locations.
 
     Computes the distance using a formula derived from the `spherical laws of cosine
@@ -36,7 +41,8 @@ def distance(a, b, radius=constants.EARTH_RADIUS_KM):
     )
 
 
-def haversine_distance(a, b, radius=constants.EARTH_RADIUS_KM):
+@register_objective
+def haversine_distance(a, b, radius: float = constants.EARTH_RADIUS_KM):
     """Great circle distance between two geographic location.
 
     Implements the `haversine formula for the great circle

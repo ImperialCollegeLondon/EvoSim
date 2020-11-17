@@ -42,7 +42,7 @@ from typing import IO, Mapping, Optional, Text, Union
 import numpy as np
 import pandas as pd
 
-from evosim.charging_posts import Chargers
+from evosim.charging_posts import Chargers, register_charging_posts_generator
 
 FileInput = Union[Text, Path, IO[Text]]
 
@@ -143,6 +143,23 @@ def read_sockets(
     return result
 
 
+@register_charging_posts_generator(
+    name="from_sockets_and_stations",
+    is_factory=True,
+    docs="""Reads charging points from sockets and stations.
+
+    Puts together the data from sockets and stations csv files to create a table of
+    charging posts.  See :py:func:`~evosim.io.read_stations` and
+    :py:func:`~evosim.io.read_sockets` for example files.
+
+    Args:
+        stations (str): station input table
+        sockets (str): socket input table
+        max_charger_power (Optional[Dict[Text, float]]): Maximum charging power for each
+            item in charger. Defaults to
+            :py:data:`evosim.charging_posts.MAXIMUM_CHARGER_POWER`.
+    """,
+)
 def read_charging_points(
     stations: Union[FileInput, pd.DataFrame] = "stations.csv",
     sockets: Union[FileInput, pd.DataFrame] = "sockets.csv",
@@ -200,3 +217,34 @@ def read_charging_points(
         .drop(columns="current_state")
     )
     return to_charging_posts(aggregated)
+
+
+def output_via_pandas(
+    table,
+    path: Union[Text, Path],
+    overwrite: bool = True,
+    fileformat: Optional[Text] = None,
+    **kwargs,
+):
+    """Writes a table to file, guessing the format from the filename."""
+    path = Path(path)
+    if path.exists() and path.is_dir():
+        raise RuntimeError(f"Path {path} is a directory, not a file.")
+
+    if (not overwrite) and path.exists():
+        raise RuntimeError(f"Path {path} already exists and overwrite is False")
+
+    if fileformat is None:
+        fileformat = path.suffix
+    if fileformat.startswith("."):
+        fileformat = fileformat[1:]
+    if fileformat == "xlsx":
+        table.to_excel(path, **kwargs)
+    elif fileformat == "feather":
+        table.to_feather(path, **kwargs)
+    elif fileformat == "h5":
+        table.to_hdf(path, **kwargs)
+    elif fileformat == "json":
+        table.to_json(path, **kwargs)
+    else:
+        table.to_csv(path, **kwargs)

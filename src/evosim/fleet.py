@@ -6,9 +6,13 @@ import numpy as np
 import pandas as pd
 
 from evosim import constants
+from evosim.autoconf import AutoConf
 from evosim.charging_posts import Chargers, Sockets, to_chargers, to_sockets
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
+
+register_fleet_generator = AutoConf("fleet generation")
+"""Registry for functions to read or generate fleets. """
 
 
 class Models(Enum):
@@ -49,17 +53,49 @@ class Models(Enum):
         return self.name
 
 
+@register_fleet_generator(
+    name="random",
+    is_factory=True,
+    docs="""Generates a random fleet of electric vehicles.
+
+    Args:
+        n (int): The number of charging posts
+        latitude (Tuple[float, float]): The range over which to create random current
+            locations and destinations. Defaults to the :py:data:`London latitudinal
+            range <evosim.constants.LONDON_LATITUDE>`.
+        longitude (Tuple[float, float]): The range over which to create random current
+            locations and destinations. Defaults to the :py:data:`London longitudinal
+            range <evosim.constants.LONDON_LONGITUDE>`.
+        socket_types (List[Text]): A list of sockets from which to choose randomly.
+            Defaults to :py:class:`all available socket types
+            <evosim.charging_posts.Sockets>`.
+        socket_distribution (Optional[List[float]]): weights when choosing the socket
+            types.
+        socket_multiplicity (int): number of different types of socket each post can
+            accomodate.
+        charger_types (List[Text]): A list of chargers from which to choose randomly.
+            Defaults to :py:class:`all available charger types
+            <evosim.charging_posts.Chargers>` .
+        charger_distribution (Optional[List[float]]): weights when choosing the charger
+            types.
+        charger_multiplicity (int): number of different types of chargers each post can
+            accomodate.
+        model_types (List[Text]): A list of models from which to choose randomly.
+            Defaults to :py:class:`all known models <evosim.fleet.Models>`.
+        seed (Optional[int]): optional seed for the random number generators.
+    """,
+)
 def random_fleet(
     n: int,
     latitude: Tuple[float, float] = constants.LONDON_LATITUDE,
     longitude: Tuple[float, float] = constants.LONDON_LONGITUDE,
-    socket_types: Sequence[Sockets] = tuple(Sockets),
+    socket_types: Sequence[Union[Sockets, Text]] = tuple((str(u) for u in Sockets)),
     socket_distribution: Optional[Sequence[float]] = None,
     socket_multiplicity: int = 1,
-    charger_types: Sequence[Chargers] = tuple(Chargers),
+    charger_types: Sequence[Union[Chargers, Text]] = tuple((str(u) for u in Chargers)),
     charger_distribution: Optional[Sequence[float]] = None,
     charger_multiplicity: int = 1,
-    model_types: Sequence[Models] = tuple(Models),
+    model_types: Sequence[Union[Text, Models]] = tuple((str(u) for u in Models)),
     seed: Optional[Union[int, np.random.Generator]] = None,
 ) -> pd.DataFrame:
     """Generates a random table representing a fleet of electric vehicles.
@@ -116,14 +152,16 @@ def random_fleet(
     result["dest_long"] = rng.uniform(
         high=np.max(longitude), low=np.min(longitude), size=n
     )
-    result["model"] = rng.choice(list(model_types), size=n, replace=True)
+    result["model"] = rng.choice(list(to_models(model_types)), size=n, replace=True)
     result["model"] = result.model.astype("category")
     result.index.name = "vehicle"
 
     return to_fleet(result)
 
 
-def to_models(data: Union[Sequence[Text], Text, Models]) -> Sequence[Models]:
+def to_models(
+    data: Union[Sequence[Union[Models, Text]], Text, Models]
+) -> Sequence[Models]:
     """Transforms text strings to sockets.
 
     Example:
@@ -268,3 +306,23 @@ def to_fleet(data: pd.DataFrame) -> pd.DataFrame:
     from evosim.fleet import FLEET_SCHEMA
 
     return _transform_to_schema(FLEET_SCHEMA, data, index_name="vehicle")
+
+
+@register_fleet_generator(
+    name="from_file",
+    is_factory=True,
+    docs="""Reads a fleet from a variety of files.
+    Args:
+        path (Text): path to a file, either excel, csv, json, feather, or hdf5.
+        kwargs: Additional arguments are passed on to the underlying :py:mod:pandas`
+            function, e.g. :py:func:`pandas.read_csv`.
+    """,
+)
+def fleet_from_file(path: Union[Text, Path], **kwargs):
+    """Reads a fleet from file, guessing the format from the filename.
+
+    Defaults to the csv file format.
+    """
+    from evosim.charging_posts import _from_file
+
+    return _from_file(path, to_fleet, **kwargs)

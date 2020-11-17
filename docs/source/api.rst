@@ -21,6 +21,10 @@ Enumerations
 Functions
 ---------
 
+.. autofunction:: evosim.charging_posts.register_charging_posts_generator
+
+.. autofunction:: evosim.charging_posts.charging_posts_from_file
+
 .. autofunction:: evosim.charging_posts.random_charging_posts
 
 .. autofunction:: evosim.charging_posts.to_sockets
@@ -52,6 +56,10 @@ Enumerations
 Functions
 ---------
 
+.. autofunction:: evosim.fleet.register_fleet_generator
+
+.. autofunction:: evosim.fleet.fleet_from_file
+
 .. autofunction:: evosim.fleet.random_fleet
 
 .. autofunction:: evosim.fleet.to_models
@@ -68,6 +76,8 @@ Data
 
 Matchers
 ========
+
+.. autofunction:: evosim.matchers.register_matcher
 
 .. autofunction:: evosim.matchers.factory
 
@@ -91,6 +101,8 @@ Matchers
 Objectives
 ==========
 
+.. autofunction:: evosim.objectives.register_objective
+
 .. autofunction:: evosim.objectives.distance
 
 .. autofunction:: evosim.objectives.haversine_distance
@@ -98,10 +110,32 @@ Objectives
 Allocators
 ==========
 
+.. autofunction:: evosim.allocators.register_allocator
+
 .. autofunction:: evosim.allocators.random_allocator
 
 .. autofunction:: evosim.allocators.greedy_allocator
 
+Simulation
+==========
+
+Classes
+-------
+
+.. autoclass:: evosim.simulation.SimulationConfig
+    :members:
+    :undoc-members:
+
+.. autoclass:: evosim.simulation.Simulation
+    :members:
+    :undoc-members:
+
+Functions
+---------
+
+.. autofunction:: evosim.simulation.simulation_output_factory
+
+.. autofunction:: evosim.simulation.register_simulation_output
 
 IO
 ==
@@ -115,6 +149,7 @@ Functions
 
 .. autofunction:: evosim.io.read_charging_points
 
+.. autofunction:: evosim.io.output_via_pandas
 
 Data
 ----
@@ -122,6 +157,12 @@ Data
 .. autodata:: evosim.io.EXEMPLARS
 
 
+AutoConf
+========
+
+.. autoclass:: evosim.autoconf.AutoConf
+    :members:
+    :special-members: __call__
 
 Constants
 =========
