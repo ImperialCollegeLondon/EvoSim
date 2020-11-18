@@ -6,6 +6,8 @@ from typing import List, Optional, Text, Union
 
 import click
 
+from evosim import __version__
+
 DEFAULT_FILENAME = "evosim.yml"
 
 EXAMPLES = """
@@ -66,7 +68,7 @@ def get_options():
     return result.rstrip()
 
 
-@click.command()
+@click.command(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.option(
     "--input",
     "-i",
@@ -99,6 +101,7 @@ def get_options():
 @click.option(
     "--help-parameters", help="Print parameter description to screen.", is_flag=True
 )
+@click.version_option(version=__version__)
 @click.argument("inputs", nargs=-1)
 def evosim(
     input_file: Optional[Union[Text, Path]],
@@ -113,7 +116,8 @@ def evosim(
     Evosim accepts its inputs from three locations with increasing priorities: (i) hard-
     coded defaults, (ii) an optional input file specified on the command-line, (iii) any
     number of modifiers also on the command-line. The latter follow the dot syntax
-    implemented by omegaconf.
+    implemented by omegaconf. See `--help-usage` and `--help-parameters` for more
+    information.
     """
     from io import StringIO
     from omegaconf import OmegaConf
@@ -129,7 +133,7 @@ def evosim(
         click.echo(EXAMPLES)
         return
 
-    if input_file is not None:
+    if input_file is not None and input_file != "-":
         input_file = Path(input_file)
         if input_file.is_dir():
             input_file /= DEFAULT_FILENAME
@@ -137,9 +141,11 @@ def evosim(
             click.echo(f"No file {input_file} found, aborting.", err=True)
             return
 
-    settings = construct_input(
-        input_file if input_file else {}, overrides=OmegaConf.from_cli(inputs)
-    )
+    if input_file:
+        with click.open_file(str(input_file), "r") as fileobj:
+            settings = construct_input(fileobj, overrides=OmegaConf.from_cli(inputs))
+    else:
+        settings = construct_input(overrides=OmegaConf.from_cli(inputs))
     load_initial_imports(settings.imports)
     factories = construct_factories(settings, materialize=False)
 

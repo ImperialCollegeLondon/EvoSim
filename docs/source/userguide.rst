@@ -52,7 +52,8 @@ The output should look something like:
       Evosim accepts its inputs from three locations with increasing priorities:
       (i) hard- coded defaults, (ii) an optional input file specified on the
       command-line, (iii) any number of modifiers also on the command-line. The
-      latter follow the dot syntax implemented by omegaconf.
+      latter follow the dot syntax implemented by omegaconf. See `--help-usage`
+      and `--help-parameters` for more information.
 
     Options:
       -i, --input PATH      Path to an input file or a directory. If the latter, a
@@ -69,11 +70,12 @@ The output should look something like:
 
       --help-usage          A few examples showing how to call evosim.
       --help-parameters     Print parameter description to screen.
-      --help                Show this message and exit.
+      --version             Show the version and exit.
+      -h, --help            Show this message and exit.
 
 
 The simulation command-line takes optional arguments as input. Notably, it can spit-out
-a few examples showcasing how to call :command:evosim (``--help-usage``), as was as all
+a few examples showcasing how to call :command:`evosim` (``--help-usage``), as was as all
 available parameters (``--help-parameters``). The same information is described in more
 details below.
 
@@ -135,32 +137,31 @@ inputs are include a default matcher that only compare the sockets and an alloca
 algorithm which default to the greedy algorithm. The other sections will not be used
 here. They are described in the next part of this manual.
 
-.. note::
+There are two additional keywords, ``root`` and ``cwd``. Although they could be
+specified on the input file or on the command-line, we recommend leaving them to the
+their default values.
 
-    There are two additional keywords, ``root`` and ``cwd``. Although they could be
-    specified on the input file or on the command-line, we recommend leaving them to the
-    their default values.
+    ``cwd``
+        points to the current working directory where :command:`evosim` is launched.
 
-    ``cwd`` points to the current working directory where :command:`evosim` is launched.
+    ``root``
+        points to the directory where the optional input file is located, if it is
+        specified (with ``-i path/to/file.yml``), or to the current working directory.
 
-    ``root`` points to the directory where the optional input file is located, if it is
-    specifed (with ``-i path/to/file.yml``), or to the current working directory.
-
-    Both are usefull to specify input and output file locations. Nominally, ``cwd`` is
-    not necessary since :command:`evosim` will default relative path to start from the
-    currrent working directory. But it does make it nicely explicit.
-
-.. warning::
-
-    Paths in :command:`evosim` should be given with ``/`` on unixes and ``\`` on
-    windows.
-
+Both are useful to specify input and output file locations. Nominally, ``cwd`` is not
+necessary since :command:`evosim` will default relative path to start from the current
+working directory. But it does make it nicely explicit.
 
 Lets specify an :download:`input file <generated/examples/partial_override.yaml>` to
 override the fleet and infrastructure generation parts, as well as the outputs:
 
 .. literalinclude:: generated/examples/partial_override.yaml
     :language: yaml
+
+.. warning::
+
+    Paths in :command:`evosim` should be given with ``/`` on unixes and ``\`` on
+    windows.
 
 In this example, we tell :command:`evosim` to generate a random fleet with a restricted
 number of socket types. We also tell it to generate a random table of charging posts
@@ -169,6 +170,11 @@ twice (and cut down on copy-paste errors), we refer to the first definition via 
 interpolation. We also use a shortcut in the ``outputs``: ``- stats`` is automatically
 translated to ``- name: stats``. The shortcut only works in simple cases where no other
 keywords need be specified.
+
+.. note::
+
+    For unix users, ``-i -`` will read from the standard input rather than a file.
+    CTRL-D once or twice should terminate the input and start the simulation.
 
 .. testcode:: cli
     :hide:

@@ -67,7 +67,7 @@ def load_initial_imports(imports: List[Union[Text, Path]]):
 
 
 def construct_input(
-    settings: Union[Text, Path, IO, Mapping[Text, Any]],
+    settings: Optional[Union[Text, Path, IO, Mapping[Text, Any]]] = None,
     root: Optional[Union[Text, Path]] = None,
     overrides: Optional[DictConfig] = None,
 ) -> DictConfig:
@@ -89,14 +89,16 @@ def construct_input(
     from omegaconf import OmegaConf
     from io import StringIO
 
-    if isinstance(settings, (Text, Path)) and root is None:
+    if settings is None:
+        settings = dict()
+    elif isinstance(settings, (Text, Path)) and root is None:
         root = Path(settings).parent.absolute()
     elif hasattr(settings, "name") and root is None:
         root = Path(getattr(settings, "name")).absolute()
     elif root is None:
         root = Path().absolute()
 
-    if isinstance(settings, (Text, Path, StringIO, IO)):
+    if isinstance(settings, (Text, Path, StringIO, IO)) or hasattr(settings, "read"):
         inputs = OmegaConf.load(settings)
     else:
         inputs = OmegaConf.create(settings)
