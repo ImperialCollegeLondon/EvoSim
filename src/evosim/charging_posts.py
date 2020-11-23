@@ -1,4 +1,4 @@
-from enum import Flag, auto
+from enum import Enum, Flag, auto
 from pathlib import Path
 from typing import Callable, Mapping, Optional, Sequence, Text, Tuple, Union
 
@@ -37,6 +37,18 @@ class Chargers(Flag):
 
     def __str__(self):
         return super().__str__()[9:]
+
+
+class Status(Enum):
+    """Status of a charging posts."""
+
+    OUT_OF_SERVICE = auto()
+    IN_REPAIR = auto()
+    UNAVAILABLE = auto()
+    AVAILABLE = auto()
+
+    def __str__(self):
+        return super().__str__()[7:]
 
 
 MAXIMUM_CHARGER_POWER: Mapping[Chargers, float] = {
@@ -126,6 +138,23 @@ def to_chargers(
     return _to_enum(data, Chargers, "charger")
 
 
+def to_status(
+    data: Union[Sequence[Union[Text, Chargers]], Text, Chargers]
+) -> Sequence[Chargers]:
+    """Transforms text strings to charging post status.
+    Example:
+
+        String to chargers:
+
+        >>> from evosim.charging_posts import to_status
+        >>> to_status("AVAILABLE")
+        <Status.AVAILABLE: 4>
+    """
+    from evosim.schema import _to_enum
+
+    return _to_enum(data, Status, "status")
+
+
 class ChargingPostsSchema:
     columns: Mapping[
         Text, Union[np.dtype, Callable[[Sequence], Sequence], Sequence[np.dtype]]
@@ -136,6 +165,7 @@ class ChargingPostsSchema:
         occupancy=(np.dtype(int), np.int8, np.int16, np.int32, np.int64),
         socket=to_sockets,
         charger=to_chargers,
+        status=to_status,
     )
     """Schema defining a table of charging posts.
 

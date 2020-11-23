@@ -18,6 +18,10 @@ Enumerations
     :members:
     :undoc-members:
 
+.. autoclass:: evosim.charging_posts.Status
+    :members:
+    :undoc-members:
+
 Functions
 ---------
 
@@ -30,6 +34,8 @@ Functions
 .. autofunction:: evosim.charging_posts.to_sockets
 
 .. autofunction:: evosim.charging_posts.to_chargers
+
+.. autofunction:: evosim.charging_posts.to_status
 
 .. autofunction:: evosim.charging_posts.to_charging_posts
 

@@ -111,7 +111,12 @@ def read_sockets(
         those used in the rest of evosim.
     """
     from operator import itemgetter
-    from evosim.charging_posts import to_sockets, to_chargers, MAXIMUM_CHARGER_POWER
+    from evosim.charging_posts import (
+        to_sockets,
+        to_chargers,
+        MAXIMUM_CHARGER_POWER,
+        Status,
+    )
 
     if max_charger_power is None:
         max_charger_power = MAXIMUM_CHARGER_POWER
@@ -125,7 +130,7 @@ def read_sockets(
                 Power="power",
                 ChargingStationID="charging_station",
                 ProviderID="provider",
-                CurrentState="current_state",
+                CurrentState="status",
                 LastStateCheckTimestamp="state_check",
             )
         )
@@ -141,6 +146,8 @@ def read_sockets(
     ):
         result.loc[result.power <= power, "charger"] = charger
     result["charger"] = to_chargers(result.charger)
+    states = [Status.UNAVAILABLE, Status.AVAILABLE, Status.OUT_OF_SERVICE]
+    result["status"] = [states[u] for u in result["status"]]
     return result
 
 
