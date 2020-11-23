@@ -10,7 +10,7 @@ from evosim.autoconf import AutoConf
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
-register_charging_posts_generator = AutoConf("infrastructure generator")
+register_charging_posts_generator = AutoConf("charging posts generation")
 """Registry for functions to read or generate charging posts."""
 
 

@@ -10,6 +10,7 @@ Optimisation for lowering vehicle Emissions.
    :caption: Contents:
 
    source/generated/installation.md
+   source/userguide.rst
    source/manual.rst
    source/api.rst
    source/generated/howto/README.rst

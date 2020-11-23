@@ -1,0 +1,16 @@
+fleet:
+    name: random
+    n: 10
+    socket_types:
+        - TYPE1
+        - TYPE2
+charging_posts:
+    name: from_file
+    path: ${root}/charging_posts.csv
+matcher:
+    - name: socket_compatibility
+    - name: charger_compatibility
+allocator:
+    name: greedy
+outputs:
+    - name: stats

@@ -14,6 +14,7 @@ from typing import (
 import numpy as np
 import pandas as pd
 
+from evosim import constants
 from evosim.autoconf import AutoConf
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
@@ -26,39 +27,8 @@ register_matcher = AutoConf("matcher")
 
 
 @register_matcher
-def charging_post_availability(_, charging_post) -> bool:
-    """True if the charging post has some spare capacity.
-
-    This matcher checks whether there is any occupancy left. For a single charging
-    post, it is either ``True`` or ``False``.  It does not actually depend on the
-    vehicles. Hence, the result has not really changed even if both functions are
-    applied.
-
-    Example:
-
-        >>> import evosim
-        >>> cps = evosim.charging_posts.random_charging_posts(5, seed=1)
-        >>> evs = evosim.fleet.random_fleet(10, seed=1)
-        >>> evosim.matchers.charging_post_availability(None, cps.loc[0])
-        True
-        >>> evosim.matchers.charging_post_availability(None, cps)
-        post
-        0    True
-        1    True
-        2    True
-        3    True
-        4    True
-        dtype: bool
-
-    This matcher must still conform to the same interface as all other matchers, so that
-    it can be used with others via the factory.
-    """
-    return charging_post.occupancy < charging_post.capacity
-
-
-@register_matcher
 def socket_compatibility(vehicle, charging_post) -> bool:
-    """True if vehicle and charging post are compatible."""
+    """Compares the sockets of vehicle and charging post for compatibility."""
     result = np.bitwise_and(vehicle.socket, charging_post.socket)
     if isinstance(result, (np.ndarray, pd.Series)):
         return result.astype(bool)
@@ -66,16 +36,40 @@ def socket_compatibility(vehicle, charging_post) -> bool:
 
 
 @register_matcher
-def distance(vehicle, charging_post, max_distance: float = 1) -> bool:
-    """Maximum distance between current vehicle location and charging post."""
+def distance(
+    vehicle,
+    charging_post,
+    max_distance: float = 1,
+    radius: float = constants.EARTH_RADIUS_KM,
+) -> bool:
+    """Maximum distance between current vehicle location and charging post.
+
+    Args:
+        max_distance: distance cutoff beyond which a post is not considered a matching
+            the vehicle.
+        radius: Earth radius used in computing the distances. Defaults to
+            :py:data:`evosim.constants.EARTH_RADIUS_KM`.
+    """
     from evosim.objectives import distance
 
-    return distance(vehicle, charging_post) < max_distance
+    return distance(vehicle, charging_post, radius) < max_distance
 
 
 @register_matcher
-def distance_from_destination(vehicle, charging_post, max_distance: float = 1) -> bool:
-    """Maximum distance between vehicle destination and charging post."""
+def distance_from_destination(
+    vehicle,
+    charging_post,
+    max_distance: float = 1,
+    radius: float = constants.EARTH_RADIUS_KM,
+) -> bool:
+    """Maximum distance between vehicle destination and charging post.
+
+    Args:
+        max_distance: distance cutoff beyond which a post is not considered a matching
+            the vehicle.
+        radius: Earth radius used in computing the distances. Defaults to
+            :py:data:`evosim.constants.EARTH_RADIUS_KM`.
+    """
     from evosim.objectives import distance
 
     return (
@@ -91,7 +85,7 @@ def distance_from_destination(vehicle, charging_post, max_distance: float = 1) -
 
 @register_matcher
 def charger_compatibility(vehicle, charging_post) -> bool:
-    """True if vehicle and charging post are compatible."""
+    """Post and vehicle chargers are compatible."""
     result = np.bitwise_and(vehicle.charger, charging_post.charger)
     if isinstance(result, (np.ndarray, pd.Series)):
         return result.astype(bool)

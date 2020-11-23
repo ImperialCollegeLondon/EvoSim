@@ -1,19 +1,6 @@
 import numpy as np
 
 
-def test_charging_post_availability():
-    from evosim.matchers import charging_post_availability
-    from dataclasses import dataclass
-
-    @dataclass
-    class ChargingPost:
-        occupancy: int = 0
-        capacity: int = 1
-
-    assert charging_post_availability(None, ChargingPost(0, 1))
-    assert not charging_post_availability(None, ChargingPost(1, 1))
-
-
 def test_distance_from_destination():
     from evosim.matchers import distance_from_destination, distance
     from evosim.charging_posts import random_charging_posts

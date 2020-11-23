@@ -81,8 +81,6 @@ Matchers
 
 .. autofunction:: evosim.matchers.factory
 
-.. autofunction:: evosim.matchers.charging_post_availability
-
 .. autofunction:: evosim.matchers.socket_compatibility
 
 .. autofunction:: evosim.matchers.charger_compatibility

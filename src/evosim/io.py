@@ -49,8 +49,9 @@ FileInput = Union[Text, Path, IO[Text]]
 EXEMPLARS: Mapping[Text, Path] = {
     "stations": Path(__file__).parent / "data" / "stations.csv",
     "sockets": Path(__file__).parent / "data" / "sockets.csv",
+    "examples": Path(__file__).parent / "data" / "examples",
 }
-"""Exemplar stations and sockets files. """
+"""Exemplar files. """
 
 
 def read_stations(stations: FileInput = "stations.csv") -> pd.DataFrame:

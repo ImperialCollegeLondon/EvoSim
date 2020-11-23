@@ -48,7 +48,7 @@ def test_shortcut_load():
     assert len(sim.charging_posts) == 5
 
 
-def test_run(mocker):
+def test_run():
     from io import StringIO
     from evosim.simulation import Simulation, register_simulation_output
 
