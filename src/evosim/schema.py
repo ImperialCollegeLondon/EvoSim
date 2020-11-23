@@ -75,8 +75,10 @@ def _transform_to_schema(
 ) -> pd.DataFrame:
     dataframe = data.copy(deep=False)
     for column, dtypes in schema.columns.items():
-        if column not in dataframe.columns and column in schema.required:
-            raise ValueError(f"Missing column {column}")
+        if column not in dataframe.columns:
+            if column in schema.required:
+                raise ValueError(f"Missing column {column}")
+            continue
         if callable(dtypes):
             dataframe[column] = dtypes(dataframe[column])
             continue

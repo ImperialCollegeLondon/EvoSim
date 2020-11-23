@@ -172,6 +172,10 @@ Functions
 
 .. autofunction:: evosim.io.output_via_pandas
 
+.. autofunction:: evosim.io.as_sockets
+
+.. autofunction:: evosim.io.as_stations
+
 Data
 ----
 
