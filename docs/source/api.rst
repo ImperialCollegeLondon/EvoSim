@@ -38,7 +38,9 @@ Functions
 Data
 ----
 
-.. autodata:: evosim.charging_posts.CHARGING_POSTS_SCHEMA
+.. autoclass:: evosim.charging_posts.ChargingPostsSchema
+    :members:
+    :undoc-members:
 
 .. autodata:: evosim.charging_posts.MAXIMUM_CHARGER_POWER
 
@@ -71,7 +73,9 @@ Functions
 Data
 ----
 
-.. autodata:: evosim.fleet.FLEET_SCHEMA
+.. autoclass:: evosim.fleet.FleetSchema
+    :members:
+    :undoc-members:
 
 
 Matchers
