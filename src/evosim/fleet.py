@@ -275,7 +275,9 @@ def is_fleet(dataframe: pd.DataFrame, raise_exception: bool = False) -> bool:
     from evosim.fleet import FleetSchema
 
     return _dataframe_follows_schema(
-        dataframe, raise_exception=raise_exception, schema=FleetSchema,
+        dataframe,
+        raise_exception=raise_exception,
+        schema=FleetSchema,
     )
 
 

@@ -201,7 +201,9 @@ def is_charging_posts(dataframe: pd.DataFrame, raise_exception: bool = False) ->
     from evosim.schema import _dataframe_follows_schema
 
     return _dataframe_follows_schema(
-        dataframe, raise_exception=raise_exception, schema=ChargingPostsSchema,
+        dataframe,
+        raise_exception=raise_exception,
+        schema=ChargingPostsSchema,
     )
 
 

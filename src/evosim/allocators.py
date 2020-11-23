@@ -280,7 +280,9 @@ def greedy_allocator(
 
     sfleet = fleet.copy(deep=False).drop("allocation", errors="ignore")
     allocation = pd.Series(
-        np.full(len(sfleet), fill_value=pd.NA), dtype="Int64", index=sfleet.index,
+        np.full(len(sfleet), fill_value=pd.NA),
+        dtype="Int64",
+        index=sfleet.index,
     )
 
     # copy of charging posts where we can modify the occupancy
@@ -319,7 +321,9 @@ def greedy_allocator(
         )
         newly_assigned = _void_overbooking(available_posts, nearest_matching)
         allocation.where(
-            allocation.notna(), newly_assigned, inplace=True,
+            allocation.notna(),
+            newly_assigned,
+            inplace=True,
         )
 
         iteration += max(newly_assigned.count(), 1)

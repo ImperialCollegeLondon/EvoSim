@@ -31,7 +31,9 @@ def _to_enum(
 
 
 def _dataframe_follows_schema(
-    dataframe: pd.DataFrame, schema: Type, raise_exception: bool = False,
+    dataframe: pd.DataFrame,
+    schema: Type,
+    raise_exception: bool = False,
 ) -> bool:
     missing_cols = set(schema.required) - set(dataframe.columns)
     if missing_cols and raise_exception:
@@ -67,7 +69,9 @@ def _dataframe_follows_schema(
 
 
 def _transform_to_schema(
-    schema: Type, data: Union[pd.DataFrame, Any], reorder: bool = True,
+    schema: Type,
+    data: Union[pd.DataFrame, Any],
+    reorder: bool = True,
 ) -> pd.DataFrame:
     dataframe = data.copy(deep=False)
     for column, dtypes in schema.columns.items():
