@@ -22,24 +22,36 @@ Usage if fairly straightforward. Some demonstration files are provided in
     >>> posts[posts.columns[:6]].sample(5, random_state=1)
           latitude  longitude  capacity  occupancy socket charger
     post
-    14       51.50      -0.43         1          1  TYPE2    FAST
-    21       51.50      -0.43         1          1  TYPE2    SLOW
-    18       51.50      -0.43         1          1  TYPE2    FAST
-    20       51.53      -0.17         1          1  TYPE2    FAST
-    25       51.49       0.03         1          1  TYPE2    FAST
-    >>> posts[posts.columns[6:]].sample(5, random_state=1)
-          charging_cost  power          state_check
+    27       51.46      -0.43         1          0  TYPE2    FAST
+    3        51.61      -0.07         1          0  TYPE2    FAST
+    22       51.53      -0.17         1          0  TYPE2    FAST
+    18       51.57      -0.50         1          0  TYPE2    FAST
+    23       51.53      -0.17         1          0  TYPE2    FAST
+    >>> posts[posts.columns[6:11]].sample(5, random_state=1)
+             status  socket_id  charging_cost  power  charging_station_id
     post
-    14              0.0    7.2  2020-01-01 00:00:00
-    21              0.0    3.6  2020-01-01 00:00:00
-    18              0.1    7.2  2020-01-01 00:00:00
-    20              0.0    7.2  2020-01-01 00:00:00
-    25              0.0    7.2  2020-01-01 00:00:00
+    27    AVAILABLE        138            0.1    7.2                   14
+    3     AVAILABLE        114            0.0    7.2                    2
+    22    AVAILABLE        133            0.0    7.2                   12
+    18    AVAILABLE        129            0.0    7.2                   10
+    23    AVAILABLE        134            0.0    7.2                   12
+    >>> posts[posts.columns[11:]].sample(5, random_state=1)
+          provider_id          state_check station_state_check postcode
+    post
+    27              2  2020-01-01 00:00:00  2020-01-0100:00:00  TW149QS
+    3               2  2020-01-01 00:00:00  2020-01-0100:00:00   N170TX
+    22              1  2020-01-01 00:00:00  2020-01-0100:00:00   NW89SG
+    18              1  2020-01-01 00:00:00  2020-01-0100:00:00   UB94HD
+    23              2  2020-01-01 00:00:00  2020-01-0100:00:00   NW89SG
+
+Tables corresponding to "sockets" and "stations" files can be extracted from a charging
+posts table using :py:func:`~evosim.io.as_sockets` and
+:py:func:`~evosim.io.as_stations`. However, this only makes sense if the charging posts
+table was originally read from such files in the first place.
 """
 from pathlib import Path
 from typing import IO, Mapping, Optional, Text, Union
 
-import numpy as np
 import pandas as pd
 
 from evosim.charging_posts import Chargers, register_charging_posts_generator
@@ -76,7 +88,7 @@ def read_stations(stations: FileInput = "stations.csv") -> pd.DataFrame:
                 Lat="latitude",
                 Long="longitude",
                 Availability="available",
-                ProviderID="provider",
+                ProviderID="provider_id",
                 Postcode="postcode",
                 LastStateCheckTimestamp="state_check",
             )
@@ -84,7 +96,7 @@ def read_stations(stations: FileInput = "stations.csv") -> pd.DataFrame:
         .sort_index()
     )
     result.index.name = "charging_station"
-    result["provider"] = [int(u.strip("pro-")) for u in result.provider]
+    result["provider_id"] = [int(u.strip("pro-")) for u in result.provider_id]
     result["available"] = result.available.astype(bool)
 
     return result
@@ -111,7 +123,12 @@ def read_sockets(
         those used in the rest of evosim.
     """
     from operator import itemgetter
-    from evosim.charging_posts import to_sockets, to_chargers, MAXIMUM_CHARGER_POWER
+    from evosim.charging_posts import (
+        to_sockets,
+        to_chargers,
+        MAXIMUM_CHARGER_POWER,
+        Status,
+    )
 
     if max_charger_power is None:
         max_charger_power = MAXIMUM_CHARGER_POWER
@@ -123,15 +140,15 @@ def read_sockets(
                 SocketType="socket",
                 ChargingCost="charging_cost",
                 Power="power",
-                ChargingStationID="charging_station",
-                ProviderID="provider",
-                CurrentState="current_state",
+                ChargingStationID="charging_station_id",
+                ProviderID="provider_id",
+                CurrentState="status",
                 LastStateCheckTimestamp="state_check",
             )
         )
         .sort_index()
     )
-    result.index.name = "socket"
+    result.index.name = "socket_id"
     result["socket"] = to_sockets(
         result.socket.replace(dict(TYPE_1="TYPE1", TYPE_2="TYPE2"))
     )
@@ -141,6 +158,10 @@ def read_sockets(
     ):
         result.loc[result.power <= power, "charger"] = charger
     result["charger"] = to_chargers(result.charger)
+    result["capacity"] = [(1, 1, 0)[u] for u in result["status"]]
+    result["occupancy"] = [(1, 0, 0)[u] for u in result["status"]]
+    states = (Status.UNAVAILABLE, Status.AVAILABLE, Status.OUT_OF_SERVICE)
+    result["status"] = [states[u] for u in result["status"]]
     return result
 
 
@@ -185,58 +206,58 @@ def read_charging_points(
         pandas.DataFrame: a table of charging posts following the schema in
         :py:mod:`evosim.charging_posts`.
     """
-    from evosim.charging_posts import to_charging_posts
+    from evosim.charging_posts import to_charging_posts, Status
 
     if not isinstance(stations, pd.DataFrame):
         stations = read_stations(stations)
     if not isinstance(sockets, pd.DataFrame):
         sockets = read_sockets(sockets, max_charger_power)
 
+    if "state_check" in stations.columns:
+        stations = stations.rename(columns=dict(state_check="station_state_check"))
+
     merged = pd.concat(
         (
             sockets,
-            stations.drop(columns=["provider", "state_check"])
-            .loc[sockets.charging_station]
+            stations.drop(columns="provider_id")
+            .loc[sockets.charging_station_id]
             .set_index(sockets.index),
         ),
         axis="columns",
     )
-    merged = merged.loc[
-        np.logical_and(merged.current_state >= 0, merged.available)
-    ].drop(columns=["available", "postcode"])
+    merged.loc[~merged.available, "status"] = Status.UNAVAILABLE
+    merged = merged.drop(columns="available")
     merged.index.name = "socket_id"
-
-    merged["socket"] = merged.socket.astype(str)
-    grouped = merged.groupby(["charging_station", "socket", "provider"])
-    aggregated = grouped.agg("first")
-    aggregated["occupancy"] = grouped.current_state.sum()
-    aggregated["capacity"] = grouped.current_state.count()
-
-    aggregated = (
-        aggregated.reset_index(level="socket")
-        .reset_index(drop=True)
-        .drop(columns="current_state")
-    )
-    return to_charging_posts(aggregated)
+    merged = merged.reset_index("socket_id")
+    merged.index.name = "post"
+    return to_charging_posts(merged)
 
 
 def output_via_pandas(
     table,
-    path: Union[Text, Path],
+    path: Union[Text, Path, IO],
     overwrite: bool = True,
     fileformat: Optional[Text] = None,
     **kwargs,
 ):
-    """Writes a table to file, guessing the format from the filename."""
-    path = Path(path)
-    if path.exists() and path.is_dir():
-        raise RuntimeError(f"Path {path} is a directory, not a file.")
+    """Writes a table to file, guessing the format from the filename.
 
-    if (not overwrite) and path.exists():
-        raise RuntimeError(f"Path {path} already exists and overwrite is False")
+    Args:
+        path (Union[Text, pathlib.Path, io.StringIO]): path to an output file or output
+            stream.
+        overwrite: If ``True``, then will overwrite any existing file.
+        fileformat: One of "csv", "xlsx", "feather", "h5", "json". Defaults to the file
+            suffix or "csv".
+    """
+    if isinstance(path, (Text, Path)):
+        path = Path(path)
+        if path.exists() and path.is_dir():
+            raise RuntimeError(f"Path {path} is a directory, not a file.")
+        if (not overwrite) and path.exists():
+            raise RuntimeError(f"Path {path} already exists and overwrite is False")
 
     if fileformat is None:
-        fileformat = path.suffix
+        fileformat = getattr(path, "suffix", "csv")
     if fileformat.startswith("."):
         fileformat = fileformat[1:]
     if fileformat == "xlsx":
@@ -249,3 +270,86 @@ def output_via_pandas(
         table.to_json(path, **kwargs)
     else:
         table.to_csv(path, **kwargs)
+
+
+def as_stations(charging_posts: pd.DataFrame) -> pd.DataFrame:
+    """Extracts from a charging posts table the station information.
+
+    Args:
+        charging_posts (pandas.DataFrame): charging posts table originally read from
+            "sockets" and "stations" file.
+
+    Returns:
+        pandas.DataFrame: A table with information similar to that contained in a
+        "stations" file.
+    """
+    charging_posts = charging_posts.copy(deep=False)
+    if "charging_station_id" not in charging_posts:
+        charging_posts["charging_station_id"] = range(1, len(charging_posts) + 1)
+    if "availability" not in charging_posts.columns:
+        charging_posts["availability"] = charging_posts.capacity != 0
+    columns = dict(
+        charging_station_id="ChargingStationID",
+        latitude="Lat",
+        longitude="Long",
+        availability="Availability",
+        station_state_check="LastStateCheckTimestamp",
+        provider_id="ProviderID",
+        postcode="Postcode",
+    )
+    data = (
+        charging_posts[[u for u in columns if u in charging_posts.columns]]
+        .rename(columns=columns)
+        .drop_duplicates("ChargingStationID")
+        .set_index("ChargingStationID")
+    )
+    if "ProviderID" in data.columns:
+        data["ProviderID"] = [f"pro-{i}" for i in data["ProviderID"]]
+    data["Availability"] = data["Availability"].astype(int)
+
+    return data
+
+
+def as_sockets(charging_posts: pd.DataFrame) -> pd.DataFrame:
+    """Extracts a "sockets" table from a charging posts table.
+
+    Args:
+        charging_posts (pandas.DataFrame): charging posts table originally read from
+            "sockets" and "stations" file.
+
+    Returns:
+        pandas.DataFrame: A table with information similar to that contained in a
+        "sockets" file.
+    """
+    if (charging_posts.capacity > 1).any():
+        raise ValueError("Expected capacities to all be equal to 1.")
+    if "charging_station_id" not in charging_posts:
+        charging_posts["charging_station_id"] = range(1, len(charging_posts) + 1)
+    if "socket_id" not in charging_posts:
+        charging_posts["socket_id"] = range(1, len(charging_posts) + 1)
+
+    columns = dict(
+        socket_id="SocketID",
+        socket="SocketType",
+        charging_cost="ChargingCost",
+        power="Power",
+        charging_station_id="ChargingStationID",
+        provider_id="ProviderID",
+        status="CurrentState",
+        state_check="LastStateCheckTimestamp",
+        allocation="VehicleID",
+    )
+    data = (
+        charging_posts[[u for u in columns if u in charging_posts.columns]]
+        .rename(columns=columns)
+        .set_index("SocketID")
+    )
+    if "CurrentState" in data:
+        data["CurrentState"] = [
+            dict(AVAILABLE=1, OUT_OF_SERVICE=-1).get(str(u).upper(), 0)
+            for u in data["CurrentState"]
+        ]
+    data["SocketType"] = (
+        data["SocketType"].astype(str).replace(dict(TYPE1="TYPE_1", TYPE2="TYPE_2"))
+    )
+    return data

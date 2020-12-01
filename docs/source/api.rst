@@ -18,6 +18,10 @@ Enumerations
     :members:
     :undoc-members:
 
+.. autoclass:: evosim.charging_posts.Status
+    :members:
+    :undoc-members:
+
 Functions
 ---------
 
@@ -31,6 +35,8 @@ Functions
 
 .. autofunction:: evosim.charging_posts.to_chargers
 
+.. autofunction:: evosim.charging_posts.to_status
+
 .. autofunction:: evosim.charging_posts.to_charging_posts
 
 .. autofunction:: evosim.charging_posts.is_charging_posts
@@ -38,7 +44,9 @@ Functions
 Data
 ----
 
-.. autodata:: evosim.charging_posts.CHARGING_POSTS_SCHEMA
+.. autoclass:: evosim.charging_posts.ChargingPostsSchema
+    :members:
+    :undoc-members:
 
 .. autodata:: evosim.charging_posts.MAXIMUM_CHARGER_POWER
 
@@ -71,7 +79,9 @@ Functions
 Data
 ----
 
-.. autodata:: evosim.fleet.FLEET_SCHEMA
+.. autoclass:: evosim.fleet.FleetSchema
+    :members:
+    :undoc-members:
 
 
 Matchers
@@ -161,6 +171,10 @@ Functions
 .. autofunction:: evosim.io.read_charging_points
 
 .. autofunction:: evosim.io.output_via_pandas
+
+.. autofunction:: evosim.io.as_sockets
+
+.. autofunction:: evosim.io.as_stations
 
 Data
 ----

@@ -194,29 +194,40 @@ def to_models(
         >>> to_models(evosim.fleet.Models.BMW_I3)
         <Models.BMW_I3: 2>
     """
-    from evosim.charging_posts import _to_enum
+    from evosim.schema import _to_enum
 
     return _to_enum(data, Models, "model")
 
 
-FLEET_SCHEMA: Mapping[
-    Text, Union[np.dtype, Callable[[Sequence], Sequence], Sequence[np.dtype]]
-] = dict(
-    latitude=(np.dtype(float), np.float16, np.float32, np.float64),
-    longitude=(np.dtype(float), np.float16, np.float32, np.float64),
-    dest_lat=(np.dtype(float), np.float16, np.float32, np.float64),
-    dest_long=(np.dtype(float), np.float16, np.float32, np.float64),
-    socket=to_sockets,
-    charger=to_chargers,
-    model=to_models,
-)
-"""Schema defining a fleet of electric vehicles
+class FleetSchema:
+    columns: Mapping[
+        Text, Union[np.dtype, Callable[[Sequence], Sequence], Sequence[np.dtype]]
+    ] = dict(
+        latitude=(np.dtype(float), np.float16, np.float32, np.float64),
+        longitude=(np.dtype(float), np.float16, np.float32, np.float64),
+        dest_lat=(np.dtype(float), np.float16, np.float32, np.float64),
+        dest_long=(np.dtype(float), np.float16, np.float32, np.float64),
+        socket=to_sockets,
+        charger=to_chargers,
+        model=to_models,
+    )
+    """Schema defining a fleet of electric vehicles.
 
-Maps the column to the dtype, a sequence of dtypes, or to an idem-potent callable that
-can be used to transform the column. If  a sequence of dtypes is given, then the first
-one is the default.All the columns named here are **required**. A charging posts table
-can any number of extra columns.
-"""
+    Maps the column to the dtype, a sequence of dtypes, or to an idem-potent callable
+    that can be used to transform the column. If  a sequence of dtypes is given, then
+    the first one is the default. A vehicle table can any number of extra columns.
+    """
+    required: Sequence[Text] = (
+        "latitude",
+        "longitude",
+        "dest_lat",
+        "dest_long",
+        "socket",
+        "charger",
+        "model",
+    )
+    """Columns required for dataframe to represent a fleet."""
+    index_name: Text = "vehicle"
 
 
 def is_fleet(dataframe: pd.DataFrame, raise_exception: bool = False) -> bool:
@@ -226,7 +237,7 @@ def is_fleet(dataframe: pd.DataFrame, raise_exception: bool = False) -> bool:
         dataframe (pandas.DataFrame): putative fleet of electric vehicles
         raise_exception: if ``False`` returns a boolean. If ``True``, will raise an
             exception with some information identifying the difference with
-            :py:data:`FLEET_SCHEMA`.
+            :py:class:`~evosim.fleet.FleetSchema`.
 
     Usage:
 
@@ -260,14 +271,13 @@ def is_fleet(dataframe: pd.DataFrame, raise_exception: bool = False) -> bool:
         >>> with raises(ValueError):
         ...     is_fleet(fleet.drop(columns="latitude"), raise_exception=True)
     """
-    from evosim.charging_posts import _dataframe_follows_schema
-    from evosim.fleet import FLEET_SCHEMA
+    from evosim.schema import _dataframe_follows_schema
+    from evosim.fleet import FleetSchema
 
     return _dataframe_follows_schema(
         dataframe,
         raise_exception=raise_exception,
-        schema=FLEET_SCHEMA,
-        index_name="vehicle",
+        schema=FleetSchema,
     )
 
 
@@ -275,7 +285,7 @@ def to_fleet(data: pd.DataFrame) -> pd.DataFrame:
     """Tries and transform input data to a fleet dataframe.
 
     This function will try and transform the columns of the input dataframe to fit the
-    schema defined in :py:data:`evosim.fleet.FLEET_SCHEMA`. It also sets the "vehicle"
+    schema defined in :py:data:`evosim.fleet.FleetSchema`. It also sets the "vehicle"
     column as the index, if it exists. In any-case, it names the indices "vehicle". It
     returns a shallow copy of the input data frame with transformed columns as required.
 
@@ -302,10 +312,10 @@ def to_fleet(data: pd.DataFrame) -> pd.DataFrame:
         >>> isinstance(fleet.at[0, "charger"], Chargers)
         True
     """
-    from evosim.charging_posts import _transform_to_schema
-    from evosim.fleet import FLEET_SCHEMA
+    from evosim.schema import _transform_to_schema
+    from evosim.fleet import FleetSchema
 
-    return _transform_to_schema(FLEET_SCHEMA, data, index_name="vehicle")
+    return _transform_to_schema(FleetSchema, data)
 
 
 @register_fleet_generator(
