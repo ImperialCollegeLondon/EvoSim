@@ -172,7 +172,11 @@ def test_greedy_allocator(rng):
     sockets = list(Sockets)[:2]
     chargers = list(Chargers)[:2]
     charging_posts = random_charging_posts(
-        100, capacity=3, socket_types=sockets, charger_types=chargers, seed=rng,
+        100,
+        capacity=3,
+        socket_types=sockets,
+        charger_types=chargers,
+        seed=rng,
     ).sample(50, random_state=2)
     fleet = random_fleet(
         200, socket_types=sockets, charger_types=chargers, seed=rng
@@ -206,7 +210,11 @@ def test_greedy_allocator_nearest_neighbor():
     sockets = list(Sockets)[:2]
     chargers = list(Chargers)[:2]
     charging_posts = random_charging_posts(
-        100, capacity=3, socket_types=sockets, charger_types=chargers, seed=rng,
+        100,
+        capacity=3,
+        socket_types=sockets,
+        charger_types=chargers,
+        seed=rng,
     ).sample(50, random_state=2)
     fleet = random_fleet(
         200, socket_types=sockets, charger_types=chargers, seed=rng

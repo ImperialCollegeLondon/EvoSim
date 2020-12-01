@@ -220,6 +220,37 @@ def simulation_output_factory(settings, materialize: bool = True) -> Callable:
     return output
 
 
+def _output_dataframe(
+    data_mangler: Callable,
+    path: Text,
+    overwrite: bool = True,
+    fileformat: Optional[Text] = None,
+    **kwargs,
+):
+    if str(path).lower() in ("screen", "stdout", "none", "-"):
+        filepath = None
+    else:
+        filepath = Path(path)
+    if filepath is not None and filepath.exists() and filepath.is_dir():
+        raise RuntimeError(f"Path {filepath} is a directory, not a file.")
+
+    if filepath is not None and (not overwrite) and filepath.exists():
+        raise RuntimeError(f"Path {filepath} already exists and overwrite is False")
+
+    def output(simulation: Simulation, result: pd.DataFrame):
+        from evosim.io import output_via_pandas
+
+        data = data_mangler(simulation, result)
+        if filepath is None:
+            print(data)
+        else:
+            output_via_pandas(
+                data, path=filepath, overwrite=overwrite, fileformat=fileformat
+            )
+
+    return output
+
+
 @register_simulation_output(name="input_fleet", is_factory=True)
 def input_fleet_to_file(
     path: Text, overwrite: bool = True, fileformat: Optional[Text] = None, **kwargs
@@ -227,7 +258,7 @@ def input_fleet_to_file(
     """Writes input fleet to file.
 
     Args:
-        path: path to the output file.
+        path: path to the output file. If one of "stdout" or "-", then prints to screen.
         overwrite: if ``False``, raises an error rather than overwrite an existing file.
             Defaults to ``True``.
         fileformat: format of the output file. Defaults to guessing from the filename,
@@ -235,21 +266,13 @@ def input_fleet_to_file(
         **kwargs: any arguments to the underlying :py:mod:`pandas` functions e.g.
             :py:meth:`pandas.DataFrame.to_csv`.
     """
-    filepath = Path(path)
-    if filepath.exists() and filepath.is_dir():
-        raise RuntimeError(f"Path {filepath} is a directory, not a file.")
-
-    if (not overwrite) and filepath.exists():
-        raise RuntimeError(f"Path {filepath} already exists and overwrite is False")
-
-    def output(simulation: Simulation, result: pd.DataFrame):
-        from evosim.io import output_via_pandas
-
-        output_via_pandas(
-            simulation.fleet, path=filepath, overwrite=overwrite, fileformat=fileformat
-        )
-
-    return output
+    return _output_dataframe(
+        lambda s, r: s.fleet,
+        path=path,
+        overwrite=overwrite,
+        fileformat=fileformat,
+        **kwargs,
+    )
 
 
 @register_simulation_output(name="input_charging_posts", is_factory=True)
@@ -259,7 +282,7 @@ def input_charging_posts_to_file(
     """Writes input charging posts to file.
 
     Args:
-        path: path to the output file.
+        path: path to the output file. If one of "stdout" or "-", then prints to screen.
         overwrite: if ``False``, raises an error rather than overwrite an existing file.
             Defaults to ``True``.
         fileformat: format of the output file. Defaults to guessing from the filename,
@@ -267,25 +290,13 @@ def input_charging_posts_to_file(
         **kwargs: any arguments to the underlying :py:mod:`pandas` functions e.g.
             :py:meth:`pandas.DataFrame.to_csv`.
     """
-    filepath = Path(path)
-    if filepath.exists() and filepath.is_dir():
-        raise RuntimeError(f"Path {filepath} is a directory, not a file.")
-
-    if (not overwrite) and filepath.exists():
-        raise RuntimeError(f"Path {filepath} already exists and overwrite is False")
-
-    def output(simulation: Simulation, result: pd.DataFrame):
-        from evosim.io import output_via_pandas
-
-        output_via_pandas(
-            simulation.charging_posts,
-            path=path,
-            overwrite=overwrite,
-            fileformat=fileformat,
-            **kwargs,
-        )
-
-    return output
+    return _output_dataframe(
+        lambda s, r: s.charging_posts,
+        path=path,
+        overwrite=overwrite,
+        fileformat=fileformat,
+        **kwargs,
+    )
 
 
 @register_simulation_output(name="allocated_fleet", is_factory=True)
@@ -295,7 +306,7 @@ def allocated_fleet_to_file(
     """Writes allocated fleet to file.
 
     Args:
-        path: path to the output file.
+        path: path to the output file. If one of "stdout" or "-", then prints to screen.
         overwrite: if ``False``, raises an error rather than overwrite an existing file.
             Defaults to ``True``.
         fileformat: format of the output file. Defaults to guessing from the filename,
@@ -303,21 +314,13 @@ def allocated_fleet_to_file(
         **kwargs: any arguments to the underlying :py:mod:`pandas` functions e.g.
             :py:meth:`pandas.DataFrame.to_csv`.
     """
-    filepath = Path(path)
-    if filepath.exists() and filepath.is_dir():
-        raise RuntimeError(f"Path {filepath} is a directory, not a file.")
-
-    if (not overwrite) and filepath.exists():
-        raise RuntimeError(f"Path {filepath} already exists and overwrite is False")
-
-    def output(simulation: Simulation, result: pd.DataFrame):
-        from evosim.io import output_via_pandas
-
-        output_via_pandas(
-            result, path=filepath, overwrite=overwrite, fileformat=fileformat
-        )
-
-    return output
+    return _output_dataframe(
+        lambda s, r: r,
+        path=path,
+        overwrite=overwrite,
+        fileformat=fileformat,
+        **kwargs,
+    )
 
 
 def distances(fleet: pd.pandas, charging_posts: pd.pandas) -> pd.Series:
@@ -363,4 +366,82 @@ def allocation_stats(simulation: Simulation, result: pd.DataFrame):
                 * max: {final_distances.max():.2f}
             """
         ).lstrip()
+    )
+
+
+@register_simulation_output(name="sockets", is_factory=True)
+def write_sockets(
+    path: Text, overwrite: bool = True, fileformat: Optional[Text] = None, **kwargs
+):
+    """Extract socket information from the charging posts.
+
+    The output may include an extra "VehicleID" column indicating allocating vehicles.
+    This output format works best when the input charging posts are read from sockets
+    and stations files.
+
+    Args:
+        path: path to the output file. If one of "stdout" or "-", then prints to screen.
+        overwrite: if ``False``, raises an error rather than overwrite an existing file.
+            Defaults to ``True``.
+        fileformat: format of the output file. Defaults to guessing from the filename,
+            or to csv if there is no good guess.
+        **kwargs: any arguments to the underlying :py:mod:`pandas` functions e.g.
+            :py:meth:`pandas.DataFrame.to_csv`.
+    """
+
+    def create_sockets(
+        simulation: Simulation,
+        result: pd.DataFrame,
+    ):
+        from evosim.io import as_sockets
+
+        data = simulation.charging_posts.copy(deep=False)
+        if "allocation" in result:
+            data["allocation"] = pd.Series(pd.NA, dtype="Int64")
+            allocation = result.allocation[result.allocation.notna()]
+            data.loc[allocation.to_numpy(), "allocation"] = allocation.index
+        return as_sockets(data)
+
+    return _output_dataframe(
+        create_sockets,
+        path=path,
+        overwrite=overwrite,
+        fileformat=fileformat,
+        **kwargs,
+    )
+
+
+@register_simulation_output(name="stations", is_factory=True)
+def write_stations(
+    path: Text, overwrite: bool = True, fileformat: Optional[Text] = None, **kwargs
+):
+    """Extracts station information from the charging posts table.
+
+    This output format works best when the input charging posts are read from sockets
+    and stations files.
+
+    Args:
+        path: path to the output file. If one of "stdout" or "-", then prints to screen.
+        overwrite: if ``False``, raises an error rather than overwrite an existing file.
+            Defaults to ``True``.
+        fileformat: format of the output file. Defaults to guessing from the filename,
+            or to csv if there is no good guess.
+        **kwargs: any arguments to the underlying :py:mod:`pandas` functions e.g.
+            :py:meth:`pandas.DataFrame.to_csv`.
+    """
+
+    def create_stations(
+        simulation: Simulation,
+        result: pd.DataFrame,
+    ):
+        from evosim.io import as_stations
+
+        return as_stations(simulation.charging_posts)
+
+    return _output_dataframe(
+        create_stations,
+        path=path,
+        overwrite=overwrite,
+        fileformat=fileformat,
+        **kwargs,
     )
