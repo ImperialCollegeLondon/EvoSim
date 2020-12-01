@@ -128,12 +128,25 @@ Classes
     :members:
     :undoc-members:
 
+.. autodata:: evosim.simulation.SimulationVar
+
 Functions
 ---------
 
 .. autofunction:: evosim.simulation.simulation_output_factory
 
 .. autofunction:: evosim.simulation.register_simulation_output
+
+.. autofunction:: evosim.simulation.construct_input
+
+.. autofunction:: evosim.simulation.construct_factories
+
+.. autofunction:: evosim.simulation.load_initial_imports
+
+Data
+----
+
+.. autodata:: evosim.simulation.INPUT_DEFAULTS
 
 IO
 ==
@@ -161,6 +174,8 @@ AutoConf
 .. autoclass:: evosim.autoconf.AutoConf
     :members:
     :special-members: __call__
+
+.. autofunction:: evosim.autoconf.evosim_registries
 
 Constants
 =========

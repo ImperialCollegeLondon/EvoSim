@@ -12,6 +12,9 @@ homepage = "https://github.com/ImperialCollegeLondon/EvoSim"
 packages = [{include = "evosim", from = "src"}]
 include = ["*.rst", "*.csv", "*.yml"]
 
+[tool.poetry.scripts]
+evosim = 'evosim.script:evosim'
+
 [tool.poetry.dependencies]
 python = "^3.8"
 numpy = "1.19"
@@ -20,6 +23,7 @@ scikit-learn = "^0.23.2"
 attrs = "^20.2.0"
 omegaconf = "^2.0.3"
 docstring-parser = "^0.7.3"
+PyYAML = "^5.3.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

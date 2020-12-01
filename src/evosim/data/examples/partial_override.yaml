@@ -1,0 +1,12 @@
+fleet:
+    name: random
+    n: 10
+    socket_types:
+        - TYPE1
+        - TYPE2
+charging_posts:
+    name: random
+    n: 100
+    socket_types: ${fleet.socket_types}
+outputs:
+    - stats

@@ -1,8 +1,18 @@
-from __future__ import annotations
-
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import IO, Any, Callable, Dict, List, Mapping, Optional, Text, Union
+from typing import (
+    IO,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Text,
+    Type,
+    TypeVar,
+    Union,
+)
 
 import pandas as pd
 from omegaconf import MISSING
@@ -13,7 +23,21 @@ from evosim.autoconf import AutoConf
 from evosim.matchers import Matcher
 
 __doc__ = Path(__file__).with_suffix(".rst").read_text()
-register_simulation_output = AutoConf("output")
+register_simulation_output = AutoConf("outputs")
+
+INPUT_DEFAULTS: Mapping[Text, Any] = dict(
+    fleet=dict(name="from_file", path="${cwd}/fleet.csv"),
+    charging_posts=dict(name="from_file", path="${cwd}/charging_posts.csv"),
+    objective=dict(name="haversine_distance"),
+    allocator=dict(name="greedy"),
+    matchers=["socket_compatibility"],
+    outputs=[],
+    imports=[],
+)
+"""Default input."""
+
+SimulationVar = TypeVar("SimulationVar", bound="Simulation")
+"""Annotation for classes derived from :py:class:`~evosim.simulation.Simulation`."""
 
 
 @dataclass
@@ -22,12 +46,93 @@ class SimulationConfig:
 
     fleet: Dict = field(default_factory=lambda: DictConfig(MISSING))
     charging_posts: Dict = field(default_factory=lambda: DictConfig(MISSING))
-    matcher: List = field(default_factory=lambda: ListConfig(["socket_compatibility"]))
-    objective: Dict = field(
-        default_factory=lambda: DictConfig(dict(name="haversine_distance"))
-    )
-    allocator: Dict = field(default_factory=lambda: DictConfig(dict(name="greedy")))
-    outputs: List = field(default_factory=lambda: ListConfig([]))
+    matchers: List = field(default_factory=lambda: ListConfig(MISSING))
+    objective: Dict = field(default_factory=lambda: DictConfig(MISSING))
+    allocator: Dict = field(default_factory=lambda: DictConfig(MISSING))
+    outputs: List = field(default_factory=lambda: ListConfig(MISSING))
+    imports: List = field(default_factory=lambda: ListConfig(MISSING))
+    root: Text = field(default_factory=lambda: str(Path.cwd()))
+    cwd: Text = field(default_factory=lambda: str(Path.cwd()))
+
+
+def load_initial_imports(imports: List[Union[Text, Path]]):
+    """Load user-declared module to register new functions."""
+    from importlib import util as implib
+
+    for path in imports:
+        path = Path(path)
+        spec = implib.spec_from_file_location(path.stem, path)
+        mod = implib.module_from_spec(spec)
+        spec.loader.exec_module(mod)  # type: ignore
+
+
+def construct_input(
+    settings: Optional[Union[Text, Path, IO, Mapping[Text, Any]]] = None,
+    root: Optional[Union[Text, Path]] = None,
+    overrides: Optional[DictConfig] = None,
+) -> DictConfig:
+    """Construct and partially validate an input.
+
+    Args:
+        settings (Union[Text, pathlib.Path, dict]): path to a yaml file, or an io
+            buffer with yaml content, or a dictionary with the settings already
+            prepared.
+        root: root custom interpolation when loading omegaconf files. Defaults to
+            the directory where the file is located, if the input is a file, or to
+            the current working directory.
+        overrides(Optional[Mapping]): additional dictionary with which to override the
+            underlying inputs.
+
+    Returns:
+        Mapping: a fully merged omegaconf input.
+    """
+    from omegaconf import OmegaConf
+    from io import StringIO
+
+    if settings is None:
+        settings = dict()
+    elif isinstance(settings, (Text, Path)) and root is None:
+        root = Path(settings).parent.absolute()
+    elif hasattr(settings, "name") and root is None:
+        root = Path(getattr(settings, "name")).absolute()
+    elif root is None:
+        root = Path().absolute()
+
+    if isinstance(settings, (Text, Path, StringIO, IO)) or hasattr(settings, "read"):
+        inputs = OmegaConf.load(settings)
+    else:
+        inputs = OmegaConf.create(settings)
+    inputs = OmegaConf.merge(dict(root=str(root), cwd=str(Path().absolute())), inputs)
+    if overrides:
+        inputs = OmegaConf.merge(inputs, overrides)
+    inputs = OmegaConf.merge(OmegaConf.structured(SimulationConfig), inputs)
+    for subsection, defaults in INPUT_DEFAULTS.items():
+        if OmegaConf.is_missing(inputs, subsection):
+            setattr(inputs, subsection, OmegaConf.create(defaults))
+
+    return inputs
+
+
+def construct_factories(
+    inputs: DictConfig, materialize: bool = True
+) -> Mapping[Text, Callable]:
+    """Constructs factories from pre-constructed inputs.
+
+    Args:
+        inputs (Mapping): pre-constructed inputs
+        materialize: whether to call the factories (``True``) or return them uncalled.
+    """
+    from evosim.matchers import factory as matcher_factory
+    from evosim.autoconf import evosim_registries
+
+    result = {
+        k: v.factory(inputs[k], materialize=materialize)
+        for k, v in evosim_registries().items()
+        if k not in {"matchers", "outputs"}
+    }
+    result["matchers"] = matcher_factory(inputs.matchers, materialize)
+    result["outputs"] = simulation_output_factory(inputs.outputs, materialize)
+    return result
 
 
 @dataclass
@@ -38,32 +143,34 @@ class Simulation:
     """pandas.DataFrame: the fleet to allocate"""
     charging_posts: Any
     """pandas.DataFrame: the charging posts to allocate"""
-    matcher: Matcher
     allocator: Callable
-    output: Callable
+    matchers: Matcher
+    outputs: Callable
     objective: Optional[Callable] = None
 
-    def run(self):
+    def __call__(self) -> pd.DataFrame:
         """Runs the simulation."""
         from inspect import signature
 
         arguments = dict(fleet=self.fleet, charging_posts=self.charging_posts)
         parameters = signature(self.allocator).parameters
         if "matcher" in parameters:
-            arguments["matcher"] = self.matcher
+            arguments["matcher"] = self.matchers
         if "objective" in parameters:
             arguments["objective"] = self.objective
 
         result = self.allocator(**arguments)
 
-        self.output(self, result)
+        self.outputs(self, result)
+
+        return result
 
     @classmethod
     def load(
-        cls,
+        cls: Type[SimulationVar],
         settings: Union[Text, Path, IO, Mapping[Text, Any]],
         root: Optional[Union[Text, Path]] = None,
-    ) -> Simulation:
+    ) -> SimulationVar:
         """Loads simulation from an input file.
 
         Args:
@@ -73,57 +180,17 @@ class Simulation:
             root: root custom interpolation when loading omegaconf files. Defaults to
                 the directory where the file is located, if the input is a file, or to
                 the current working directory.
+
+        Returns:
+            :py:data:`~evosim.simulation.SimulationVar`: an instance of a class derived
+            from :py:class:`~evosim.simulation.Simulation`.
         """
-        from omegaconf import OmegaConf
-        from io import StringIO
-        from evosim.fleet import register_fleet_generator
-        from evosim.matchers import factory as matcher_factory
-        from evosim.charging_posts import register_charging_posts_generator
-        from evosim.allocators import register_allocator
-        from evosim.objectives import register_objective
-
-        if isinstance(settings, (Text, Path)) and root is None:
-            root = Path(settings).parent.absolute()
-        elif hasattr(settings, "name") and root is None:
-            root = Path(getattr(settings, "name")).absolute()
-        elif root is None:
-            root = Path().absolute()
-
-        if isinstance(settings, (Text, Path, StringIO, IO)):
-            inputs = OmegaConf.load(settings)
-        else:
-            inputs = OmegaConf.create(settings)
-        inputs = OmegaConf.merge(OmegaConf.structured(SimulationConfig), inputs)
-        inputs = OmegaConf.merge(
-            dict(**inputs), dict(root=str(root), cwd=str(Path().absolute()))
-        )
-        if OmegaConf.is_missing(inputs, "fleet"):
-            inputs.fleet = dict(name="from_file", path="${root}/fleet.csv")
-        if OmegaConf.is_missing(inputs, "charging_posts"):
-            inputs.charging_posts = dict(
-                name="from_file", path="${root}/charging_posts.csv"
-            )
-
-        fleet = register_fleet_generator.factory(inputs.fleet)
-        charging_posts = register_charging_posts_generator.factory(
-            inputs.charging_posts
-        )
-        matcher = matcher_factory(inputs.matcher)
-        allocator = register_allocator.factory(inputs.allocator)
-        objective = register_objective.factory(inputs.objective)
-        output = simulation_output_factory(inputs.outputs)
-
-        return cls(
-            matcher=matcher,
-            fleet=fleet,
-            charging_posts=charging_posts,
-            allocator=allocator,
-            objective=objective,
-            output=output,
-        )
+        inputs = construct_input(settings, root=root)
+        load_initial_imports(inputs.imports)
+        return cls(**construct_factories(inputs, materialize=True))
 
 
-def simulation_output_factory(settings) -> Callable:
+def simulation_output_factory(settings, materialize: bool = True) -> Callable:
     """Creates an output function to call all output functions."""
     from evosim.simulation import register_simulation_output
 
@@ -142,6 +209,13 @@ def simulation_output_factory(settings) -> Callable:
         def output(simulation: Simulation, result: pd.DataFrame):
             for output in output_functions:
                 output(simulation, result)
+
+    if not materialize:
+
+        def output_factory():
+            return output
+
+        return output_factory
 
     return output
 
@@ -260,6 +334,7 @@ def distances(fleet: pd.pandas, charging_posts: pd.pandas) -> pd.Series:
 
 @register_simulation_output(name="stats")
 def allocation_stats(simulation: Simulation, result: pd.DataFrame):
+    """Simple standard statistics about the allocation."""
     from textwrap import dedent
     from evosim.objectives import haversine_distance
 

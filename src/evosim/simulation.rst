@@ -1,9 +1,11 @@
+.. _evosim-simulation:
+
 Simulation and simulation outputs
 =================================
 
-The :py:class:`~evosim.simulation.Simulation` is a small wrapper around Evosim's
+The :py:class:`~evosim.simulation.Simulation` is a small wrapper around EvoSim's
 algorithms to load a simulation from file, run it, and save some outputs. It can be
-instantiated quite simply from a yaml file:
+instantiated quite simply from a YAML file:
 
 .. testcode:: simple_simulation
 
@@ -18,7 +20,7 @@ instantiated quite simply from a yaml file:
         charging_posts:
             name: random
             n: 5
-        matcher: socket_compatibility
+        matchers: socket_compatibility
         allocator:
             name: random
     """
@@ -29,15 +31,15 @@ instantiated quite simply from a yaml file:
     assert len(simulation.fleet) == 5
     assert len(simulation.charging_posts) == 5
 
-Above, simulation is instantiated from a yaml in memory. It would work just as well if
-provided with a path to a yaml file, or indeed with a dictionary or an OmegaConf object.
-The simulation object holds a number of objects, e.g. fleet, charging_posts, allocation
-algorithm. All are constructed from input using registered factory functions. The
-registries of interest include:
+Above, simulation is instantiated from a YAML in memory. It would work just as well if
+provided with a path to a YAML file, or indeed with a dictionary or an ``omegaconf``
+object.  The simulation object holds a number of objects, e.g. fleet, charging_posts,
+allocation algorithm. All are constructed from input using registered factory functions.
+The registries of interest include:
 
 * :py:func:`~evosim.fleet.register_fleet_generator`: reads a fleet from file or creates
   a random one.
-* :py:func:`~evosim.charging_posts.register_charging_posts_generator`: reades a charging
+* :py:func:`~evosim.charging_posts.register_charging_posts_generator`: reads a charging
   posts from file or creates a random one.
 * :py:func:`~evosim.objectives.register_objective`: objective to optimize
   during the allocation algorithm
@@ -52,12 +54,12 @@ to run the simulation itself.
 
 .. testcode:: simple_simulation
 
-    simulation.run()
+    allocated_fleet = simulation();
 
-That's it! This simulation has no outputs (none were specified). So the allocation was
-computed and immediately lost... That's not so useful. So let's try and add an output
-function.  We will use ``stats`` which prints simple statistics to file, and create one
-that prints out the unallocated vehicles:
+That's it! This simulation has no outputs (none were specified) outside of the allocated
+fleet returned by the allocator algorithm. So let's try and print something to the
+standard out (the screen).  We will use ``stats`` which prints simple statistics and
+create function that prints out the unallocated vehicles:
 
 
 .. testcode:: simulation_with_output
@@ -97,7 +99,7 @@ follows:
             name: random
             n: 100
             seed: 2
-        matcher: socket_compatibility
+        matchers: socket_compatibility
         allocator:
             name: random
             seed: 3
@@ -119,7 +121,7 @@ the simulation:
 
 .. testcode:: simulation_with_output
 
-    simulation.run()
+    simulation()
 
 
 .. testoutput:: simulation_with_output

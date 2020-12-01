@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import (
     Any,
     Callable,
+    List,
     Mapping,
     MutableMapping,
     Optional,
@@ -16,7 +17,7 @@ __doc__ = Path(__file__).with_suffix(".rst").read_text()
 
 
 def _get_underlying_type(x: Union[Type, Text]) -> Union[Type, Text]:
-    from typing import get_args, get_origin, Union, List, Sequence, Tuple, Dict
+    from typing import get_args, get_origin, Union, Sequence, Tuple, Dict
 
     if (
         get_origin(x) is Union
@@ -194,8 +195,16 @@ class AutoConf:
         self.configs[name] = _create_config(function, name=name, drop=drop, docs=docs)
         return function
 
-    def factory(self, settings: Union[Text, Mapping]) -> Any:
-        """Instantiates a registered object."""
+    def factory(self, settings: Union[Text, Mapping], materialize: bool = True) -> Any:
+        """Instantiates a registered object.
+
+        Args:
+            settings: dictionary of inputs. If given a string, transforms it to
+                ``dict(name=setttings)`` first.
+            materialize: whether to call the factory functions or return a no-arg
+                factory function.
+        """
+        from functools import partial
         from omegaconf import (
             OmegaConf,
             KeyValidationError,
@@ -217,7 +226,7 @@ class AutoConf:
         factory = self.factories[settings["name"]]
         try:
             config = OmegaConf.merge(schema, config)
-            return factory(**config)
+            return factory(**config) if materialize else partial(factory, **config)
         except KeyValidationError as error:
             msg = f"Incorrect key {error.key} in {self.name}, {settings['name']}"
             raise KeyValidationError(msg) from error
@@ -246,13 +255,8 @@ class AutoConf:
         result = ""
         for name, config in self.configs.items():
 
-            docstring = (
-                "``name: "
-                + name.strip()
-                + "``\n"
-                + indent(config.__doc__.strip(), "    ")
-                + "\n\n"
-            )
+            configdoc = indent((config.__doc__ or "").strip(), "    ")
+            docstring = "``name: " + name.strip() + "``\n" + configdoc + "\n\n"
             for param in fields(config):
                 type_ = f" ({_get_underlying_type(param.type)})" if param.type else ""
                 if param.default is MISSING:
@@ -269,3 +273,21 @@ class AutoConf:
                 docstring += single.rstrip() + "\n\n"
             result += docstring.rstrip() + "\n\n"
         return result
+
+
+def evosim_registries() -> Mapping[Text, AutoConf]:
+    from evosim.fleet import register_fleet_generator
+    from evosim.charging_posts import register_charging_posts_generator
+    from evosim.matchers import register_matcher
+    from evosim.objectives import register_objective
+    from evosim.simulation import register_simulation_output
+    from evosim.allocators import register_allocator
+
+    return dict(
+        fleet=register_fleet_generator,
+        charging_posts=register_charging_posts_generator,
+        objective=register_objective,
+        allocator=register_allocator,
+        matchers=register_matcher,
+        outputs=register_simulation_output,
+    )
