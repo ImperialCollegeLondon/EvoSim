@@ -16,3 +16,4 @@ start them by navigating to the root of the repository and running:
 
    simple-random-allocation.ipynb
    static-allocator-comparison.ipynb
+   benchmarking.ipynb

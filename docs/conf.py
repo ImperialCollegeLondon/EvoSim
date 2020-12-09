@@ -61,6 +61,7 @@ intersphinx_mapping = {
     "pandas": ("http://pandas.pydata.org/pandas-docs/stable", None),
     "sklearn": ("https://scikit-learn.org/stable", None),
     "omegaconf": ("https://omegaconf.readthedocs.io/en/latest/", None),
+    "statsmodel": ("https://www.statsmodels.org/stable", None),
 }
 
 # -- Options for HTML output -------------------------------------------------
