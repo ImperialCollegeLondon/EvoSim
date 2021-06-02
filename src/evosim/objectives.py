@@ -91,7 +91,7 @@ def haversine_distance_from_destination(a, b, radius: float = constants.EARTH_RA
 
     Returns:
         distance in kilometers.
-     """
+    """
 
     aphi = 2 * np.pi / 360 * a.dest_lat
     bphi = 2 * np.pi / 360 * b.latitude
