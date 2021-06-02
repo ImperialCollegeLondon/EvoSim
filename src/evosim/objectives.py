@@ -73,3 +73,36 @@ def haversine_distance(a, b, radius: float = constants.EARTH_RADIUS_KM):
         )
         * radius
     )
+
+@register_objective
+def haversine_distance_from_destination(a, b, radius: float = constants.EARTH_RADIUS_KM):
+    """Great circle distance, specifically between the vehicle destination and charging point location.
+
+    Implements the `haversine formula for the great circle
+    <https://en.wikipedia.org/wiki/Great-circle_distance>`__. It is more computationally
+    demanding then :py:func:`evosim.objectives.distance` but is more stable when
+    computing small distances with single precision floating points.
+
+    Args:
+        a: destination latitude and longitude of vehicle in degrees.
+        b: latitude and longitude of charging points in degrees.
+        radius: Radius of the Earth in kilometers. Defaults to
+            :py:data:`~evosim.constants.EARTH_RADIUS_KM`.
+
+    Returns:
+        distance in kilometers.
+     """
+
+    aphi = 2 * np.pi / 360 * a.dest_lat
+    bphi = 2 * np.pi / 360 * b.latitude
+    sin_dphi = np.sin((aphi - bphi) / 2)
+    cos_dlam = np.sin(np.pi / 360 * (a.dest_long - b.longitude))
+    return (
+        2
+        * np.arcsin(
+            np.sqrt(
+                sin_dphi * sin_dphi + np.cos(aphi) * np.cos(bphi) * cos_dlam * cos_dlam
+            )
+        )
+        * radius
+    ) 
