@@ -70,13 +70,11 @@ def distance_from_destination(
         radius: Earth radius used in computing the distances. Defaults to
             :py:data:`evosim.constants.EARTH_RADIUS_KM`.
     """
-    from evosim.objectives import distance
+    from evosim.objectives import haversine_distance_from_destination
 
     return (
-        distance(
-            vehicle[["dest_lat", "dest_long"]].rename(
-                columns=dict(dest_lat="latitude", dest_long="longitude")
-            ),
+        haversine_distance_from_destination(
+            vehicle,
             charging_post,
         )
         < max_distance
