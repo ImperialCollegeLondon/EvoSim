@@ -40,12 +40,6 @@ poetry install
 # Start hacking!!
 ```
 
-In rare cases Poetry may not be able to install or update all dependencies required. If this happens, simply install any failed attemps with: 
-
-```bash 
-python -m pip install SomePackage 
-```
-
 All development should occur in a branch starting from "develop". It should be merged
 back into the development branch "develop" via a pull-request.
 
@@ -116,6 +110,6 @@ Once it is time for a new release, run the following steps:
    poetry run bump2version minor
    ```
 
-1. open a pull request against "develop" and merge
-1. open a pull request from "develop" to "main" and merge
+1. open a PR against "develop" and merge
+1. open a PR from "develop" to "main" and merge
 1. release [via github](https://docs.github.com/en/github/administering-a-repository/managing-releases-in-a-repository)
